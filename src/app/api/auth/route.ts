@@ -1,0 +1,151 @@
+// src/app/api/auth/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { comparePassword, generateToken, generateSessionId } from "@/lib/auth";
+
+export async function POST(request: NextRequest) {
+  try {
+    const { email, password } = await request.json();
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, error: "Email and password are required" },
+        { status: 400 }
+      );
+    }
+
+    // Use findFirst instead of findUnique for better filtering
+    const admin = await prisma.admin.findFirst({
+      where: { email, isActive: true },
+    });
+
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, error: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
+
+    // Verify password
+    const isPasswordValid = await comparePassword(password, admin.password);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { success: false, error: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
+
+    // Generate custom token
+    const token = generateToken({
+      userId: admin.id,
+      email: admin.email,
+      role: admin.role,
+    });
+
+    // Generate session ID
+    const sessionId = generateSessionId();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Store session in database
+    await prisma.adminSession.create({
+      data: {
+        adminId: admin.id,
+        sessionId,
+        token,
+        expiresAt,
+        isActive: true,
+      },
+    });
+
+    // Create response with user data
+    const response = NextResponse.json({
+      success: true,
+      message: "Signed in successfully",
+      user: {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+      },
+    });
+
+    // Set secure HttpOnly cookie
+    response.cookies.set("auth-token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60, // 24 hours
+      path: "/",
+    });
+
+    // Set cache control headers
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+
+    return response;
+  } catch (error) {
+    console.error("Auth error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// Logout endpoint
+export async function DELETE(request: NextRequest) {
+  try {
+    // Try to get token from Authorization header first
+    const authHeader = request.headers.get("authorization");
+    let token = authHeader?.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : null;
+
+    // If not found in header, try cookie
+    if (!token) {
+      token = request.cookies.get("auth-token")?.value || null;
+    }
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "No token provided" },
+        { status: 401 }
+      );
+    }
+
+    // Deactivate session
+    await prisma.adminSession.updateMany({
+      where: { token, isActive: true },
+      data: { isActive: false, expiresAt: new Date() }, // Also set expiresAt to now
+    });
+
+    // Create success response
+    const response = NextResponse.json({
+      success: true,
+      message: "Logged out successfully",
+    });
+
+    // Clear the auth cookie
+    response.cookies.set("auth-token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 0, // Expire immediately
+      path: "/",
+    });
+
+    // Set cache control headers
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+
+    return response;
+  } catch (error) {
+    console.error("Logout error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
