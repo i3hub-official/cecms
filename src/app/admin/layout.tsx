@@ -32,7 +32,7 @@ export default function AdminLayoutWrapper({
   const validateSession = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Clear any cached user data first
       const cachedUser = localStorage.getItem("user");
       if (cachedUser) {
@@ -44,7 +44,7 @@ export default function AdminLayoutWrapper({
         credentials: "include",
         headers: {
           "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
+          Pragma: "no-cache",
         },
       });
 
@@ -59,7 +59,7 @@ export default function AdminLayoutWrapper({
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.user) {
         setUser(data.user);
         // Use sessionStorage instead of localStorage for better security

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CECMS",
+  title: "CEC MS",
   description: "Catholic Education Center Management System",
 };
 

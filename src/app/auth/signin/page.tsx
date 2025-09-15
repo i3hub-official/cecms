@@ -22,14 +22,20 @@ export default function SignInPage() {
       ...prev,
       [name]: value,
     }));
-    // Clear error when user starts typing
-    if (error) setError("");
+    if (error) setError(""); // clear error when user starts typing
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+
+    // ✅ Client-side validation
+    if (!formData.email || !formData.password) {
+      setError("Email and password are required.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch("/api/auth/signin", {
@@ -37,17 +43,14 @@ export default function SignInPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Include cookies
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Store user data (Note: using sessionStorage instead of localStorage as per constraints)
         sessionStorage.setItem("user", JSON.stringify(data.user));
-
-        // Redirect to dashboard or home page
         window.location.href = "/admin";
       } else {
         setError(data.error || "Sign in failed");
@@ -63,7 +66,6 @@ export default function SignInPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Header */}
           <div className="text-center">
             <div className="mx-auto h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center">
               <Lock className="h-6 w-6 text-white" />
@@ -76,7 +78,6 @@ export default function SignInPage() {
             </p>
           </div>
 
-          {/* Form */}
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
@@ -99,7 +100,6 @@ export default function SignInPage() {
                     name="email"
                     type="email"
                     autoComplete="email"
-                    required
                     className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors"
                     placeholder="Enter your email"
                     value={formData.email}
@@ -121,7 +121,6 @@ export default function SignInPage() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
-                    required
                     className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors"
                     placeholder="Enter your password"
                     value={formData.password}
@@ -142,7 +141,6 @@ export default function SignInPage() {
               </div>
             </div>
 
-            {/* Forgot Password Link */}
             <div className="text-right">
               <a
                 href="/auth/forgot-password"
@@ -152,7 +150,6 @@ export default function SignInPage() {
               </a>
             </div>
 
-            {/* Submit Button */}
             <div>
               <button
                 type="submit"
@@ -170,7 +167,6 @@ export default function SignInPage() {
               </button>
             </div>
 
-            {/* Sign Up Link */}
             <div className="text-center">
               <span className="text-sm text-gray-600">
                 Don&apos;t have an account?{" "}

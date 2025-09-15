@@ -181,7 +181,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
@@ -210,19 +210,18 @@ export default function AdminDashboard() {
           Refresh
         </button>
       </div>
-
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 md:p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
-            <AlertCircle className="h-4 w-4 md:h-5 md:w-5 text-red-500 mr-2" />
+            <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
             <span className="text-red-700 text-sm md:text-base">{error}</span>
           </div>
         </div>
       )}
 
       {/* Primary Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           {
             icon: Building,
@@ -255,20 +254,19 @@ export default function AdminDashboard() {
         ].map((card, index) => {
           const Icon = card.icon;
           return (
-            <div key={index} className="card p-4 md:p-6">
+            <div
+              key={index}
+              className="card p-6 flex flex-col justify-between transition hover:shadow-md"
+            >
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <Icon
-                    className={`h-6 w-6 md:h-8 md:w-8 text-${card.color}-600`}
-                  />
+                  <Icon className={`h-8 w-8 text-${card.color}-600`} />
                 </div>
-                <div className="ml-3 md:ml-4">
-                  <div className="text-xl md:text-2xl font-bold text-gray-900">
+                <div className="ml-4">
+                  <div className="text-2xl font-bold text-gray-900">
                     {card.value}
                   </div>
-                  <div className="text-xs md:text-sm text-gray-600">
-                    {card.label}
-                  </div>
+                  <div className="text-sm text-gray-600">{card.label}</div>
                   <div className={`text-xs text-${card.color}-600 mt-1`}>
                     {card.subText}
                   </div>
@@ -280,7 +278,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
           {
             title: "Security Status",
@@ -332,24 +330,22 @@ export default function AdminDashboard() {
         ].map((section, index) => {
           const Icon = section.icon;
           return (
-            <div key={index} className="card p-4 md:p-6">
-              <div className="flex items-center justify-between mb-3 md:mb-4">
-                <h3 className="text-base md:text-lg font-medium text-gray-900">
+            <div key={index} className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
                   {section.title}
                 </h3>
-                <Icon className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+                <Icon className="h-5 w-5 text-gray-400" />
               </div>
-              <div className="space-y-2 md:space-y-3">
+              <div className="space-y-3">
                 {section.items.map((item, itemIndex) => (
                   <div
                     key={itemIndex}
                     className="flex justify-between items-center"
                   >
-                    <span className="text-xs md:text-sm text-gray-600">
-                      {item.label}
-                    </span>
+                    <span className="text-sm text-gray-600">{item.label}</span>
                     <span
-                      className={`font-medium text-xs md:text-sm ${
+                      className={`font-medium text-sm ${
                         item.status === "good"
                           ? "text-green-600"
                           : item.status === "bad"
@@ -368,20 +364,20 @@ export default function AdminDashboard() {
       </div>
 
       {/* Data Tables */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-        {/* Recent Centers Table */}
-        <div className="card p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6 gap-2">
-            <h2 className="text-base md:text-lg font-medium text-gray-900">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Centers Table */}
+        <div className="card p-6 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
+            <h2 className="text-lg font-medium text-gray-900">
               Recently Added Centers
             </h2>
-            <button className="btn btn-secondary text-xs md:text-sm py-1 md:py-2">
-              <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+            <button className="btn btn-secondary text-sm py-2">
+              <Eye className="h-4 w-4 mr-2" />
               View All
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -437,15 +433,14 @@ export default function AdminDashboard() {
         </div>
 
         {/* Active Sessions Table */}
-        <div className="card p-4 md:p-6">
-          <div className="flex items-center justify-between mb-4 md:mb-6">
-            <h2 className="text-base md:text-lg font-medium text-gray-900">
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-medium text-gray-900">
               Active Sessions
             </h2>
-            <Shield className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+            <Shield className="h-5 w-5 text-gray-400" />
           </div>
-
-          <div className="space-y-3 md:space-y-4">
+          <div className="space-y-4">
             {activeSessions.length === 0 ? (
               <div className="text-center py-4 md:py-6">
                 <div className="text-gray-400 mb-2">
@@ -483,11 +478,11 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="card p-4 md:p-6">
-        <h2 className="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4">
+      <div className="card p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">
           Quick Actions
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { icon: Building, label: "Manage Centers", href: "/admin/centers" },
             { icon: Shield, label: "View Sessions", href: "/admin/sessions" },
@@ -514,21 +509,21 @@ export default function AdminDashboard() {
       </div>
 
       {/* System Health Indicator */}
-      <div className="card p-3 md:p-4 bg-green-50 border border-green-200">
+      <div className="card p-4 bg-green-50 border border-green-200">
         <div className="flex items-center">
-          <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-600 mr-2" />
+          <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
           <div className="flex-1">
-            <div className="text-sm md:text-base font-medium text-green-900">
+            <div className="text-base font-medium text-green-900">
               System Status: All Systems Operational
             </div>
-            <div className="text-xs md:text-sm text-green-700">
+            <div className="text-sm text-green-700">
               Database connected • {stats.sessions.active} active sessions •
               Last updated{" "}
               {lastUpdated ? getTimeAgo(lastUpdated.toISOString()) : "recently"}
             </div>
           </div>
           {refreshing && (
-            <RefreshCw className="h-4 w-4 text-green-600 animate-spin" />
+            <RefreshCw className="h-5 w-5 text-green-600 animate-spin" />
           )}
         </div>
       </div>
