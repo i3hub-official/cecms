@@ -7,7 +7,7 @@
   "dev": "npm run prisma:generate && next dev",
   "build": "npm run prisma:generate && next build",
   "start": "next start",
-  "prisma:generate": "prisma generate",
+  "prisma:generate": "prisma generate --no-engine",
   "prisma:migrate": "prisma migrate dev",
   "lint": "eslint"
 },
