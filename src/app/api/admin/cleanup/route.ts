@@ -1,10 +1,12 @@
 // src/app/api/admin/cleanup/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // use singleton client
 import { validateSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    // Import prisma inside function to avoid Turbopack build-time issues
+    const { prisma } = await import("@/lib/prisma");
+
     // Validate admin session
     const authResult = await validateSession(request);
     if (!authResult.isValid || authResult.user?.role !== "ADMIN") {
@@ -29,28 +31,24 @@ export async function POST(request: NextRequest) {
           },
         ],
       },
-      data: {
-        isActive: false,
-      },
+      data: { isActive: false },
     });
 
-    // Clean up expired password reset tokens (if table exists)
+    // Clean up expired password reset tokens
     let expiredResetsResult = { count: 0 };
-    try {
-      expiredResetsResult = await prisma.passwordReset.deleteMany({
-        where: {
-          OR: [
-            { expiresAt: { lte: now } },
-            {
-              isUsed: true,
-              createdAt: { lte: oneDayAgo },
-            },
-          ],
-        },
-      });
-    } catch (error) {
-      // PasswordReset table might not exist yet
-      console.log("PasswordReset table not found, skipping cleanup");
+    if (prisma.passwordReset) {
+      try {
+        expiredResetsResult = await prisma.passwordReset.deleteMany({
+          where: {
+            OR: [
+              { expiresAt: { lte: now } },
+              { isUsed: true, createdAt: { lte: oneDayAgo } },
+            ],
+          },
+        });
+      } catch {
+        console.log("PasswordReset table not found, skipping cleanup");
+      }
     }
 
     return NextResponse.json({
@@ -78,9 +76,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET endpoint to check what would be cleaned up (dry run)
 export async function GET(request: NextRequest) {
   try {
+    // Import prisma inside function
+    const { prisma } = await import("@/lib/prisma");
+
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -90,33 +90,32 @@ export async function GET(request: NextRequest) {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // Count what would be cleaned up
-    const [expiredSessionsCount, expiredResetsCount] = await Promise.all([
-      prisma.adminSession.count({
-        where: {
-          OR: [
-            { expiresAt: { lte: now } },
-            {
-              lastUsed: { lte: sevenDaysAgo },
-              isActive: true,
-            },
-          ],
-        },
-      }),
-      prisma.passwordReset
-        ?.count({
+    // Count expired sessions
+    const expiredSessionsCount = await prisma.adminSession.count({
+      where: {
+        OR: [
+          { expiresAt: { lte: now } },
+          { lastUsed: { lte: sevenDaysAgo }, isActive: true },
+        ],
+      },
+    });
+
+    // Count expired password resets
+    let expiredResetsCount = 0;
+    if (prisma.passwordReset) {
+      try {
+        expiredResetsCount = await prisma.passwordReset.count({
           where: {
             OR: [
               { expiresAt: { lte: now } },
-              {
-                isUsed: true,
-                createdAt: { lte: oneDayAgo },
-              },
+              { isUsed: true, createdAt: { lte: oneDayAgo } },
             ],
           },
-        })
-        .catch(() => 0) || Promise.resolve(0),
-    ]);
+        });
+      } catch {
+        expiredResetsCount = 0;
+      }
+    }
 
     return NextResponse.json({
       success: true,
