@@ -2,12 +2,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth";
-import type { Prisma, Center } from "@prisma/client";
 
 // GET /api/centers - fetch centers with optional search and pagination
 export async function GET(request: NextRequest) {
   try {
-    // Validate session
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,11 +16,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
     const includeInactive = searchParams.get("includeInactive") === "true";
-
     const skip = (page - 1) * limit;
 
-    // Build where clause with proper Prisma type
-    const where: Prisma.CenterWhereInput = {};
+    // Build where clause using Prisma.CenterWhereInput
+    const where: NonNullable<Parameters<typeof prisma.center.findMany>[0]>["where"] = {};
+
     if (!includeInactive) where.isActive = true;
 
     if (search) {
@@ -35,7 +33,6 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Fetch centers and total count in parallel
     const [centers, total] = await Promise.all([
       prisma.center.findMany({
         where,
@@ -53,7 +50,7 @@ export async function GET(request: NextRequest) {
       pagination: { page, limit, total, pages },
     });
   } catch (error) {
-    console.error("Centers API error:", error);
+    console.error("Centers GET API error:", error);
     return NextResponse.json(
       { error: "Failed to fetch centers" },
       { status: 500 }
@@ -80,11 +77,10 @@ export async function POST(request: NextRequest) {
 
     const { number, name, address, state, lga, isActive = true } = body;
 
-    // Check if center number already exists
+    // Check if the center number already exists
     const existingCenter = await prisma.center.findUnique({
       where: { number },
     });
-
     if (existingCenter) {
       return NextResponse.json(
         { error: "Center number already exists" },
@@ -92,7 +88,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const center: Center = await prisma.center.create({
+    // Create center, Prisma infers type automatically
+    const center = await prisma.center.create({
       data: {
         number,
         name,
@@ -107,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(center);
   } catch (error) {
-    console.error("Create center error:", error);
+    console.error("Centers POST API error:", error);
     return NextResponse.json(
       { error: "Failed to create center" },
       { status: 500 }
