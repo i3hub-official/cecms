@@ -139,7 +139,7 @@ export default function AdminLayout({
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col lg:pl-64">
+      <div className="flex-1 flex flex-col">
         {/* Mobile top bar */}
         <header className="bg-white shadow-sm border-b border-gray-200 lg:hidden">
           <div className="flex items-center justify-between px-4 h-16">

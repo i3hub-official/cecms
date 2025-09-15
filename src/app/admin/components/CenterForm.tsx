@@ -78,6 +78,44 @@ interface ConfirmationModal {
 
 // Real API functions using your actual database
 const api = {
+  async getStates(): Promise<string[]> {
+    const cached = sessionStorage.getItem("cachedStates");
+    if (cached) return JSON.parse(cached);
+
+    const res = await fetch("https://apinigeria.vercel.app/api/v1/states");
+    if (!res.ok) throw new Error("Failed to fetch states");
+    const data = await res.json();
+    const states = data.states || [];
+    sessionStorage.setItem("cachedStates", JSON.stringify(states));
+    return states;
+  },
+
+  async getLgas(state: string): Promise<string[]> {
+    const cachedLgas = sessionStorage.getItem("cachedLgas");
+    const lgaMap = cachedLgas
+      ? new Map(Object.entries(JSON.parse(cachedLgas)))
+      : new Map();
+
+    if (lgaMap.has(state)) return lgaMap.get(state) as string[];
+
+    const res = await fetch(
+      `https://apinigeria.vercel.app/api/v1/lga?state=${encodeURIComponent(
+        state
+      )}`
+    );
+    if (!res.ok) throw new Error("Failed to fetch LGAs");
+    const data = await res.json();
+    const lgas = data.lgas || [];
+
+    lgaMap.set(state, lgas);
+    sessionStorage.setItem(
+      "cachedLgas",
+      JSON.stringify(Object.fromEntries(lgaMap))
+    );
+
+    return lgas;
+  },
+
   async getCenters(page = 1, limit = 10, search = "", includeInactive = false) {
     try {
       const params = new URLSearchParams({
@@ -117,91 +155,6 @@ const api = {
     } catch (error) {
       console.error("Error fetching stats:", error);
       throw new Error("Failed to load statistics");
-    }
-  },
-
-  async getLocationData() {
-    try {
-      // Check if we have cached data
-      const cached = localStorage.getItem("cachedStates");
-      const cachedTimestamp = localStorage.getItem("cachedTimestamp");
-      const now = Date.now();
-
-      // Use cache if it's less than 24 hours old
-      if (
-        cached &&
-        cachedTimestamp &&
-        now - parseInt(cachedTimestamp) < 24 * 60 * 60 * 1000
-      ) {
-        return {
-          states: JSON.parse(cached),
-          lgas: {},
-        };
-      }
-
-      // Fetch from external API
-      const response = await fetch(
-        "https://apinigeria.vercel.app/api/v1/states"
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch states");
-      }
-
-      const data = await response.json();
-      const statesList = data.states?.map((state: any) => state.name) || [];
-
-      // Cache the results
-      localStorage.setItem("cachedStates", JSON.stringify(statesList));
-      localStorage.setItem("cachedTimestamp", now.toString());
-
-      return {
-        states: statesList,
-        lgas: {},
-      };
-    } catch (error) {
-      console.error("Error loading location data:", error);
-      throw new Error("Failed to load location data");
-    }
-  },
-
-  async getLgasForState(state: string) {
-    try {
-      // Check cache first
-      const cacheKey = `lgas-${state}`;
-      const cached = localStorage.getItem(cacheKey);
-      const cachedTimestamp = localStorage.getItem(`${cacheKey}-timestamp`);
-      const now = Date.now();
-
-      if (
-        cached &&
-        cachedTimestamp &&
-        now - parseInt(cachedTimestamp) < 24 * 60 * 60 * 1000
-      ) {
-        return JSON.parse(cached);
-      }
-
-      // Fetch from external API
-      const response = await fetch(
-        `https://apinigeria.vercel.app/api/v1/lga?state=${encodeURIComponent(
-          state
-        )}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch LGAs");
-      }
-
-      const data = await response.json();
-      const lgasList = data.lgas || [];
-
-      // Cache the results
-      localStorage.setItem(cacheKey, JSON.stringify(lgasList));
-      localStorage.setItem(`${cacheKey}-timestamp`, now.toString());
-
-      return lgasList;
-    } catch (error) {
-      console.error("Error fetching LGAs:", error);
-      throw new Error(`Failed to load LGAs for ${state}`);
     }
   },
 
@@ -290,6 +243,34 @@ const api = {
   },
 };
 
+// Helper function to generate center number
+const generateCenterNumber = (
+  state: string,
+  lga: string,
+  stateList: string[],
+  lgaMap: { [key: string]: string[] }
+): string => {
+  // State index (1-based) → 3 digits
+  const stateIndex = stateList.indexOf(state);
+  const stateCode = (stateIndex >= 0 ? stateIndex + 1 : 0)
+    .toString()
+    .padStart(3, "0");
+
+  // LGA index (1-based) → 2 digits
+  const lgaList = lgaMap[state] || [];
+  const lgaIndex = lgaList.indexOf(lga);
+  const lgaCode = (lgaIndex >= 0 ? lgaIndex + 1 : 0)
+    .toString()
+    .padStart(2, "0");
+
+  // Random 2 digits
+  const randomDigits = Math.floor(Math.random() * 100)
+    .toString()
+    .padStart(2, "0");
+
+  return `${stateCode}${lgaCode}${randomDigits}`;
+};
+
 // Notification Component
 function NotificationContainer({
   notifications,
@@ -299,11 +280,11 @@ function NotificationContainer({
   removeNotification: (id: string) => void;
 }) {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-50 flex space-x-2">
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`max-w-sm w-full shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden animate-in slide-in-from-top-5 ${
+          className={`max-w-sm w-full shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden animate-in slide-in-from-right-5 ${
             notification.type === "success"
               ? "bg-green-50 ring-green-200"
               : notification.type === "error"
@@ -483,7 +464,6 @@ export default function CenterManagementSystem() {
   const [showForm, setShowForm] = useState(false);
   const [editingCenter, setEditingCenter] = useState<Center | null>(null);
   const [formData, setFormData] = useState({
-    number: "",
     name: "",
     address: "",
     state: "",
@@ -573,10 +553,6 @@ export default function CenterManagementSystem() {
   const validateForm = () => {
     const errors: { [key: string]: string } = {};
 
-    if (!formData.number.trim()) {
-      errors.number = "Center number is required";
-    }
-
     if (!formData.name.trim()) {
       errors.name = "Center name is required";
     }
@@ -599,8 +575,8 @@ export default function CenterManagementSystem() {
 
   const loadLocationData = useCallback(async () => {
     try {
-      const locationData = await api.getLocationData();
-      setLocationData(locationData);
+      const states = await api.getStates();
+      setLocationData({ states, lgas: {} });
     } catch (err) {
       console.error("Error loading location data:", err);
       addNotification({
@@ -652,7 +628,7 @@ export default function CenterManagementSystem() {
 
       setIsLoadingLgas(true);
       try {
-        const lgasList = await api.getLgasForState(formData.state);
+        const lgasList = await api.getLgas(formData.state);
         setLgas(lgasList);
         lgaCache.set(formData.state, lgasList);
       } catch (error) {
@@ -692,7 +668,6 @@ export default function CenterManagementSystem() {
   const handleAdd = () => {
     setEditingCenter(null);
     setFormData({
-      number: "",
       name: "",
       address: "",
       state: "",
@@ -706,7 +681,6 @@ export default function CenterManagementSystem() {
   const handleEdit = (center: Center) => {
     setEditingCenter(center);
     setFormData({
-      number: center.number,
       name: center.name,
       address: center.address,
       state: center.state,
@@ -764,9 +738,18 @@ export default function CenterManagementSystem() {
     }
 
     try {
+      // Generate center number based on state and LGA
+      const centerNumber = generateCenterNumber(
+        formData.state,
+        formData.lga,
+        locationData.states,
+        locationData.lgas
+      );
+
       if (editingCenter) {
         await api.updateCenter(editingCenter.id, {
           ...formData,
+          number: centerNumber,
           modifiedBy: "current@user.com",
         });
         addNotification({
@@ -777,13 +760,14 @@ export default function CenterManagementSystem() {
       } else {
         await api.createCenter({
           ...formData,
+          number: centerNumber,
           createdBy: "current@user.com",
           modifiedBy: null,
         });
         addNotification({
           type: "success",
           title: "Center Created",
-          message: `${formData.name} has been created successfully.`,
+          message: `${formData.name} has been created successfully with center number ${centerNumber}.`,
         });
       }
       setShowForm(false);
@@ -1014,30 +998,6 @@ export default function CenterManagementSystem() {
               </div>
 
               <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-                {/* Center Number Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Center Number *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.number}
-                    onChange={(e) =>
-                      setFormData({ ...formData, number: e.target.value })
-                    }
-                    className={`w-full px-3 py-2 text-sm sm:text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.number ? "border-red-300" : "border-gray-300"
-                    }`}
-                    placeholder="Enter center number"
-                  />
-                  {formErrors.number && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.number}
-                    </p>
-                  )}
-                </div>
-
                 {/* Center Name Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1045,7 +1005,6 @@ export default function CenterManagementSystem() {
                   </label>
                   <input
                     type="text"
-                    required
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -1068,7 +1027,6 @@ export default function CenterManagementSystem() {
                     Address *
                   </label>
                   <textarea
-                    required
                     value={formData.address}
                     onChange={(e) =>
                       setFormData({ ...formData, address: e.target.value })
@@ -1092,7 +1050,6 @@ export default function CenterManagementSystem() {
                     State *
                   </label>
                   <select
-                    required
                     value={formData.state}
                     onChange={(e) =>
                       setFormData({
@@ -1106,11 +1063,18 @@ export default function CenterManagementSystem() {
                     }`}
                   >
                     <option value="">Select State</option>
-                    {locationData.states.map((state) => (
-                      <option key={state} value={state}>
-                        {state}
-                      </option>
-                    ))}
+                    {locationData.states
+                      .filter(
+                        (state) =>
+                          state !== null &&
+                          state !== undefined &&
+                          state.trim() !== ""
+                      )
+                      .map((state) => (
+                        <option key={state} value={state}>
+                          {state}
+                        </option>
+                      ))}
                   </select>
                   {formErrors.state && (
                     <p className="text-red-500 text-xs mt-1">
@@ -1125,7 +1089,6 @@ export default function CenterManagementSystem() {
                     LGA *
                   </label>
                   <select
-                    required
                     value={formData.lga}
                     onChange={(e) =>
                       setFormData({ ...formData, lga: e.target.value })
@@ -1141,11 +1104,18 @@ export default function CenterManagementSystem() {
                         Loading LGAs...
                       </option>
                     ) : (
-                      lgas.map((lga) => (
-                        <option key={lga} value={lga}>
-                          {lga}
-                        </option>
-                      ))
+                      lgas
+                        .filter(
+                          (lga) =>
+                            lga !== null &&
+                            lga !== undefined &&
+                            lga.trim() !== ""
+                        )
+                        .map((lga) => (
+                          <option key={lga} value={lga}>
+                            {lga}
+                          </option>
+                        ))
                     )}
                   </select>
                   {formErrors.lga && (
