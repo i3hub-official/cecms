@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 // GET /api/centers - fetch centers with optional search and pagination
 export async function GET(request: NextRequest) {
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const includeInactive = searchParams.get("includeInactive") === "true";
     const skip = (page - 1) * limit;
 
-    // Build Prisma where clause
+    // Use Prisma generated type instead of manual type extraction
     const where: Prisma.CenterWhereInput = {};
 
     if (!includeInactive) where.isActive = true;
@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    // Fetch centers and total count in parallel
     const [centers, total] = await Promise.all([
       prisma.center.findMany({
         where,
@@ -82,7 +83,6 @@ export async function POST(request: NextRequest) {
     const existingCenter = await prisma.center.findUnique({
       where: { number },
     });
-
     if (existingCenter) {
       return NextResponse.json(
         { error: "Center number already exists" },
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the center
+    // Create center, Prisma infers type automatically
     const center = await prisma.center.create({
       data: {
         number,
