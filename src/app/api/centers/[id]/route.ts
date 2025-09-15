@@ -3,21 +3,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth";
 
-interface RouteParams {
-  params: { id: string };
-}
+/**
+ * GET /api/centers/[id]
+ * Fetch a single center by ID
+ */
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
 
-// GET /api/centers/[id] - Get specific center
-export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const center = await prisma.center.findUnique({
-      where: { id: params.id },
-    });
+    const center = await prisma.center.findUnique({ where: { id } });
 
     if (!center) {
       return NextResponse.json({ error: "Center not found" }, { status: 404 });
@@ -33,8 +35,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// PUT /api/centers/[id] - Update center
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+/**
+ * PUT /api/centers/[id]
+ * Update a center
+ */
+export async function PUT(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
+
   try {
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
@@ -44,16 +54,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const body = await request.json();
     const { number, name, address, state, lga, isActive } = body;
 
-    // Check if number is being changed and if it already exists
+    // Prevent duplicate center number
     if (number) {
-      const existingCenter = await prisma.center.findFirst({
-        where: {
-          number,
-          id: { not: params.id },
-        },
+      const existing = await prisma.center.findFirst({
+        where: { number, id: { not: id } },
       });
-
-      if (existingCenter) {
+      if (existing) {
         return NextResponse.json(
           { error: "Center number already exists" },
           { status: 400 }
@@ -61,8 +67,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    const center = await prisma.center.update({
-      where: { id: params.id },
+    const updatedCenter = await prisma.center.update({
+      where: { id },
       data: {
         ...(number && { number }),
         ...(name && { name }),
@@ -75,7 +81,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    return NextResponse.json(center);
+    return NextResponse.json(updatedCenter);
   } catch (error) {
     console.error("Update center error:", error);
     return NextResponse.json(
@@ -85,17 +91,24 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// DELETE /api/centers/[id] - Delete (deactivate) center
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+/**
+ * DELETE /api/centers/[id]
+ * Soft-delete (deactivate) a center
+ */
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
+
   try {
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Soft delete (deactivate) instead of hard delete
     const center = await prisma.center.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         isActive: false,
         modifiedBy: authResult.user?.email || "system",
@@ -106,6 +119,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       success: true,
       message: "Center deactivated successfully",
+      center,
     });
   } catch (error) {
     console.error("Delete center error:", error);
