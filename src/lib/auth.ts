@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { randomBytes, createHmac, timingSafeEqual } from "crypto";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSessionByToken, updateSessionLastUsed } from "@/lib/session-manager";
 
 const SECRET_KEY = process.env.AUTH_SECRET || "default_secret_key";
 const TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -111,25 +112,8 @@ export async function validateSession(
       return { isValid: false, error: "Invalid token" };
     }
 
-    // Check if session exists in database and is active
-    const session = await prisma.adminSession.findFirst({
-      where: {
-        token,
-        isActive: true,
-        expiresAt: { gt: new Date() },
-      },
-      include: {
-        admin: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            role: true,
-            isActive: true,
-          },
-        },
-      },
-    });
+    // Check if session exists in database and is active using session manager
+    const session = await getSessionByToken(token);
 
     if (!session) {
       return { isValid: false, error: "Session not found" };
@@ -139,11 +123,8 @@ export async function validateSession(
       return { isValid: false, error: "Admin account is inactive" };
     }
 
-    // Update last used timestamp
-    await prisma.adminSession.update({
-      where: { id: session.id },
-      data: { lastUsed: new Date() },
-    });
+    // Update last used timestamp using session manager
+    await updateSessionLastUsed(session.id);
 
     return {
       isValid: true,

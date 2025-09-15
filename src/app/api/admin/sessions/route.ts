@@ -1,7 +1,13 @@
 // src/app/api/admin/sessions/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyToken, getAuthToken } from "@/lib/auth";
+import {
+  verifyToken,
+  getAuthToken,
+  comparePassword,
+  generateSessionId,
+  generateToken,
+} from "@/lib/auth";
 import {
   getUserActiveSessions,
   revokeAllUserSessions,
@@ -24,18 +30,31 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: sessions.map((session) => ({
-        id: session.id,
-        sessionId: session.sessionId,
-        createdAt: session.createdAt,
-        lastUsed: session.lastUsed,
-        expiresAt: session.expiresAt,
-        // Add user agent and IP information if available
-        userAgent: session.userAgent,
-        ipAddress: session.ipAddress,
-        location: session.location,
-        deviceType: session.deviceType,
-      })),
+      data: sessions.map((session) => {
+        const s = session as {
+          id: string;
+          sessionId: string;
+          createdAt: Date;
+          lastUsed: Date;
+          expiresAt: Date;
+          userAgent?: string | null;
+          ipAddress?: string | null;
+          location?: string | null;
+          deviceType?: string | null;
+        };
+        return {
+          id: session.id,
+          sessionId: session.sessionId,
+          createdAt: session.createdAt,
+          lastUsed: session.lastUsed,
+          expiresAt: session.expiresAt,
+          // Add user agent and IP information if available (handle null values)
+          userAgent: s.userAgent || "Unknown",
+          ipAddress: s.ipAddress || "Unknown",
+          location: s.location || "Unknown",
+          deviceType: s.deviceType || "Unknown",
+        };
+      }),
     });
   } catch (error) {
     console.error("Get sessions error:", error);
@@ -146,17 +165,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Create session in database
-    const session = await prisma.adminSession.create({
+    await prisma.adminSession.create({
       data: {
         adminId: admin.id,
         sessionId,
         token,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-        userAgent,
-        ipAddress,
-        deviceType,
         // You could add geolocation here using a service like IPAPI
-        location: "Unknown", // Placeholder for actual geolocation
       },
     });
 
