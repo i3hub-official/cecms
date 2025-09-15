@@ -20,14 +20,13 @@ export async function GET(
     }
 
     const center = await prisma.center.findUnique({ where: { id } });
-
     if (!center) {
       return NextResponse.json({ error: "Center not found" }, { status: 404 });
     }
 
     return NextResponse.json(center);
   } catch (error) {
-    console.error("Get center error:", error);
+    console.error("GET center error:", error);
     return NextResponse.json(
       { error: "Failed to fetch center" },
       { status: 500 }
@@ -83,7 +82,7 @@ export async function PUT(
 
     return NextResponse.json(updatedCenter);
   } catch (error) {
-    console.error("Update center error:", error);
+    console.error("PUT center error:", error);
     return NextResponse.json(
       { error: "Failed to update center" },
       { status: 500 }
@@ -122,7 +121,7 @@ export async function DELETE(
       center,
     });
   } catch (error) {
-    console.error("Delete center error:", error);
+    console.error("DELETE center error:", error);
     return NextResponse.json(
       { error: "Failed to delete center" },
       { status: 500 }
