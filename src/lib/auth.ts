@@ -2,8 +2,10 @@
 import bcrypt from "bcryptjs";
 import { randomBytes, createHmac, timingSafeEqual } from "crypto";
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getSessionByToken, updateSessionLastUsed } from "@/lib/session-manager";
+import {
+  getSessionByToken,
+  updateSessionLastUsed,
+} from "@/lib/session-manager";
 
 const SECRET_KEY = process.env.AUTH_SECRET || "default_secret_key";
 const TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
