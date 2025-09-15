@@ -2,67 +2,56 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth";
+import type { Prisma, Center } from "@prisma/client";
 
-// GET /api/centers - Get centers with optional filtering and pagination
+// GET /api/centers - fetch centers with optional search and pagination
 export async function GET(request: NextRequest) {
   try {
     // Validate session
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
-    const includeInactive = searchParams.get('includeInactive') === 'true';
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const search = searchParams.get("search") || "";
+    const includeInactive = searchParams.get("includeInactive") === "true";
 
     const skip = (page - 1) * limit;
 
-    // Build where clause
-    const where: import('@prisma/client').Prisma.CenterWhereInput = {};
-    
-    if (!includeInactive) {
-      where.isActive = true;
-    }
+    // Build where clause with proper Prisma type
+    const where: Prisma.CenterWhereInput = {};
+    if (!includeInactive) where.isActive = true;
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { number: { contains: search, mode: 'insensitive' } },
-        { address: { contains: search, mode: 'insensitive' } },
-        { state: { contains: search, mode: 'insensitive' } },
-        { lga: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: "insensitive" } },
+        { number: { contains: search, mode: "insensitive" } },
+        { address: { contains: search, mode: "insensitive" } },
+        { state: { contains: search, mode: "insensitive" } },
+        { lga: { contains: search, mode: "insensitive" } },
       ];
     }
 
-    // Get centers and total count
+    // Fetch centers and total count in parallel
     const [centers, total] = await Promise.all([
       prisma.center.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { modifiedAt: 'desc' },
+        orderBy: { modifiedAt: "desc" },
       }),
-      prisma.center.count({ where })
+      prisma.center.count({ where }),
     ]);
 
     const pages = Math.ceil(total / limit);
 
     return NextResponse.json({
       centers,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages
-      }
+      pagination: { page, limit, total, pages },
     });
-
   } catch (error) {
     console.error("Centers API error:", error);
     return NextResponse.json(
@@ -72,23 +61,28 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/centers - Create new center
+// POST /api/centers - create a new center
 export async function POST(request: NextRequest) {
   try {
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body: {
+      number: string;
+      name: string;
+      address: string;
+      state: string;
+      lga: string;
+      isActive?: boolean;
+    } = await request.json();
+
     const { number, name, address, state, lga, isActive = true } = body;
 
     // Check if center number already exists
     const existingCenter = await prisma.center.findUnique({
-      where: { number }
+      where: { number },
     });
 
     if (existingCenter) {
@@ -98,7 +92,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const center = await prisma.center.create({
+    const center: Center = await prisma.center.create({
       data: {
         number,
         name,
@@ -106,13 +100,12 @@ export async function POST(request: NextRequest) {
         state,
         lga,
         isActive,
-        createdBy: authResult.user?.email || 'system',
-        modifiedBy: authResult.user?.email || 'system',
-      }
+        createdBy: authResult.user?.email || "system",
+        modifiedBy: authResult.user?.email || "system",
+      },
     });
 
     return NextResponse.json(center);
-
   } catch (error) {
     console.error("Create center error:", error);
     return NextResponse.json(
