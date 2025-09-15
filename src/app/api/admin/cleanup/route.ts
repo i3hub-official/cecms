@@ -1,11 +1,11 @@
 // src/app/api/admin/cleanup/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { validateSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
-    // Validate admin session
+    const { prisma } = await import("@/lib/prisma"); // <- moved here
+
     const authResult = await validateSession(request);
     if (!authResult.isValid || authResult.user?.role !== "ADMIN") {
       return NextResponse.json(
@@ -18,21 +18,16 @@ export async function POST(request: NextRequest) {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // Clean up expired sessions
     const expiredSessionsResult = await prisma.adminSession.updateMany({
       where: {
         OR: [
           { expiresAt: { lte: now } },
-          {
-            lastUsed: { lte: sevenDaysAgo },
-            isActive: true,
-          },
+          { lastUsed: { lte: sevenDaysAgo }, isActive: true },
         ],
       },
       data: { isActive: false },
     });
 
-    // Clean up expired password reset tokens
     let expiredResetsResult = { count: 0 };
     if (prisma.passwordReset) {
       try {
