@@ -1,9 +1,8 @@
 // src/app/api/analytics/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { validateSession } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 // Define the type for trend data
 interface TrendItem {
   createdAt: Date;
