@@ -1,4 +1,5 @@
 {
+  "root": true,
   "extends": [
     "next/core-web-vitals",
     "eslint:recommended",
@@ -7,8 +8,11 @@
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
   "rules": {
-    "no-unused-vars": "off", // allow unused variables
-    "@next/next/no-img-element": "off", // allow <img> instead of Next.js <Image>
-    "@typescript-eslint/no-explicit-any": "off" // allow 'any' type
+    // Common rules that often block builds
+    "no-unused-vars": "warn", // Warn for unused vars instead of error
+    "@typescript-eslint/no-unused-vars": "warn", // TypeScript unused vars
+    "@next/next/no-img-element": "off", // Allow <img> tags
+    "@typescript-eslint/no-explicit-any": "off", // Allow 'any' type
+    "react/react-in-jsx-scope": "off" // Not needed in Next.js 13
   }
 }
