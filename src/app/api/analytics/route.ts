@@ -1,19 +1,33 @@
-// src/app/api/analytics/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { validateSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// Define the type for trend data
-interface TrendItem {
-  createdAt: Date;
-  _count: {
-    _all: number;
+// Types
+interface AnalyticsData {
+  centerStats: {
+    total: number;
+    active: number;
+    inactive: number;
+    recentlyCreated: number;
   };
+  usage: {
+    publicAPI: number;
+    adminActions: number;
+    totalSessions: number;
+  };
+  systemHealth: {
+    uptime: string;
+    responseTime: string;
+    errorRate: string;
+  };
+  trends: {
+    date: string;
+    activity: number;
+  }[];
 }
 
 export async function GET(request: NextRequest) {
   try {
-    // Validate session
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
       return NextResponse.json(
@@ -25,10 +39,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const range = searchParams.get("range") || "7d";
 
-    // Calculate date ranges
     const now = new Date();
     const startDate = new Date();
-
     switch (range) {
       case "30d":
         startDate.setDate(now.getDate() - 30);
@@ -41,7 +53,6 @@ export async function GET(request: NextRequest) {
         startDate.setDate(now.getDate() - 7);
     }
 
-    // Get analytics data in parallel
     const [
       totalCenters,
       activeCenters,
@@ -53,7 +64,6 @@ export async function GET(request: NextRequest) {
       prisma.center.count(),
       prisma.center.count({ where: { isActive: true } }),
       prisma.center.count({ where: { createdAt: { gte: startDate } } }),
-
       Promise.all([
         prisma.apiLog.count({
           where: {
@@ -68,15 +78,12 @@ export async function GET(request: NextRequest) {
           where: { isActive: true, expiresAt: { gt: now } },
         }),
       ]),
-
-      // Prisma groupBy for daily counts
       prisma.center.groupBy({
         by: ["createdAt"],
         where: { createdAt: { gte: startDate } },
         _count: { _all: true },
         orderBy: { createdAt: "asc" },
       }),
-
       Promise.resolve({
         uptime: "99.9%",
         responseTime: "245ms",
@@ -84,8 +91,7 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    // Transform trend data to per-day activity
-    const trends = (trendData as TrendItem[]).map((t) => ({
+    const trends = (trendData as any[]).map((t) => ({
       date: t.createdAt.toISOString().split("T")[0],
       activity: t._count._all,
     }));
@@ -121,28 +127,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Types
-interface AnalyticsData {
-  centerStats: {
-    total: number;
-    active: number;
-    inactive: number;
-    recentlyCreated: number;
-  };
-  usage: {
-    publicAPI: number;
-    adminActions: number;
-    totalSessions: number;
-  };
-  systemHealth: {
-    uptime: string;
-    responseTime: string;
-    errorRate: string;
-  };
-  trends: {
-    date: string;
-    activity: number;
-  }[];
 }
