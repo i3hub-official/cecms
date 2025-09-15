@@ -1,3 +1,4 @@
+// Schema Model
 generator client {
     provider = "prisma-client-js"
     output   = "./app/generated-prisma-client"

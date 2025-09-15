@@ -1,3 +1,4 @@
+// src/app/api/admin/sessions/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken, getAuthToken } from "@/lib/auth";
