@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth";
-import { Prisma } from "@prisma/client";
 
 // GET /api/centers - fetch centers with optional search and pagination
 export async function GET(request: NextRequest) {
@@ -19,8 +18,8 @@ export async function GET(request: NextRequest) {
     const includeInactive = searchParams.get("includeInactive") === "true";
     const skip = (page - 1) * limit;
 
-    // Use Prisma generated type instead of manual type extraction
-    const where: Prisma.CenterWhereInput = {};
+    // Build where clause dynamically without explicit typing
+    const where: any = {};
 
     if (!includeInactive) where.isActive = true;
 
