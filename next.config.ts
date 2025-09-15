@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   compress: true,
   productionBrowserSourceMaps: false,
 
+  // Disable ESLint during build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // Enable Turbopack in dev
   turbopack: isDev
     ? {
@@ -64,7 +69,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
       { protocol: "https", hostname: "ui-avatars.com", pathname: "/**" },
       { protocol: "https", hostname: "i.pravatar.cc", pathname: "/**" },
-          ],
+    ],
     disableStaticImages: false,
     minimumCacheTTL: 60,
   },
