@@ -5,6 +5,7 @@ export const cspConfig = {
   defaultSrc: [
     "'self'",
     "blob:",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
     "https://apinigeria.vercel.app",
     "https://localhost",
@@ -20,6 +21,7 @@ export const cspConfig = {
     "'self'",
     "'report-sample'",
     "blob:",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
     "https://apinigeria.vercel.app",
     "https://localhost",
@@ -40,6 +42,7 @@ export const cspConfig = {
     "'unsafe-inline'", // Tailwind requires this
     "blob:",
     "https://fonts.googleapis.com",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
     "https://apinigeria.vercel.app",
     "https://localhost",
@@ -55,6 +58,7 @@ export const cspConfig = {
     "'self'",
     "data:",
     "blob:",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
     "https://apinigeria.vercel.app",
     "https://ui-avatars.com",
@@ -78,6 +82,7 @@ export const cspConfig = {
     "data:",
     "blob:",
     "https://fonts.gstatic.com",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
     "https://apinigeria.vercel.app",
     "https://localhost",
@@ -92,6 +97,7 @@ export const cspConfig = {
   connectSrc: [
     "'self'",
     "blob:",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
     "https://apinigeria.vercel.app",
     "https://localhost",
@@ -122,6 +128,7 @@ export const cspConfig = {
     "'self'",
     "blob:",
     "data:",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
     "https://apinigeria.vercel.app",
     "https://localhost",
@@ -136,6 +143,7 @@ export const cspConfig = {
   frameSrc: [
     "'self'",
     "blob:",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
     "https://apinigeria.vercel.app",
     "https://localhost",
@@ -155,6 +163,7 @@ export const cspConfig = {
   // Form actions
   formAction: [
     "'self'",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
     "https://apinigeria.vercel.app",
   ],
@@ -184,11 +193,13 @@ export const prodCspConfig = {
     "https://vercel.live",
     "https://*.vercel.app",
     "https://cecportal.vercel.app",
+    "https://cecms.vercel.app",
   ],
   connectSrc: [
     ...cspConfig.connectSrc,
     "https://vercel.live",
     "wss://vercel.live",
+    "https://cecms.vercel.app",
     "https://cecportal.vercel.app",
   ],
 };
