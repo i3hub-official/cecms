@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,30 +49,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const mostRecentSecondary = secondaryCenters.sort(
-        (a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime()
-      )[0];
+    const result = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        const mostRecentSecondary = secondaryCenters.sort(
+          (a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime()
+        )[0];
 
-      const updatedPrimary = await tx.center.update({
-        where: { id: primaryId },
-        data: {
-          name:
-            mostRecentSecondary.modifiedAt > primaryCenter.modifiedAt
-              ? mostRecentSecondary.name
-              : primaryCenter.name,
-          address:
-            mostRecentSecondary.modifiedAt > primaryCenter.modifiedAt
-              ? mostRecentSecondary.address
-              : primaryCenter.address,
-          modifiedBy: "system_merge",
-        },
-      });
+        const updatedPrimary = await tx.center.update({
+          where: { id: primaryId },
+          data: {
+            name:
+              mostRecentSecondary.modifiedAt > primaryCenter.modifiedAt
+                ? mostRecentSecondary.name
+                : primaryCenter.name,
+            address:
+              mostRecentSecondary.modifiedAt > primaryCenter.modifiedAt
+                ? mostRecentSecondary.address
+                : primaryCenter.address,
+            modifiedBy: "system_merge",
+          },
+        });
 
-      await tx.center.deleteMany({ where: { id: { in: secondaryIds } } });
+        await tx.center.deleteMany({ where: { id: { in: secondaryIds } } });
 
-      return updatedPrimary;
-    });
+        return updatedPrimary;
+      }
+    );
 
     return NextResponse.json(result);
   } catch (error) {

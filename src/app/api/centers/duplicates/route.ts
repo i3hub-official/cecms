@@ -17,7 +17,8 @@ function calculateSimilarity(str1: string, str2: string): number {
 }
 
 function levenshteinDistance(str1: string, str2: string): number {
-  const matrix = [];
+  // Explicitly type the matrix as a 2D number array
+  const matrix: number[][] = [];
 
   for (let i = 0; i <= str2.length; i++) {
     matrix[i] = [i];
@@ -51,7 +52,11 @@ export async function GET() {
       orderBy: { createdAt: "asc" },
     });
 
-    const duplicates = [];
+    const duplicates: {
+      centers: typeof centers;
+      similarity: number;
+      type: string;
+    }[] = [];
     const processed = new Set<string>();
 
     for (let i = 0; i < centers.length; i++) {
@@ -124,7 +129,10 @@ export async function GET() {
   } catch (error) {
     console.error("Error finding duplicates:", error);
     return NextResponse.json(
-      { message: "Failed to find duplicates", error },
+      {
+        message: "Failed to find duplicates",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
