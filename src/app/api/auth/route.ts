@@ -1,7 +1,9 @@
 // src/app/api/auth/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
 import { comparePassword, generateToken, generateSessionId } from "@/lib/auth";
+import { admins, adminSessions } from "@/lib/server/db/schema";
+import { eq, and } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,10 +16,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use findFirst instead of findUnique for better filtering
-    const admin = await prisma.admin.findFirst({
-      where: { email, isActive: true },
-    });
+    // Find active admin by email
+    const [admin] = await db
+      .select()
+      .from(admins)
+      .where(and(eq(admins.email, email), eq(admins.isActive, true)))
+      .limit(1);
 
     if (!admin) {
       return NextResponse.json(
@@ -47,14 +51,18 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Store session in database
-    await prisma.adminSession.create({
-      data: {
-        adminId: admin.id,
-        sessionId,
-        token,
-        expiresAt,
-        isActive: true,
-      },
+    await db.insert(adminSessions).values({
+      adminId: admin.id,
+      sessionId,
+      token,
+      expiresAt,
+      isActive: true,
+      createdAt: new Date(),
+      lastUsed: new Date(),
+      userAgent: null,
+      ipAddress: null,
+      location: null,
+      deviceType: null,
     });
 
     // Create response with user data
@@ -88,8 +96,6 @@ export async function POST(request: NextRequest) {
       { success: false, error: "Internal server error" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -115,10 +121,18 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Deactivate session
-    await prisma.adminSession.updateMany({
-      where: { token, isActive: true },
-      data: { isActive: false, expiresAt: new Date() }, // Also set expiresAt to now
-    });
+    await db
+      .update(adminSessions)
+      .set({ 
+        isActive: false, 
+        expiresAt: new Date() 
+      })
+      .where(
+        and(
+          eq(adminSessions.token, token),
+          eq(adminSessions.isActive, true)
+        )
+      );
 
     // Create success response
     const response = NextResponse.json({
@@ -145,7 +159,5 @@ export async function DELETE(request: NextRequest) {
       { success: false, error: "Internal server error" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

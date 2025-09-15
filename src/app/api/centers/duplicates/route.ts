@@ -1,6 +1,8 @@
 // app/api/centers/duplicates/route.ts
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
+import { centers } from "@/lib/server/db/schema";
+import { eq } from "drizzle-orm";
 
 // Common words to ignore when comparing names
 const COMMON_WORDS = [
@@ -60,21 +62,23 @@ function levenshteinDistance(str1: string, str2: string): number {
 
 export async function GET() {
   try {
-    const centers = await prisma.center.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: "asc" },
-    });
+    // Fetch all active centers ordered by creation date
+    const centersData = await db
+      .select()
+      .from(centers)
+      .where(eq(centers.isActive, true))
+      .orderBy(centers.createdAt);
 
     // Group centers by location (state + lga)
-    const groups = new Map<string, typeof centers>();
-    for (const c of centers) {
+    const groups = new Map<string, typeof centersData>();
+    for (const c of centersData) {
       const key = `${c.state}|${c.lga}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(c);
     }
 
     const duplicates: {
-      centers: typeof centers;
+      centers: typeof centersData;
       similarity: number;
       type: "name" | "address";
     }[] = [];

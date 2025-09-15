@@ -1,7 +1,9 @@
 // src/app/api/auth/signin/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
 import { comparePassword, generateToken, generateSessionId } from "@/lib/auth";
+import { admins, adminSessions } from "@/lib/server/db/schema";
+import { eq, and } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,10 +16,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ✅ Use findFirst (not findUnique) to filter by email + isActive
-    const admin = await prisma.admin.findFirst({
-      where: { email, isActive: true },
-    });
+    // Find active admin by email
+    const [admin] = await db
+      .select()
+      .from(admins)
+      .where(and(eq(admins.email, email), eq(admins.isActive, true)))
+      .limit(1);
 
     if (!admin) {
       return NextResponse.json(
@@ -46,14 +50,19 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Store session in DB
-    await prisma.adminSession.create({
-      data: {
-        adminId: admin.id,
-        sessionId,
-        token,
-        expiresAt,
-        isActive: true,
-      },
+    await db.insert(adminSessions).values({
+      adminId: admin.id,
+      sessionId,
+      token,
+      expiresAt,
+      isActive: true,
+      createdAt: new Date(),
+      lastUsed: new Date(),
+      // Optional fields can be null if not provided
+      userAgent: null,
+      ipAddress: null,
+      location: null,
+      deviceType: null,
     });
 
     // Return user info
@@ -87,7 +96,5 @@ export async function POST(request: NextRequest) {
       { success: false, error: "Internal server error" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

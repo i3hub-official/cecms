@@ -1,7 +1,15 @@
 // src/app/api/dashboard/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
+import {
+  centers,
+  admins,
+  adminSessions,
+  passwordResets,
+} from "@/lib/server/db/schema";
 import { validateSession } from "@/lib/auth";
+import { eq, and, or, gte, lte, gt, desc } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 // GET /api/dashboard - Get dashboard statistics
 export async function GET(request: NextRequest) {
@@ -21,116 +29,166 @@ export async function GET(request: NextRequest) {
 
     // Get all statistics in parallel for better performance
     const [
-      // Center statistics
-      totalCenters,
-      activeCenters,
-      inactiveCenters,
-      recentlyCreatedCenters,
-      recentlyModifiedCenters,
-
-      // Admin statistics
-      totalAdmins,
-      activeAdmins,
-      inactiveAdmins,
-
-      // Session statistics
-      activeSessions,
-      totalSessions,
-      expiredSessions,
-
-      // Password reset statistics (handle if table doesn't exist yet)
-      pendingResets,
-      usedResets,
-      expiredResets,
-
-      // Recent data for tables
-      recentCenters,
-      activeSessionsDetailed,
-    ] = await Promise.all([
       // Center counts
-      prisma.center.count(),
-      prisma.center.count({ where: { isActive: true } }),
-      prisma.center.count({ where: { isActive: false } }),
-      prisma.center.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
-      prisma.center.count({ where: { modifiedAt: { gte: sevenDaysAgo } } }),
+      totalCentersResult,
+      activeCentersResult,
+      inactiveCentersResult,
+      recentlyCreatedCentersResult,
+      recentlyModifiedCentersResult,
 
       // Admin counts
-      prisma.admin.count(),
-      prisma.admin.count({ where: { isActive: true } }),
-      prisma.admin.count({ where: { isActive: false } }),
+      totalAdminsResult,
+      activeAdminsResult,
+      inactiveAdminsResult,
 
       // Session counts
-      prisma.adminSession.count({
-        where: {
-          isActive: true,
-          expiresAt: { gt: now },
-        },
-      }),
-      prisma.adminSession.count(),
-      prisma.adminSession.count({
-        where: {
-          OR: [{ isActive: false }, { expiresAt: { lte: now } }],
-        },
-      }),
+      activeSessionsResult,
+      totalSessionsResult,
+      expiredSessionsResult,
 
-      // Password reset counts (with proper error handling)
-      prisma.passwordReset
-        ?.count({
-          where: {
-            isUsed: false,
-            expiresAt: { gt: now },
-          },
-        })
-        .catch(() => 0) || 0,
-      prisma.passwordReset
-        ?.count({ where: { isUsed: true } })
-        .catch(() => 0) || 0,
-      prisma.passwordReset
-        ?.count({
-          where: {
-            isUsed: false,
-            expiresAt: { lte: now },
-          },
-        })
-        .catch(() => 0) || 0,
+      // Password reset counts
+      pendingResetsResult,
+      usedResetsResult,
+      expiredResetsResult,
+
+      // Recent centers
+      recentCentersData,
+      activeSessionsDetailedData,
+    ] = await Promise.all([
+      // Center counts
+      db.select({ count: sql<number>`count(*)` }).from(centers),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(centers)
+        .where(eq(centers.isActive, true)),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(centers)
+        .where(eq(centers.isActive, false)),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(centers)
+        .where(gte(centers.createdAt, sevenDaysAgo)),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(centers)
+        .where(gte(centers.modifiedAt, sevenDaysAgo)),
+
+      // Admin counts
+      db.select({ count: sql<number>`count(*)` }).from(admins),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(admins)
+        .where(eq(admins.isActive, true)),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(admins)
+        .where(eq(admins.isActive, false)),
+
+      // Session counts
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(adminSessions)
+        .where(
+          and(
+            eq(adminSessions.isActive, true),
+            gt(adminSessions.expiresAt, now)
+          )
+        ),
+      db.select({ count: sql<number>`count(*)` }).from(adminSessions),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(adminSessions)
+        .where(
+          or(
+            eq(adminSessions.isActive, false),
+            lte(adminSessions.expiresAt, now)
+          )
+        ),
+
+      // Password reset counts
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(passwordResets)
+        .where(
+          and(
+            eq(passwordResets.isUsed, false),
+            gt(passwordResets.expiresAt, now)
+          )
+        ),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(passwordResets)
+        .where(eq(passwordResets.isUsed, true)),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(passwordResets)
+        .where(
+          and(
+            eq(passwordResets.isUsed, false),
+            lte(passwordResets.expiresAt, now)
+          )
+        ),
 
       // Recent centers with full details
-      prisma.center.findMany({
-        take: 5,
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          number: true,
-          name: true,
-          address: true,
-          isActive: true,
-          createdAt: true,
-          modifiedAt: true,
-        },
-      }),
+      db
+        .select({
+          id: centers.id,
+          number: centers.number,
+          name: centers.name,
+          address: centers.address,
+          isActive: centers.isActive,
+          createdAt: centers.createdAt,
+          modifiedAt: centers.modifiedAt,
+        })
+        .from(centers)
+        .orderBy(desc(centers.createdAt))
+        .limit(5),
 
-      // Active sessions with admin details
-      prisma.adminSession.findMany({
-        where: {
-          isActive: true,
-          expiresAt: { gt: now },
-        },
-        take: 10,
-        orderBy: { lastUsed: "desc" },
-        include: {
+      // Active sessions with admin details (using join)
+      db
+        .select({
+          session: adminSessions,
           admin: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-            },
+            id: admins.id,
+            name: admins.name,
+            email: admins.email,
+            role: admins.role,
           },
-        },
-      }),
+        })
+        .from(adminSessions)
+        .innerJoin(admins, eq(adminSessions.adminId, admins.id))
+        .where(
+          and(
+            eq(adminSessions.isActive, true),
+            gt(adminSessions.expiresAt, now)
+          )
+        )
+        .orderBy(desc(adminSessions.lastUsed))
+        .limit(10),
     ]);
 
-    // Build response data compatible with your existing dashboard
+    // Extract counts from results
+    const totalCenters = totalCentersResult[0]?.count || 0;
+    const activeCenters = activeCentersResult[0]?.count || 0;
+    const inactiveCenters = inactiveCentersResult[0]?.count || 0;
+    const recentlyCreatedCenters = recentlyCreatedCentersResult[0]?.count || 0;
+    const recentlyModifiedCenters =
+      recentlyModifiedCentersResult[0]?.count || 0;
+
+    const totalAdmins = totalAdminsResult[0]?.count || 0;
+    const activeAdmins = activeAdminsResult[0]?.count || 0;
+    const inactiveAdmins = inactiveAdminsResult[0]?.count || 0;
+
+    const activeSessions = activeSessionsResult[0]?.count || 0;
+    const totalSessions = totalSessionsResult[0]?.count || 0;
+    const expiredSessions = expiredSessionsResult[0]?.count || 0;
+
+    const pendingResets = pendingResetsResult[0]?.count || 0;
+    const usedResets = usedResetsResult[0]?.count || 0;
+    const expiredResets = expiredResetsResult[0]?.count || 0;
+
+    // Build response data
     const dashboardData = {
       success: true,
       data: {
@@ -156,26 +214,28 @@ export async function GET(request: NextRequest) {
           used: usedResets,
           expired: expiredResets,
         },
-        recentCenters: recentCenters.map((center) => ({
+        recentCenters: recentCentersData.map((center) => ({
           id: center.id,
           number: center.number,
           name: center.name,
           address: center.address,
           isActive: center.isActive,
           createdAt: center.createdAt.toISOString(),
-          modifiedAt: center.modifiedAt.toISOString(),
+          modifiedAt: center.modifiedAt ? center.modifiedAt.toISOString() : null,
         })),
-        activeSessions: activeSessionsDetailed.map((session) => ({
-          id: session.id,
-          admin: {
-            name: session.admin.name,
-            email: session.admin.email,
-            role: session.admin.role,
-          },
-          lastUsed: session.lastUsed.toISOString(),
-          expiresAt: session.expiresAt.toISOString(),
-          createdAt: session.createdAt.toISOString(),
-        })),
+        activeSessions: activeSessionsDetailedData.map(
+          ({ session, admin }) => ({
+            id: session.id,
+            admin: {
+              name: admin.name,
+              email: admin.email,
+              role: admin.role,
+            },
+            lastUsed: session.lastUsed.toISOString(),
+            expiresAt: session.expiresAt.toISOString(),
+            createdAt: session.createdAt.toISOString(),
+          })
+        ),
       },
     };
 
@@ -200,7 +260,5 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

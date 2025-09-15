@@ -1,6 +1,8 @@
 // src/app/api/auth/signout/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
+import { adminSessions } from "@/lib/server/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,10 +22,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await prisma.adminSession.updateMany({
-      where: { token, isActive: true },
-      data: { isActive: false, expiresAt: new Date() },
-    });
+    // Update session to mark as inactive
+    await db
+      .update(adminSessions)
+      .set({ 
+        isActive: false, 
+        expiresAt: new Date() 
+      })
+      .where(
+        eq(adminSessions.token, token) && 
+        eq(adminSessions.isActive, true)
+      );
 
     const response = NextResponse.json({
       success: true,
@@ -47,7 +56,5 @@ export async function POST(request: NextRequest) {
       { success: false, error: "Internal server error" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

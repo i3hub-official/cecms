@@ -1,7 +1,9 @@
 // src/app/api/auth/signup/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
 import { hashPassword } from "@/lib/auth";
+import { admins } from "@/lib/server/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,9 +24,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if admin already exists
-    const existingAdmin = await prisma.admin.findUnique({
-      where: { email },
-    });
+    const [existingAdmin] = await db
+      .select()
+      .from(admins)
+      .where(eq(admins.email, email))
+      .limit(1);
 
     if (existingAdmin) {
       return NextResponse.json(
@@ -37,14 +41,17 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password);
 
     // Create admin
-    const admin = await prisma.admin.create({
-      data: {
+    const [admin] = await db
+      .insert(admins)
+      .values({
         name,
         email,
         password: hashedPassword,
         role: "ADMIN",
-      },
-    });
+        isActive: true,
+        createdAt: new Date(),
+      })
+      .returning();
 
     return NextResponse.json(
       {

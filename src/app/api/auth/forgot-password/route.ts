@@ -1,9 +1,10 @@
 // src/app/api/auth/forgot-password/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index"; // Update import
 import { generateSessionId } from "@/lib/auth";
-import { createHmac } from "crypto";
+import { admins, passwordResets } from "@/lib/server/db/schema"; // Import your schema
+import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,9 +15,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if admin exists
-    const admin = await prisma.admin.findUnique({
-      where: { email, isActive: true },
-    });
+    const [admin] = await db
+      .select()
+      .from(admins)
+      .where(eq(admins.email, email) && eq(admins.isActive, true))
+      .limit(1);
 
     if (!admin) {
       // Don't reveal if email exists or not for security
@@ -32,12 +35,12 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
 
     // Store reset token in database
-    await prisma.passwordReset.create({
-      data: {
-        adminId: admin.id,
-        token: resetToken,
-        expiresAt,
-      },
+    await db.insert(passwordResets).values({
+      adminId: admin.id,
+      token: resetToken,
+      expiresAt,
+      isUsed: false,
+      createdAt: new Date(),
     });
 
     // In a real application, you would send an email here

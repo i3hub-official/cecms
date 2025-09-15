@@ -1,7 +1,9 @@
 // src/app/api/auth/reset-password/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
 import { hashPassword } from "@/lib/auth";
+import { admins, passwordResets, adminSessions } from "@/lib/server/db/schema";
+import { eq, and, gt } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,14 +24,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Find valid reset token
-    const resetRecord = await prisma.passwordReset.findUnique({
-      where: {
-        token,
-        isUsed: false,
-        expiresAt: { gt: new Date() },
-      },
-      include: { admin: true },
-    });
+    const [resetRecord] = await db
+      .select({
+        id: passwordResets.id,
+        adminId: passwordResets.adminId,
+        admin: admins,
+      })
+      .from(passwordResets)
+      .innerJoin(admins, eq(passwordResets.adminId, admins.id))
+      .where(
+        and(
+          eq(passwordResets.token, token),
+          eq(passwordResets.isUsed, false),
+          gt(passwordResets.expiresAt, new Date())
+        )
+      )
+      .limit(1);
 
     if (!resetRecord) {
       return NextResponse.json(
@@ -41,22 +51,26 @@ export async function POST(request: NextRequest) {
     // Hash new password
     const hashedPassword = await hashPassword(password);
 
-    // Update password and mark token as used
-    await Promise.all([
-      prisma.admin.update({
-        where: { id: resetRecord.adminId },
-        data: { password: hashedPassword },
-      }),
-      prisma.passwordReset.update({
-        where: { id: resetRecord.id },
-        data: { isUsed: true },
-      }),
+    // Update password and mark token as used in a transaction
+    await db.transaction(async (tx) => {
+      // Update admin password
+      await tx
+        .update(admins)
+        .set({ password: hashedPassword })
+        .where(eq(admins.id, resetRecord.adminId));
+
+      // Mark token as used
+      await tx
+        .update(passwordResets)
+        .set({ isUsed: true })
+        .where(eq(passwordResets.id, resetRecord.id));
+
       // Revoke all existing sessions for security
-      prisma.adminSession.updateMany({
-        where: { adminId: resetRecord.adminId },
-        data: { isActive: false },
-      }),
-    ]);
+      await tx
+        .update(adminSessions)
+        .set({ isActive: false })
+        .where(eq(adminSessions.adminId, resetRecord.adminId));
+    });
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { db } from "@/lib/server/db/index";
+import { centers } from "@/lib/server/db/schema";
+import { eq, inArray } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,29 +17,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get all centers with explicit type
+    // Get all centers
     const allCenterIds = [primaryId, ...secondaryIds];
-    const centers = (await prisma.center.findMany({
-      where: { id: { in: allCenterIds } },
-    })) as {
-      id: string;
-      name: string;
-      address: string;
-      modifiedAt: Date;
-    }[];
+    const centersData = await db
+      .select()
+      .from(centers)
+      .where(inArray(centers.id, allCenterIds));
 
-    if (centers.length !== allCenterIds.length) {
+    if (centersData.length !== allCenterIds.length) {
       return NextResponse.json(
         { message: "Some centers not found" },
         { status: 404 }
       );
     }
 
-    // Explicitly type the callback parameter
-    const primaryCenter = centers.find(
-      (c: (typeof centers)[number]) => c.id === primaryId
-    );
-    const secondaryCenters = centers.filter((c: (typeof centers)[number]) =>
+    const primaryCenter = centersData.find((c) => c.id === primaryId);
+    const secondaryCenters = centersData.filter((c) =>
       secondaryIds.includes(c.id)
     );
 
@@ -49,32 +43,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        const mostRecentSecondary = secondaryCenters.sort(
-          (a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime()
-        )[0];
+    // Use transaction for atomic operations
+    const result = await db.transaction(async (tx) => {
+      const mostRecentSecondary = secondaryCenters.sort(
+        (a, b) => (b.modifiedAt ? b.modifiedAt.getTime() : 0) - (a.modifiedAt ? a.modifiedAt.getTime() : 0)
+      )[0];
 
-        const updatedPrimary = await tx.center.update({
-          where: { id: primaryId },
-          data: {
-            name:
-              mostRecentSecondary.modifiedAt > primaryCenter.modifiedAt
-                ? mostRecentSecondary.name
-                : primaryCenter.name,
-            address:
-              mostRecentSecondary.modifiedAt > primaryCenter.modifiedAt
-                ? mostRecentSecondary.address
-                : primaryCenter.address,
-            modifiedBy: "system_merge",
-          },
-        });
+      // Update primary center with the most recent data
+      const [updatedPrimary] = await tx
+        .update(centers)
+        .set({
+          name:
+            (mostRecentSecondary.modifiedAt ?? 0) > (primaryCenter.modifiedAt ?? 0)
+              ? mostRecentSecondary.name
+              : primaryCenter.name,
+          address:
+            (mostRecentSecondary.modifiedAt ?? 0) > (primaryCenter.modifiedAt ?? 0)
+              ? mostRecentSecondary.address
+              : primaryCenter.address,
+          modifiedBy: "system_merge",
+          modifiedAt: new Date(),
+        })
+        .where(eq(centers.id, primaryId))
+        .returning();
 
-        await tx.center.deleteMany({ where: { id: { in: secondaryIds } } });
+      // Delete secondary centers
+      await tx.delete(centers).where(inArray(centers.id, secondaryIds));
 
-        return updatedPrimary;
-      }
-    );
+      return updatedPrimary;
+    });
 
     return NextResponse.json(result);
   } catch (error) {

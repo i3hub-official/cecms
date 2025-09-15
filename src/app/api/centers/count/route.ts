@@ -1,7 +1,10 @@
 // src/app/api/centers/count/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
+import { centers } from "@/lib/server/db/schema";
 import { validateSession } from "@/lib/auth";
+import { eq, and, ilike } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -21,11 +24,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const count = await prisma.center.count({
-      where: { state, lga, isActive: true },
-    });
+    // const results = await db
+    // .select()
+    // .from(centers)
+    // .where(
+    //   and(
+    //     eq(centers.state, state),
+    //     eq(centers.lga, lga),
+    //     eq(centers.isActive, true)
+    //   )
+    // );
 
-    return NextResponse.json({ count });
+    // const count = results.length;
+
+    // Count centers with the specified state, LGA, and active status
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(centers)
+      .where(
+        and(
+          ilike(centers.state, state),
+          ilike(centers.lga, lga),
+          eq(centers.isActive, true)
+        )
+      );
+
+    return NextResponse.json({ count: result?.count || 0 });
   } catch (error) {
     console.error(
       "Count centers error:",

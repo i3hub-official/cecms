@@ -1,7 +1,9 @@
 // src/app/api/centers/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
+import { centers } from "@/lib/server/db/schema";
 import { validateSession } from "@/lib/auth";
+import { eq, or, ilike, and, sql } from "drizzle-orm";
 
 // GET /api/centers - fetch centers with optional search and pagination
 export async function GET(request: NextRequest) {
@@ -18,36 +20,48 @@ export async function GET(request: NextRequest) {
     const includeInactive = searchParams.get("includeInactive") === "true";
     const skip = (page - 1) * limit;
 
-    // Build where clause dynamically without explicit typing
-    const where: any = {};
+    // Build where conditions
+    const whereConditions: Array<ReturnType<typeof eq> | ReturnType<typeof or>> = [];
 
-    if (!includeInactive) where.isActive = true;
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { number: { contains: search, mode: "insensitive" } },
-        { address: { contains: search, mode: "insensitive" } },
-        { state: { contains: search, mode: "insensitive" } },
-        { lga: { contains: search, mode: "insensitive" } },
-      ];
+    if (!includeInactive) {
+      whereConditions.push(eq(centers.isActive, true));
     }
 
-    // Fetch centers and total count in parallel
-    const [centers, total] = await Promise.all([
-      prisma.center.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { modifiedAt: "desc" },
-      }),
-      prisma.center.count({ where }),
+    if (search) {
+      const searchCondition = or(
+        ilike(centers.name, `%${search}%`),
+        ilike(centers.number, `%${search}%`),
+        ilike(centers.address, `%${search}%`),
+        ilike(centers.state, `%${search}%`),
+        ilike(centers.lga, `%${search}%`)
+      );
+      whereConditions.push(searchCondition);
+    }
+
+    // Combine all conditions with AND
+    const finalWhere =
+      whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+    // Fetch centers and total count
+    const [centersData, totalResult] = await Promise.all([
+      db
+        .select()
+        .from(centers)
+        .where(finalWhere)
+        .orderBy(centers.modifiedAt)
+        .limit(limit)
+        .offset(skip),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(centers)
+        .where(finalWhere),
     ]);
 
+    const total = totalResult[0]?.count || 0;
     const pages = Math.ceil(total / limit);
 
     return NextResponse.json({
-      centers,
+      centers: centersData,
       pagination: { page, limit, total, pages },
     });
   } catch (error) {
@@ -79,9 +93,12 @@ export async function POST(request: NextRequest) {
     const { number, name, address, state, lga, isActive = true } = body;
 
     // Check if the center number already exists
-    const existingCenter = await prisma.center.findUnique({
-      where: { number },
-    });
+    const [existingCenter] = await db
+      .select()
+      .from(centers)
+      .where(eq(centers.number, number))
+      .limit(1);
+
     if (existingCenter) {
       return NextResponse.json(
         { error: "Center number already exists" },
@@ -89,9 +106,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create center, Prisma infers type automatically
-    const center = await prisma.center.create({
-      data: {
+    // Create center
+    const [center] = await db
+      .insert(centers)
+      .values({
         number,
         name,
         address,
@@ -100,8 +118,10 @@ export async function POST(request: NextRequest) {
         isActive,
         createdBy: authResult.user?.email || "system",
         modifiedBy: authResult.user?.email || "system",
-      },
-    });
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+      })
+      .returning();
 
     return NextResponse.json(center);
   } catch (error) {

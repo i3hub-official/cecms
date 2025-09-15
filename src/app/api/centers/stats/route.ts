@@ -1,7 +1,10 @@
 // src/app/api/centers/stats/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
+import { centers } from "@/lib/server/db/schema";
 import { validateSession } from "@/lib/auth";
+import { eq, desc } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,21 +13,50 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const [total, active, inactive, inactiveCenters, recentActivity] =
-      await Promise.all([
-        prisma.center.count(),
-        prisma.center.count({ where: { isActive: true } }),
-        prisma.center.count({ where: { isActive: false } }),
-        prisma.center.findMany({
-          where: { isActive: false },
-          take: 10,
-          orderBy: { modifiedAt: "desc" },
-        }),
-        prisma.center.findMany({
-          take: 10,
-          orderBy: { modifiedAt: "desc" },
-        }),
-      ]);
+    // Execute all queries in parallel
+    const [
+      totalResult,
+      activeResult,
+      inactiveResult,
+      inactiveCenters,
+      recentActivity,
+    ] = await Promise.all([
+      // Total count
+      db.select({ count: sql<number>`count(*)` }).from(centers),
+
+      // Active count
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(centers)
+        .where(eq(centers.isActive, true)),
+
+      // Inactive count
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(centers)
+        .where(eq(centers.isActive, false)),
+
+      // Inactive centers (latest 10)
+      db
+        .select()
+        .from(centers)
+        .where(eq(centers.isActive, false))
+        .orderBy(desc(centers.modifiedAt))
+        .limit(10),
+
+      // Recent activity (latest 10)
+      db.select().from(centers).orderBy(desc(centers.modifiedAt)).limit(10),
+    ]);
+
+    // Extract counts from results
+    const total = totalResult[0]?.count || 0;
+    const active = activeResult[0]?.count || 0;
+    const inactive = inactiveResult[0]?.count || 0;
+
+    // Alternative count approach (if available)
+    // const total = await db.$count(centers);
+    // const active = await db.$count(centers, eq(centers.isActive, true));
+    // const inactive = await db.$count(centers, eq(centers.isActive, false));
 
     return NextResponse.json({
       total,

@@ -1,105 +1,118 @@
 // lib/session-manager.ts
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
+import { adminSessions, admins } from "@/lib/server/db/schema";
+import { eq, and, or, lt, gt, desc } from "drizzle-orm";
 
 // Clean up expired sessions (call this periodically)
 export async function cleanupExpiredSessions() {
   const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const result = await prisma.adminSession.updateMany({
-    where: {
-      OR: [
-        { expiresAt: { lt: now } },
-        {
-          lastUsed: {
-            lt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-          },
-        },
-      ],
-      isActive: true,
-    },
-    data: {
+  const result = await db
+    .update(adminSessions)
+    .set({
       isActive: false,
-    },
-  });
+    })
+    .where(
+      and(
+        eq(adminSessions.isActive, true),
+        or(
+          lt(adminSessions.expiresAt, now),
+          lt(adminSessions.lastUsed, sevenDaysAgo)
+        )
+      )
+    );
 
-  console.log(`Cleaned up ${result.count} expired sessions`);
-  return result.count;
+  const affectedRows = result.length || 0; // Adjusted to use the length of the result array
+  console.log(`Cleaned up ${affectedRows} expired sessions`);
+  return affectedRows;
 }
 
 // Revoke all sessions for a user
 export async function revokeAllUserSessions(adminId: string) {
-  await prisma.adminSession.updateMany({
-    where: {
-      adminId,
-      isActive: true,
-    },
-    data: {
+  await db
+    .update(adminSessions)
+    .set({
       isActive: false,
-    },
-  });
+    })
+    .where(
+      and(eq(adminSessions.adminId, adminId), eq(adminSessions.isActive, true))
+    );
 }
 
 // Get active sessions for a user - include all the new fields
 export async function getUserActiveSessions(adminId: string) {
-  return await prisma.adminSession.findMany({
-    where: {
-      adminId,
-      isActive: true,
-      expiresAt: { gt: new Date() },
-    },
-    orderBy: {
-      lastUsed: "desc",
-    },
-    select: {
-      id: true,
-      sessionId: true,
-      createdAt: true,
-      lastUsed: true,
-      expiresAt: true,
-    },
-  });
+  return await db
+    .select({
+      id: adminSessions.id,
+      sessionId: adminSessions.sessionId,
+      createdAt: adminSessions.createdAt,
+      lastUsed: adminSessions.lastUsed,
+      expiresAt: adminSessions.expiresAt,
+    })
+    .from(adminSessions)
+    .where(
+      and(
+        eq(adminSessions.adminId, adminId),
+        eq(adminSessions.isActive, true),
+        gt(adminSessions.expiresAt, new Date())
+      )
+    )
+    .orderBy(desc(adminSessions.lastUsed));
 }
 
 // Revoke a specific session
 export async function revokeSession(sessionId: string) {
-  return await prisma.adminSession.updateMany({
-    where: {
-      sessionId,
-      isActive: true,
-    },
-    data: {
+  return await db
+    .update(adminSessions)
+    .set({
       isActive: false,
       expiresAt: new Date(),
-    },
-  });
+    })
+    .where(
+      and(
+        eq(adminSessions.sessionId, sessionId),
+        eq(adminSessions.isActive, true)
+      )
+    );
 }
 
 // Get session by token
 export async function getSessionByToken(token: string) {
-  return await prisma.adminSession.findFirst({
-    where: {
-      token,
-      isActive: true,
-      expiresAt: { gt: new Date() },
-    },
-    include: {
+  const [session] = await db
+    .select({
+      session: adminSessions,
       admin: {
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          isActive: true,
-        },
+        id: admins.id,
+        email: admins.email,
+        name: admins.name,
+        role: admins.role,
+        isActive: admins.isActive,
       },
-    },
-  });
+    })
+    .from(adminSessions)
+    .innerJoin(admins, eq(adminSessions.adminId, admins.id))
+    .where(
+      and(
+        eq(adminSessions.token, token),
+        eq(adminSessions.isActive, true),
+        gt(adminSessions.expiresAt, new Date())
+      )
+    )
+    .limit(1);
+
+  return session ? { ...session.session, admin: session.admin } : null;
 }
 
 // Update session last used timestamp
 export async function updateSessionLastUsed(sessionId: string) {
-  return await prisma.adminSession.update({
-    where: { id: sessionId },
-    data: { lastUsed: new Date() },
-  });
+  const [updatedSession] = await db
+    .update(adminSessions)
+    .set({
+      lastUsed: new Date(),
+    })
+    .where(eq(adminSessions.id, sessionId))
+    .returning();
+
+  return updatedSession;
 }

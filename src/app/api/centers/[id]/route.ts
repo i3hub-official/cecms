@@ -1,7 +1,20 @@
 // src/app/api/centers/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/server/db/index";
+import { centers } from "@/lib/server/db/schema";
 import { validateSession } from "@/lib/auth";
+import { eq, and, not } from "drizzle-orm";
+
+interface UpdateData {
+  number?: string;
+  name?: string;
+  address?: string;
+  state?: string;
+  lga?: string;
+  isActive?: boolean;
+  modifiedBy: string;
+  modifiedAt: Date;
+}
 
 /**
  * GET /api/centers/[id]
@@ -18,7 +31,12 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const center = await prisma.center.findUnique({ where: { id } });
+    const [center] = await db
+      .select()
+      .from(centers)
+      .where(eq(centers.id, id))
+      .limit(1);
+
     if (!center) {
       return NextResponse.json({ error: "Center not found" }, { status: 404 });
     }
@@ -53,9 +71,12 @@ export async function PUT(
 
     // Prevent duplicate center number
     if (number) {
-      const existing = await prisma.center.findFirst({
-        where: { number, id: { not: id } },
-      });
+      const [existing] = await db
+        .select()
+        .from(centers)
+        .where(and(eq(centers.number, number), not(eq(centers.id, id))))
+        .limit(1);
+
       if (existing) {
         return NextResponse.json(
           { error: "Center number already exists" },
@@ -64,19 +85,28 @@ export async function PUT(
       }
     }
 
-    const updatedCenter = await prisma.center.update({
-      where: { id },
-      data: {
-        ...(number && { number }),
-        ...(name && { name }),
-        ...(address && { address }),
-        ...(state && { state }),
-        ...(lga && { lga }),
-        ...(isActive !== undefined && { isActive }),
-        modifiedBy: authResult.user?.email || "system",
-        modifiedAt: new Date(),
-      },
-    });
+    // Build update data dynamically
+    const updateData: UpdateData = {
+      modifiedBy: authResult.user?.email || "system",
+      modifiedAt: new Date(),
+    };
+
+    if (number !== undefined) updateData.number = number;
+    if (name !== undefined) updateData.name = name;
+    if (address !== undefined) updateData.address = address;
+    if (state !== undefined) updateData.state = state;
+    if (lga !== undefined) updateData.lga = lga;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    const [updatedCenter] = await db
+      .update(centers)
+      .set(updateData)
+      .where(eq(centers.id, id))
+      .returning();
+
+    if (!updatedCenter) {
+      return NextResponse.json({ error: "Center not found" }, { status: 404 });
+    }
 
     return NextResponse.json(updatedCenter);
   } catch (error) {
@@ -103,14 +133,15 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const center = await prisma.center.update({
-      where: { id },
-      data: {
+    const [center] = await db
+      .update(centers)
+      .set({
         isActive: false,
         modifiedBy: authResult.user?.email || "system",
         modifiedAt: new Date(),
-      },
-    });
+      })
+      .where(eq(centers.id, id))
+      .returning();
 
     return NextResponse.json({
       success: true,

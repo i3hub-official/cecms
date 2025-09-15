@@ -4,21 +4,26 @@
   "private": true,
   "type": "module",
   "scripts": {
-  "dev": "npm run prisma:generate && next dev",
-  "build": "npm run prisma:generate && next build",
-  "start": "next start",
-  "prisma:generate": "prisma generate --no-engine",
-  "prisma:migrate": "prisma migrate dev",
-  "lint": "eslint"
-},
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:test": "tsx test-connection.ts",
+    "lint": "eslint"
+  },
   "dependencies": {
-    "@prisma/client": "^6.16.1",
     "@prisma/extension-accelerate": "^2.0.2",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
+    "dotenv": "^17.2.2",
+    "drizzle-orm": "^0.44.5",
     "lucide-react": "^0.544.0",
+    "mysql2": "^3.14.5",
     "next": "15.5.3",
-    "prisma": "^6.16.1",
+    "pg": "^8.16.3",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
@@ -28,14 +33,17 @@
     "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/pg": "^8.15.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
+    "drizzle-kit": "^0.31.4",
     "eslint": "^9.35.0",
     "eslint-config-next": "15.5.3",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
-    "typescript": "^5"
+    "typescript": "^5.9.2"
   }
 }
