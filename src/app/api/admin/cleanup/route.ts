@@ -1,12 +1,10 @@
 // src/app/api/admin/cleanup/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { validateSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
-    // Import prisma inside function to avoid Turbopack build-time issues
-    const { prisma } = await import("@/lib/prisma");
-
     // Validate admin session
     const authResult = await validateSession(request);
     if (!authResult.isValid || authResult.user?.role !== "ADMIN") {
