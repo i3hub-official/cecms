@@ -1,0 +1,14 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "rules": {
+    "no-unused-vars": "off", // allow unused variables
+    "@next/next/no-img-element": "off", // allow <img> instead of Next.js <Image>
+    "@typescript-eslint/no-explicit-any": "off" // allow 'any' type
+  }
+}
