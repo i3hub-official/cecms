@@ -1,54 +1,58 @@
 // lib/session-manager.ts
 import { prisma } from "@/lib/prisma";
 
-// Clean up expired sessions (call this periodically)
-export async function cleanupExpiredSessions() {
-  const now = new Date();
-
-  const result = await prisma.adminSession.updateMany({
+export async function getUserActiveSessions(userId: string) {
+  return prisma.adminSession.findMany({
     where: {
-      OR: [
-        { expiresAt: { lt: now } },
-        {
-          lastUsed: {
-            lt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-          },
-        },
-      ],
+      adminId: userId,
       isActive: true,
-    },
-    data: {
-      isActive: false,
-    },
-  });
-
-  console.log(`Cleaned up ${result.count} expired sessions`);
-  return result.count;
-}
-
-// Revoke all sessions for a user
-export async function revokeAllUserSessions(adminId: string) {
-  await prisma.adminSession.updateMany({
-    where: {
-      adminId,
-      isActive: true,
-    },
-    data: {
-      isActive: false,
-    },
-  });
-}
-
-// Get active sessions for a user
-export async function getUserActiveSessions(adminId: string) {
-  return await prisma.adminSession.findMany({
-    where: {
-      adminId,
-      isActive: true,
-      expiresAt: { gt: new Date() },
+      expiresAt: {
+        gt: new Date(),
+      },
     },
     orderBy: {
       lastUsed: "desc",
     },
   });
+}
+
+export async function revokeAllUserSessions(userId: string) {
+  return prisma.adminSession.updateMany({
+    where: {
+      adminId: userId,
+      isActive: true,
+    },
+    data: {
+      isActive: false,
+      expiresAt: new Date(), // Immediate expiration
+    },
+  });
+}
+
+export async function revokeSession(sessionId: string) {
+  return prisma.adminSession.updateMany({
+    where: {
+      sessionId,
+    },
+    data: {
+      isActive: false,
+      expiresAt: new Date(),
+    },
+  });
+}
+
+export async function cleanupExpiredSessions() {
+  return prisma.adminSession.deleteMany({
+    where: {
+      expiresAt: {
+        lt: new Date(),
+      },
+    },
+  });
+}
+
+// Run cleanup periodically (you can set this up with a cron job)
+export async function scheduleSessionCleanup() {
+  // Run every hour
+  setInterval(cleanupExpiredSessions, 60 * 60 * 1000);
 }

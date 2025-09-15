@@ -1,3 +1,4 @@
+// Schema Model
 generator client {
   provider = "prisma-client-js"
   output   = "./app/generated-prisma-client"
@@ -59,6 +60,7 @@ model Admin {
   @@map("admins")
 }
 
+// Update the AdminSession model
 model AdminSession {
   id        String   @id @default(cuid())
   adminId   String
@@ -69,12 +71,20 @@ model AdminSession {
   expiresAt DateTime
   lastUsed  DateTime @default(now())
 
+  // Additional session information for auditing
+  userAgent  String?
+  ipAddress  String?
+  location   String?
+  deviceType String? // Mobile, Tablet, Desktop, etc.
+
   admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@index([isActive], name: "idx_admin_session_is_active")
   @@index([createdAt], name: "idx_admin_session_created_at")
   @@index([expiresAt], name: "idx_admin_session_expires_at")
   @@index([lastUsed], name: "idx_admin_session_last_used")
+  @@index([ipAddress], name: "idx_admin_session_ip_address")
+  @@index([deviceType], name: "idx_admin_session_device_type")
   @@map("admin_sessions")
 }
 

@@ -152,7 +152,11 @@ exports.Prisma.AdminSessionScalarFieldEnum = {
   isActive: 'isActive',
   createdAt: 'createdAt',
   expiresAt: 'expiresAt',
-  lastUsed: 'lastUsed'
+  lastUsed: 'lastUsed',
+  userAgent: 'userAgent',
+  ipAddress: 'ipAddress',
+  location: 'location',
+  deviceType: 'deviceType'
 };
 
 exports.Prisma.PasswordResetScalarFieldEnum = {

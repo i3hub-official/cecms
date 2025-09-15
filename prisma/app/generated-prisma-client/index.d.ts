@@ -3735,6 +3735,10 @@ export namespace Prisma {
     createdAt: Date | null
     expiresAt: Date | null
     lastUsed: Date | null
+    userAgent: string | null
+    ipAddress: string | null
+    location: string | null
+    deviceType: string | null
   }
 
   export type AdminSessionMaxAggregateOutputType = {
@@ -3746,6 +3750,10 @@ export namespace Prisma {
     createdAt: Date | null
     expiresAt: Date | null
     lastUsed: Date | null
+    userAgent: string | null
+    ipAddress: string | null
+    location: string | null
+    deviceType: string | null
   }
 
   export type AdminSessionCountAggregateOutputType = {
@@ -3757,6 +3765,10 @@ export namespace Prisma {
     createdAt: number
     expiresAt: number
     lastUsed: number
+    userAgent: number
+    ipAddress: number
+    location: number
+    deviceType: number
     _all: number
   }
 
@@ -3770,6 +3782,10 @@ export namespace Prisma {
     createdAt?: true
     expiresAt?: true
     lastUsed?: true
+    userAgent?: true
+    ipAddress?: true
+    location?: true
+    deviceType?: true
   }
 
   export type AdminSessionMaxAggregateInputType = {
@@ -3781,6 +3797,10 @@ export namespace Prisma {
     createdAt?: true
     expiresAt?: true
     lastUsed?: true
+    userAgent?: true
+    ipAddress?: true
+    location?: true
+    deviceType?: true
   }
 
   export type AdminSessionCountAggregateInputType = {
@@ -3792,6 +3812,10 @@ export namespace Prisma {
     createdAt?: true
     expiresAt?: true
     lastUsed?: true
+    userAgent?: true
+    ipAddress?: true
+    location?: true
+    deviceType?: true
     _all?: true
   }
 
@@ -3876,6 +3900,10 @@ export namespace Prisma {
     createdAt: Date
     expiresAt: Date
     lastUsed: Date
+    userAgent: string | null
+    ipAddress: string | null
+    location: string | null
+    deviceType: string | null
     _count: AdminSessionCountAggregateOutputType | null
     _min: AdminSessionMinAggregateOutputType | null
     _max: AdminSessionMaxAggregateOutputType | null
@@ -3904,6 +3932,10 @@ export namespace Prisma {
     createdAt?: boolean
     expiresAt?: boolean
     lastUsed?: boolean
+    userAgent?: boolean
+    ipAddress?: boolean
+    location?: boolean
+    deviceType?: boolean
     admin?: boolean | AdminDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["adminSession"]>
 
@@ -3916,6 +3948,10 @@ export namespace Prisma {
     createdAt?: boolean
     expiresAt?: boolean
     lastUsed?: boolean
+    userAgent?: boolean
+    ipAddress?: boolean
+    location?: boolean
+    deviceType?: boolean
     admin?: boolean | AdminDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["adminSession"]>
 
@@ -3928,6 +3964,10 @@ export namespace Prisma {
     createdAt?: boolean
     expiresAt?: boolean
     lastUsed?: boolean
+    userAgent?: boolean
+    ipAddress?: boolean
+    location?: boolean
+    deviceType?: boolean
     admin?: boolean | AdminDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["adminSession"]>
 
@@ -3940,9 +3980,13 @@ export namespace Prisma {
     createdAt?: boolean
     expiresAt?: boolean
     lastUsed?: boolean
+    userAgent?: boolean
+    ipAddress?: boolean
+    location?: boolean
+    deviceType?: boolean
   }
 
-  export type AdminSessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "adminId" | "sessionId" | "token" | "isActive" | "createdAt" | "expiresAt" | "lastUsed", ExtArgs["result"]["adminSession"]>
+  export type AdminSessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "adminId" | "sessionId" | "token" | "isActive" | "createdAt" | "expiresAt" | "lastUsed" | "userAgent" | "ipAddress" | "location" | "deviceType", ExtArgs["result"]["adminSession"]>
   export type AdminSessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     admin?: boolean | AdminDefaultArgs<ExtArgs>
   }
@@ -3967,6 +4011,10 @@ export namespace Prisma {
       createdAt: Date
       expiresAt: Date
       lastUsed: Date
+      userAgent: string | null
+      ipAddress: string | null
+      location: string | null
+      deviceType: string | null
     }, ExtArgs["result"]["adminSession"]>
     composites: {}
   }
@@ -4399,6 +4447,10 @@ export namespace Prisma {
     readonly createdAt: FieldRef<"AdminSession", 'DateTime'>
     readonly expiresAt: FieldRef<"AdminSession", 'DateTime'>
     readonly lastUsed: FieldRef<"AdminSession", 'DateTime'>
+    readonly userAgent: FieldRef<"AdminSession", 'String'>
+    readonly ipAddress: FieldRef<"AdminSession", 'String'>
+    readonly location: FieldRef<"AdminSession", 'String'>
+    readonly deviceType: FieldRef<"AdminSession", 'String'>
   }
     
 
@@ -9120,7 +9172,11 @@ export namespace Prisma {
     isActive: 'isActive',
     createdAt: 'createdAt',
     expiresAt: 'expiresAt',
-    lastUsed: 'lastUsed'
+    lastUsed: 'lastUsed',
+    userAgent: 'userAgent',
+    ipAddress: 'ipAddress',
+    location: 'location',
+    deviceType: 'deviceType'
   };
 
   export type AdminSessionScalarFieldEnum = (typeof AdminSessionScalarFieldEnum)[keyof typeof AdminSessionScalarFieldEnum]
@@ -9438,6 +9494,10 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AdminSession"> | Date | string
     expiresAt?: DateTimeFilter<"AdminSession"> | Date | string
     lastUsed?: DateTimeFilter<"AdminSession"> | Date | string
+    userAgent?: StringNullableFilter<"AdminSession"> | string | null
+    ipAddress?: StringNullableFilter<"AdminSession"> | string | null
+    location?: StringNullableFilter<"AdminSession"> | string | null
+    deviceType?: StringNullableFilter<"AdminSession"> | string | null
     admin?: XOR<AdminScalarRelationFilter, AdminWhereInput>
   }
 
@@ -9450,6 +9510,10 @@ export namespace Prisma {
     createdAt?: SortOrder
     expiresAt?: SortOrder
     lastUsed?: SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    location?: SortOrderInput | SortOrder
+    deviceType?: SortOrderInput | SortOrder
     admin?: AdminOrderByWithRelationInput
   }
 
@@ -9465,6 +9529,10 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AdminSession"> | Date | string
     expiresAt?: DateTimeFilter<"AdminSession"> | Date | string
     lastUsed?: DateTimeFilter<"AdminSession"> | Date | string
+    userAgent?: StringNullableFilter<"AdminSession"> | string | null
+    ipAddress?: StringNullableFilter<"AdminSession"> | string | null
+    location?: StringNullableFilter<"AdminSession"> | string | null
+    deviceType?: StringNullableFilter<"AdminSession"> | string | null
     admin?: XOR<AdminScalarRelationFilter, AdminWhereInput>
   }, "id" | "sessionId" | "token">
 
@@ -9477,6 +9545,10 @@ export namespace Prisma {
     createdAt?: SortOrder
     expiresAt?: SortOrder
     lastUsed?: SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    location?: SortOrderInput | SortOrder
+    deviceType?: SortOrderInput | SortOrder
     _count?: AdminSessionCountOrderByAggregateInput
     _max?: AdminSessionMaxOrderByAggregateInput
     _min?: AdminSessionMinOrderByAggregateInput
@@ -9494,6 +9566,10 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"AdminSession"> | Date | string
     expiresAt?: DateTimeWithAggregatesFilter<"AdminSession"> | Date | string
     lastUsed?: DateTimeWithAggregatesFilter<"AdminSession"> | Date | string
+    userAgent?: StringNullableWithAggregatesFilter<"AdminSession"> | string | null
+    ipAddress?: StringNullableWithAggregatesFilter<"AdminSession"> | string | null
+    location?: StringNullableWithAggregatesFilter<"AdminSession"> | string | null
+    deviceType?: StringNullableWithAggregatesFilter<"AdminSession"> | string | null
   }
 
   export type PasswordResetWhereInput = {
@@ -9927,6 +10003,10 @@ export namespace Prisma {
     createdAt?: Date | string
     expiresAt: Date | string
     lastUsed?: Date | string
+    userAgent?: string | null
+    ipAddress?: string | null
+    location?: string | null
+    deviceType?: string | null
     admin: AdminCreateNestedOneWithoutSessionsInput
   }
 
@@ -9939,6 +10019,10 @@ export namespace Prisma {
     createdAt?: Date | string
     expiresAt: Date | string
     lastUsed?: Date | string
+    userAgent?: string | null
+    ipAddress?: string | null
+    location?: string | null
+    deviceType?: string | null
   }
 
   export type AdminSessionUpdateInput = {
@@ -9949,6 +10033,10 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastUsed?: DateTimeFieldUpdateOperationsInput | Date | string
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    deviceType?: NullableStringFieldUpdateOperationsInput | string | null
     admin?: AdminUpdateOneRequiredWithoutSessionsNestedInput
   }
 
@@ -9961,6 +10049,10 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastUsed?: DateTimeFieldUpdateOperationsInput | Date | string
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    deviceType?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AdminSessionCreateManyInput = {
@@ -9972,6 +10064,10 @@ export namespace Prisma {
     createdAt?: Date | string
     expiresAt: Date | string
     lastUsed?: Date | string
+    userAgent?: string | null
+    ipAddress?: string | null
+    location?: string | null
+    deviceType?: string | null
   }
 
   export type AdminSessionUpdateManyMutationInput = {
@@ -9982,6 +10078,10 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastUsed?: DateTimeFieldUpdateOperationsInput | Date | string
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    deviceType?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AdminSessionUncheckedUpdateManyInput = {
@@ -9993,6 +10093,10 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastUsed?: DateTimeFieldUpdateOperationsInput | Date | string
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    deviceType?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PasswordResetCreateInput = {
@@ -10485,6 +10589,10 @@ export namespace Prisma {
     createdAt?: SortOrder
     expiresAt?: SortOrder
     lastUsed?: SortOrder
+    userAgent?: SortOrder
+    ipAddress?: SortOrder
+    location?: SortOrder
+    deviceType?: SortOrder
   }
 
   export type AdminSessionMaxOrderByAggregateInput = {
@@ -10496,6 +10604,10 @@ export namespace Prisma {
     createdAt?: SortOrder
     expiresAt?: SortOrder
     lastUsed?: SortOrder
+    userAgent?: SortOrder
+    ipAddress?: SortOrder
+    location?: SortOrder
+    deviceType?: SortOrder
   }
 
   export type AdminSessionMinOrderByAggregateInput = {
@@ -10507,6 +10619,10 @@ export namespace Prisma {
     createdAt?: SortOrder
     expiresAt?: SortOrder
     lastUsed?: SortOrder
+    userAgent?: SortOrder
+    ipAddress?: SortOrder
+    location?: SortOrder
+    deviceType?: SortOrder
   }
 
   export type PasswordResetCountOrderByAggregateInput = {
@@ -11057,6 +11173,10 @@ export namespace Prisma {
     createdAt?: Date | string
     expiresAt: Date | string
     lastUsed?: Date | string
+    userAgent?: string | null
+    ipAddress?: string | null
+    location?: string | null
+    deviceType?: string | null
   }
 
   export type AdminSessionUncheckedCreateWithoutAdminInput = {
@@ -11067,6 +11187,10 @@ export namespace Prisma {
     createdAt?: Date | string
     expiresAt: Date | string
     lastUsed?: Date | string
+    userAgent?: string | null
+    ipAddress?: string | null
+    location?: string | null
+    deviceType?: string | null
   }
 
   export type AdminSessionCreateOrConnectWithoutAdminInput = {
@@ -11183,6 +11307,10 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AdminSession"> | Date | string
     expiresAt?: DateTimeFilter<"AdminSession"> | Date | string
     lastUsed?: DateTimeFilter<"AdminSession"> | Date | string
+    userAgent?: StringNullableFilter<"AdminSession"> | string | null
+    ipAddress?: StringNullableFilter<"AdminSession"> | string | null
+    location?: StringNullableFilter<"AdminSession"> | string | null
+    deviceType?: StringNullableFilter<"AdminSession"> | string | null
   }
 
   export type PasswordResetUpsertWithWhereUniqueWithoutAdminInput = {
@@ -11548,6 +11676,10 @@ export namespace Prisma {
     createdAt?: Date | string
     expiresAt: Date | string
     lastUsed?: Date | string
+    userAgent?: string | null
+    ipAddress?: string | null
+    location?: string | null
+    deviceType?: string | null
   }
 
   export type PasswordResetCreateManyAdminInput = {
@@ -11581,6 +11713,10 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastUsed?: DateTimeFieldUpdateOperationsInput | Date | string
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    deviceType?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AdminSessionUncheckedUpdateWithoutAdminInput = {
@@ -11591,6 +11727,10 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastUsed?: DateTimeFieldUpdateOperationsInput | Date | string
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    deviceType?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AdminSessionUncheckedUpdateManyWithoutAdminInput = {
@@ -11601,6 +11741,10 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastUsed?: DateTimeFieldUpdateOperationsInput | Date | string
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    deviceType?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PasswordResetUpdateWithoutAdminInput = {
