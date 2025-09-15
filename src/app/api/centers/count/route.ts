@@ -3,17 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateSession } from "@/lib/auth";
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // Validate session
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const state = searchParams.get("state");
-    const lga = searchParams.get("lga");
+    const url = new URL(request.url);
+    const state = url.searchParams.get("state")?.trim();
+    const lga = url.searchParams.get("lga")?.trim();
 
     if (!state || !lga) {
       return NextResponse.json(
@@ -23,16 +22,15 @@ export async function GET(request: NextRequest) {
     }
 
     const count = await prisma.center.count({
-      where: {
-        state,
-        lga,
-        isActive: true,
-      },
+      where: { state, lga, isActive: true },
     });
 
     return NextResponse.json({ count });
   } catch (error) {
-    console.error("Count centers error:", error);
+    console.error(
+      "Count centers error:",
+      error instanceof Error ? error.message : error
+    );
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
