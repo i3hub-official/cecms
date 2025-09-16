@@ -931,17 +931,17 @@ export default function CenterManagementSystem() {
         onClose={closeConfirmation}
       />
 
-      <div className="space-y-4 lg:space-y-6 max-w-7xl mx-auto p-3 sm:p-4 lg:p-6">
+      <div className="px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 max-w-7xl mx-auto space-y-4 lg:space-y-6">
         {/* Error Display */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 mr-2 flex-shrink-0" />
               <span className="text-red-700 text-sm sm:text-base">{error}</span>
             </div>
             <button
               onClick={() => setError(null)}
-              className="mt-2 bg-red-100 hover:bg-red-200 text-red-700 px-3 sm:px-4 py-1 sm:py-2 rounded-md text-xs sm:text-sm font-medium"
+              className="mt-2 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors"
             >
               Dismiss
             </button>
@@ -953,14 +953,14 @@ export default function CenterManagementSystem() {
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center">
-                <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0" />
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 mr-2 flex-shrink-0" />
                 <span className="text-yellow-700 text-sm sm:text-base">
                   {duplicates.length} potential duplicate(s) found
                 </span>
               </div>
               <button
                 onClick={() => setShowDuplicates(!showDuplicates)}
-                className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 sm:px-4 py-1 sm:py-2 rounded-md text-xs sm:text-sm font-medium self-start sm:self-auto"
+                className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium self-start sm:self-auto transition-colors"
               >
                 {showDuplicates ? "Hide" : "Review"}
               </button>
@@ -970,11 +970,11 @@ export default function CenterManagementSystem() {
 
         {/* Duplicates Review Panel */}
         {showDuplicates && duplicates.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
               Review Duplicates
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {duplicates.map((duplicate, index) => (
                 <div
                   key={index}
@@ -991,7 +991,7 @@ export default function CenterManagementSystem() {
                           duplicate.centers[1].id,
                         ])
                       }
-                      className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded text-xs sm:text-sm flex items-center self-start sm:self-auto"
+                      className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded text-xs sm:text-sm flex items-center self-start sm:self-auto transition-colors"
                     >
                       <Merge className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       Merge
@@ -1025,41 +1025,61 @@ export default function CenterManagementSystem() {
         )}
 
         {/* Header and Controls */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex flex-col gap-6">
-            {/* Title Section */}
-            <div className="text-center lg:text-left">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Centers
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Manage education centers efficiently
-              </p>
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:gap-6">
+            {/* Title Section with Mobile Refresh Button */}
+            <div className="flex items-center justify-between">
+              <div className="text-center sm:text-left">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  Centers
+                </h1>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">
+                  Manage education centers efficiently
+                </p>
+              </div>
+              {/* Mobile Refresh Button */}
+              <button
+                onClick={() => {
+                  addNotification({
+                    type: "info",
+                    title: "Refreshing Data",
+                    message: "Reloading all data",
+                  });
+                  loadCenters();
+                  loadStats();
+                  loadDuplicates();
+                  setSearchTerm("");
+                }}
+                className="sm:hidden p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Refresh data"
+              >
+                <RefreshCw className="h-5 w-5 text-gray-600" />
+              </button>
             </div>
 
             {/* Controls Row */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
               {/* Search */}
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                 <input
                   type="text"
                   placeholder="Search centers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="pl-9 sm:pl-10 w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
                 />
               </div>
 
               {/* Checkbox */}
-              <label className="flex items-center whitespace-nowrap bg-gray-50 px-4 py-2.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+              <label className="flex items-center whitespace-nowrap bg-gray-50 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                 <input
                   type="checkbox"
                   checked={includeInactive}
                   onChange={(e) => setIncludeInactive(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="ml-2 text-sm text-gray-700 font-medium">
+                <span className="ml-2 text-sm font-medium text-gray-700">
                   Include inactive
                 </span>
               </label>
@@ -1067,9 +1087,9 @@ export default function CenterManagementSystem() {
               {/* Add Button */}
               <button
                 onClick={handleAdd}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg flex items-center justify-center text-sm font-medium whitespace-nowrap transition-colors shadow-sm hover:shadow-md"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg flex items-center justify-center text-sm font-medium whitespace-nowrap transition-colors shadow-sm hover:shadow-md"
               >
-                <Plus className="h-5 w-5 mr-2" />
+                <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Add Center
               </button>
             </div>
@@ -1078,7 +1098,7 @@ export default function CenterManagementSystem() {
 
         {/* Enhanced Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
             {/* Backdrop with blur */}
             <div
               className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-all duration-300"
@@ -1086,16 +1106,16 @@ export default function CenterManagementSystem() {
             />
 
             {/* Modal content */}
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-100">
+            <div className="relative bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-100">
               {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 rounded-t-xl sm:rounded-t-2xl">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
                     {editingCenter ? "Edit Center" : "Add New Center"}
                   </h2>
                   <button
                     onClick={() => setShowForm(false)}
-                    className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="text-gray-400 hover:text-gray-600 p-1 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -1103,8 +1123,11 @@ export default function CenterManagementSystem() {
               </div>
 
               {/* Form content */}
-              <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              <div className="overflow-y-auto max-h-[calc(95vh-140px)] sm:max-h-[calc(90vh-140px)]">
+                <form
+                  onSubmit={handleSubmit}
+                  className="p-4 sm:p-6 space-y-4 sm:space-y-5"
+                >
                   {/* Center Name Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1116,7 +1139,7 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
                         formErrors.name
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
@@ -1141,7 +1164,7 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, address: e.target.value })
                       }
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none text-sm sm:text-base ${
                         formErrors.address
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
@@ -1171,7 +1194,7 @@ export default function CenterManagementSystem() {
                           lga: "",
                         })
                       }
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
                         formErrors.state
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
@@ -1209,7 +1232,7 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, lga: e.target.value })
                       }
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
                         formErrors.lga
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
@@ -1256,7 +1279,7 @@ export default function CenterManagementSystem() {
                   </div>
 
                   {/* Active Checkbox */}
-                  <div className="flex items-center bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center bg-gray-50 p-3 sm:p-4 rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.isActive}
@@ -1278,18 +1301,18 @@ export default function CenterManagementSystem() {
               </div>
 
               {/* Footer */}
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl">
-                <div className="flex flex-col-reverse sm:flex-row gap-3">
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-3 sm:px-6 sm:py-4 rounded-b-xl sm:rounded-b-2xl">
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="flex-1 px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors font-medium"
+                    className="flex-1 px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors font-medium text-sm sm:text-base"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors font-medium shadow-sm hover:shadow-md"
+                    className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors font-medium shadow-sm hover:shadow-md text-sm sm:text-base"
                   >
                     {editingCenter ? "Update Center" : "Create Center"}
                   </button>
@@ -1299,14 +1322,119 @@ export default function CenterManagementSystem() {
           </div>
         )}
 
-        {/* Centers Table/Cards */}
+        {/* Centers Table/Cards with Skeleton Loading */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {loading ? (
-            <div className="p-6 lg:p-8 text-center">
-              <RefreshCw className="w-6 h-6 lg:w-8 lg:h-8 animate-spin text-blue-600 mx-auto mb-3 lg:mb-4" />
-              <p className="text-sm lg:text-base text-gray-600">
-                Loading centers...
-              </p>
+            // Skeleton Loading
+            <div className="p-3 sm:p-6 lg:p-8">
+              {/* Mobile Skeleton */}
+              <div className="space-y-3 sm:hidden">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="border border-gray-200 rounded-lg p-3 animate-pulse"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+                          <div className="h-4 bg-gray-200 rounded w-12"></div>
+                        </div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2 mb-1"></div>
+                        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                      </div>
+                      <div className="h-4 w-4 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tablet Skeleton */}
+              <div className="hidden sm:grid md:grid-cols-2 lg:hidden gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="border border-gray-200 rounded-lg p-4 animate-pulse"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-5 bg-gray-200 rounded-full w-20"></div>
+                          <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        </div>
+                        <div className="h-5 bg-gray-200 rounded w-4/5 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
+                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                      </div>
+                      <div className="flex space-x-1">
+                        <div className="h-8 w-8 bg-gray-200 rounded"></div>
+                        <div className="h-8 w-8 bg-gray-200 rounded"></div>
+                      </div>
+                    </div>
+                    <div className="h-3 bg-gray-200 rounded w-2/5"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Skeleton */}
+              <div className="hidden lg:block">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        {[
+                          "Center Details",
+                          "Location",
+                          "Status",
+                          "Last Modified",
+                          "Actions",
+                        ].map((header) => (
+                          <th
+                            key={header}
+                            className="px-4 xl:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            {header}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {[...Array(5)].map((_, i) => (
+                        <tr key={i} className="animate-pulse">
+                          <td className="px-4 xl:px-6 py-4">
+                            <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+                            <div className="h-3 bg-gray-200 rounded w-20"></div>
+                          </td>
+                          <td className="px-4 xl:px-6 py-4">
+                            <div className="h-4 bg-gray-200 rounded w-48 mb-2"></div>
+                            <div className="h-3 bg-gray-200 rounded w-32"></div>
+                          </td>
+                          <td className="px-4 xl:px-6 py-4">
+                            <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                          </td>
+                          <td className="px-4 xl:px-6 py-4">
+                            <div className="h-3 bg-gray-200 rounded w-24 mb-1"></div>
+                            <div className="h-3 bg-gray-200 rounded w-20"></div>
+                          </td>
+                          <td className="px-4 xl:px-6 py-4 text-right">
+                            <div className="flex justify-end space-x-2">
+                              <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                              <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Loading text */}
+              <div className="text-center mt-4">
+                <p className="text-sm text-gray-600">Loading centers...</p>
+              </div>
             </div>
           ) : centers.length === 0 ? (
             <div className="p-6 lg:p-8 text-center">
@@ -1324,7 +1452,7 @@ export default function CenterManagementSystem() {
               {!searchTerm && (
                 <button
                   onClick={handleAdd}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm lg:text-base font-medium"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm lg:text-base font-medium transition-colors"
                 >
                   <Plus className="h-4 w-4 lg:h-5 lg:w-5 mr-1 lg:mr-2 inline" />
                   Add First Center
@@ -1333,6 +1461,173 @@ export default function CenterManagementSystem() {
             </div>
           ) : (
             <div className="overflow-x-auto">
+              {/* Mobile Cards */}
+              <div className="sm:hidden space-y-3 p-3">
+                {centers.map((center) => (
+                  <div
+                    key={center.id}
+                    className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              center.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {center.isActive ? (
+                              <>
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Active
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                Inactive
+                              </>
+                            )}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            #{center.number}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
+                          {center.name}
+                        </h3>
+                        <p className="text-xs text-gray-600 mb-1 line-clamp-2">
+                          {center.address}
+                        </p>
+                        <div className="text-xs text-gray-500 flex items-center">
+                          <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                          {center.state}, {center.lga}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setMobileMenuOpen(
+                            mobileMenuOpen === center.id ? null : center.id
+                          )
+                        }
+                        className="text-gray-400 hover:text-gray-600 p-1 ml-2 transition-colors"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {mobileMenuOpen === center.id && (
+                      <div className="flex justify-end space-x-2 pt-2 border-t border-gray-100 animate-fadeIn">
+                        <button
+                          onClick={() => {
+                            handleEdit(center);
+                            setMobileMenuOpen(null);
+                          }}
+                          className="flex items-center text-blue-600 text-xs px-3 py-1 rounded border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors"
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleDelete(center);
+                            setMobileMenuOpen(null);
+                          }}
+                          className="flex items-center text-red-600 text-xs px-3 py-1 rounded border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          {center.isActive ? "Deactivate" : "Delete"}
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
+                      Updated {formatShortDate(center.modifiedAt)}
+                      {center.modifiedBy && ` by ${center.modifiedByName}`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tablet Cards */}
+              <div className="hidden sm:grid md:grid-cols-2 lg:hidden gap-4 p-4">
+                {centers.map((center) => (
+                  <div
+                    key={center.id}
+                    className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              center.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {center.isActive ? (
+                              <>
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Active
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                Inactive
+                              </>
+                            )}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            #{center.number}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-medium text-gray-900 mb-1 truncate">
+                          {center.name}
+                        </h3>
+                        <p
+                          className="text-xs text-gray-600 mb-1 line-clamp-2"
+                          title={center.address}
+                        >
+                          {center.address}
+                        </p>
+                        <div className="text-xs text-gray-500 flex items-center">
+                          <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                          <span className="truncate">
+                            {center.state}, {center.lga}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex space-x-1 ml-2">
+                        <button
+                          onClick={() => handleEdit(center)}
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                          title="Edit center"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(center)}
+                          className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
+                          title={
+                            center.isActive
+                              ? "Deactivate center"
+                              : "Delete center"
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                      Updated {formatShortDate(center.modifiedAt)}
+                      {center.modifiedBy && ` by ${center.modifiedBy}`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {/* Desktop Table */}
               <table className="hidden lg:table min-w-full">
                 <thead className="bg-gray-50">
@@ -1439,165 +1734,13 @@ export default function CenterManagementSystem() {
                   ))}
                 </tbody>
               </table>
-
-              {/* Mobile/Tablet Cards */}
-              <div className="lg:hidden">
-                {/* Tablet View (md) */}
-                <div className="hidden md:block lg:hidden">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                    {centers.map((center) => (
-                      <div
-                        key={center.id}
-                        className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  center.isActive
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {center.isActive ? "Active" : "Inactive"}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                #{center.number}
-                              </span>
-                            </div>
-                            <h3 className="text-sm font-medium text-gray-900 mb-1 truncate">
-                              {center.name}
-                            </h3>
-                            <p
-                              className="text-xs text-gray-600 mb-1 line-clamp-2"
-                              title={center.address}
-                            >
-                              {center.address}
-                            </p>
-                            <div className="text-xs text-gray-500 flex items-center">
-                              <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                              <span className="truncate">
-                                {center.state}, {center.lga}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex space-x-1 ml-2">
-                            <button
-                              onClick={() => handleEdit(center)}
-                              className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
-                              title="Edit center"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(center)}
-                              className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
-                              title={
-                                center.isActive
-                                  ? "Deactivate center"
-                                  : "Delete center"
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
-                          Updated {formatShortDate(center.modifiedAt)}
-                          {center.modifiedBy && ` by ${center.modifiedBy}`}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Mobile View (sm and below) */}
-                <div className="md:hidden space-y-3 p-3">
-                  {centers.map((center) => (
-                    <div
-                      key={center.id}
-                      className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                center.isActive
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {center.isActive ? "Active" : "Inactive"}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              #{center.number}
-                            </span>
-                          </div>
-                          <h3 className="text-sm font-medium text-gray-900 mb-1">
-                            {center.name}
-                          </h3>
-                          <p className="text-xs text-gray-600 mb-1 line-clamp-2">
-                            {center.address}
-                          </p>
-                          <div className="text-xs text-gray-500 flex items-center">
-                            <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                            {center.state}, {center.lga}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() =>
-                            setMobileMenuOpen(
-                              mobileMenuOpen === center.id ? null : center.id
-                            )
-                          }
-                          className="text-gray-400 hover:text-gray-600 p-1 ml-2"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </div>
-
-                      {mobileMenuOpen === center.id && (
-                        <div className="flex justify-end space-x-2 pt-2 border-t border-gray-100">
-                          <button
-                            onClick={() => {
-                              handleEdit(center);
-                              setMobileMenuOpen(null);
-                            }}
-                            className="flex items-center text-blue-600 text-xs px-3 py-1 rounded border border-blue-200 bg-blue-50"
-                          >
-                            <Edit className="h-3 w-3 mr-1" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleDelete(center);
-                              setMobileMenuOpen(null);
-                            }}
-                            className="flex items-center text-red-600 text-xs px-3 py-1 rounded border border-red-200 bg-red-50"
-                          >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            {center.isActive ? "Deactivate" : "Delete"}
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="text-xs text-gray-500 mt-2">
-                        Updated {formatShortDate(center.modifiedAt)}
-                        {center.modifiedBy && ` by ${center.modifiedByName}`}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
         </div>
 
         {/* Pagination Controls */}
         {pagination && pagination.pages > 1 && (
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
               <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
                 Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
@@ -1608,7 +1751,7 @@ export default function CenterManagementSystem() {
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={pagination.page === 1}
-                  className="px-3 py-1 text-xs sm:text-sm bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 min-w-[70px] sm:min-w-[80px]"
+                  className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 min-w-[60px] sm:min-w-[70px] transition-colors"
                 >
                   Previous
                 </button>
@@ -1618,7 +1761,7 @@ export default function CenterManagementSystem() {
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={pagination.page === pagination.pages}
-                  className="px-3 py-1 text-xs sm:text-sm bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 min-w-[70px] sm:min-w-[80px]"
+                  className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 min-w-[60px] sm:min-w-[70px] transition-colors"
                 >
                   Next
                 </button>
@@ -1666,15 +1809,17 @@ export default function CenterManagementSystem() {
             return (
               <div
                 key={index}
-                className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6"
+                className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <Icon className={`h-6 w-6 lg:h-8 lg:w-8 ${colorClasses}`} />
+                    <Icon
+                      className={`h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 ${colorClasses}`}
+                    />
                   </div>
-                  <div className="ml-3 lg:ml-4 min-w-0">
-                    <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
-                      {stat.value}
+                  <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                    <div className="text-base sm:text-lg lg:text-2xl font-bold text-gray-900">
+                      {stat.value || 0}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-600 truncate">
                       {stat.label}
@@ -1689,34 +1834,36 @@ export default function CenterManagementSystem() {
         {/* Bottom Section - Recent Activity and Quick Actions */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
           {/* Recent Centers */}
-          <div className="bg-white rounded-xl shadow-sm flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white rounded-xl shadow-sm flex flex-col hover:shadow-md transition-shadow">
+            <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                 Recent Centers
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
                 Latest centers added to the system
               </p>
             </div>
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-4 sm:p-6">
               {centers.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
-                  <Building className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-base font-medium">No centers yet</p>
-                  <p className="text-sm mt-1">
+                <div className="text-center text-gray-500 py-6 sm:py-8">
+                  <Building className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-gray-300" />
+                  <p className="text-sm sm:text-base font-medium">
+                    No centers yet
+                  </p>
+                  <p className="text-xs sm:text-sm mt-1">
                     Add your first center to get started
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {centers.slice(0, 5).map((center) => (
                     <div
                       key={center.id}
-                      className="relative p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="relative p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                     >
                       {/* Active/Inactive Badge - Top Right */}
                       <span
-                        className={`absolute top-3 right-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                        className={`absolute top-2 right-2 sm:top-3 sm:right-3 inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-xs font-medium ${
                           center.isActive
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
@@ -1726,9 +1873,9 @@ export default function CenterManagementSystem() {
                       </span>
 
                       {/* Content - Adjusted padding to prevent badge overlap */}
-                      <div className="pr-16">
+                      <div className="pr-14 sm:pr-16">
                         {/* Center Name */}
-                        <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900 line-clamp-2">
                           {center.name}
                         </p>
 
@@ -1739,7 +1886,7 @@ export default function CenterManagementSystem() {
                       </div>
 
                       {/* Timestamp - Bottom Right */}
-                      <div className="absolute bottom-3 right-3 text-xs text-gray-400">
+                      <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 text-xs text-gray-400">
                         {formatShortDate(center.createdAt)}
                       </div>
                     </div>
@@ -1750,17 +1897,17 @@ export default function CenterManagementSystem() {
           </div>
 
           {/* Enhanced Quick Actions */}
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                 Quick Actions
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
                 Common tasks and utilities
               </p>
             </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {[
                   {
                     icon: Plus,
@@ -1831,13 +1978,17 @@ export default function CenterManagementSystem() {
                     <button
                       key={index}
                       onClick={action.action}
-                      className={`flex items-center p-4 rounded-xl ${action.bgColor} ${action.hoverColor} transition-all hover:shadow-sm border border-transparent hover:border-opacity-20`}
+                      className={`flex items-center p-3 sm:p-4 rounded-xl ${action.bgColor} ${action.hoverColor} transition-all hover:shadow-sm border border-transparent hover:border-opacity-20`}
                     >
                       <div className="flex-shrink-0 p-2 bg-white rounded-lg shadow-sm">
-                        <Icon className={`h-5 w-5 ${colorClasses}`} />
+                        <Icon
+                          className={`h-4 w-4 sm:h-5 sm:w-5 ${colorClasses}`}
+                        />
                       </div>
                       <div className="ml-3 text-left">
-                        <div className={`text-sm font-medium ${colorClasses}`}>
+                        <div
+                          className={`text-xs sm:text-sm font-medium ${colorClasses}`}
+                        >
                           {action.label}
                         </div>
                         <div className="text-xs text-gray-600">
