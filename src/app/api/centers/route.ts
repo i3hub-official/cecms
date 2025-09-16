@@ -21,7 +21,9 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where conditions
-    const whereConditions: Array<ReturnType<typeof eq> | ReturnType<typeof or>> = [];
+    const whereConditions: Array<
+      ReturnType<typeof eq> | ReturnType<typeof or>
+    > = [];
 
     if (!includeInactive) {
       whereConditions.push(eq(centers.isActive, true));
@@ -116,8 +118,8 @@ export async function POST(request: NextRequest) {
         state,
         lga,
         isActive,
-        createdBy: authResult.user?.email || "system",
-        modifiedBy: authResult.user?.email || "system",
+        createdBy: authResult.user?.name || "system",
+        modifiedBy: authResult.user?.name || "system",
         createdAt: new Date(),
         modifiedAt: new Date(),
       })
