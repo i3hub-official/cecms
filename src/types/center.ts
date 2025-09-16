@@ -7,9 +7,13 @@ export interface Center {
   lga: string;
   isActive: boolean;
   createdAt: string;
-  modifiedAt: string;
   createdBy: string;
+  createdById: string;
+  modifiedAt: string;
   modifiedBy: string | null;
+  modifiedById: string;
+  modifiedByName: string;
+  createdByName: string;
 }
 
 export interface Stats {

@@ -13,24 +13,24 @@ import {
   Merge,
   AlertTriangle,
   X,
-  Check,
   RefreshCw,
   MoreVertical,
 } from "lucide-react";
+import { Center } from "@/types/center";
 
-interface Center {
-  id: string;
-  number: string;
-  name: string;
-  address: string;
-  state: string;
-  lga: string;
-  isActive: boolean;
-  createdAt: string;
-  modifiedAt: string;
-  createdBy: string;
-  modifiedBy: string | null;
-}
+// interface Center {
+//   id: string;
+//   number: string;
+//   name: string;
+//   address: string;
+//   state: string;
+//   lga: string;
+//   isActive: boolean;
+//   createdAt: string;
+//   modifiedAt: string;
+//   createdBy: string;
+//   modifiedBy: string | null;
+// }
 
 interface Stats {
   total: number;
@@ -76,6 +76,16 @@ interface ConfirmationModal {
   type: "danger" | "warning" | "info";
 }
 
+export interface CentersResponse {
+  centers: Center[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 // Real API functions using your actual database
 const api = {
   async getStates(): Promise<string[]> {
@@ -116,7 +126,12 @@ const api = {
     return lgas;
   },
 
-  async getCenters(page = 1, limit = 10, search = "", includeInactive = false) {
+  async getCenters(
+    page = 1,
+    limit = 10,
+    search = "",
+    includeInactive = false
+  ): Promise<CentersResponse> {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -762,7 +777,11 @@ export default function CenterManagementSystem() {
           ...formData,
           number: centerNumber,
           createdBy: "current@user.com",
-          modifiedBy: null,
+          createdById: "current-user-id",
+          createdByName: "Current User",
+          modifiedBy: "current@user.com",
+          modifiedById: "current-user-id",
+          modifiedByName: "Current User",
         });
         addNotification({
           type: "success",
@@ -1459,7 +1478,7 @@ export default function CenterManagementSystem() {
 
                       <div className="text-xs text-gray-500 mt-2">
                         Updated {formatShortDate(center.modifiedAt)}
-                        {center.modifiedBy && ` by ${center.modifiedBy}`}
+                        {center.modifiedBy && ` by ${center.modifiedByName}`}
                       </div>
                     </div>
                   ))}

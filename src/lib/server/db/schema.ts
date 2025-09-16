@@ -17,7 +17,9 @@ import { relations } from "drizzle-orm";
 export const centers = pgTable(
   "centers",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     number: text("number").notNull().unique(),
     name: text("name").notNull(),
     address: text("address").notNull(),
@@ -26,11 +28,23 @@ export const centers = pgTable(
     isActive: boolean("isActive").notNull().default(true),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     createdBy: text("createdBy").notNull(),
+    createdById: text("createdById")
+      .notNull()
+      .references(() => admins.id, { onDelete: "set default" })
+      .default("system"),
     modifiedBy: text("modifiedBy"),
     modifiedAt: timestamp("modifiedAt").$onUpdateFn(() => new Date()),
+    modifiedById: text("modifiedById")
+      .notNull()
+      .references(() => admins.id, { onDelete: "set default" })
+      .default("system"),
   },
   (table) => [
-    uniqueIndex("center_name_state_lga_unique").on(table.name, table.state, table.lga),
+    uniqueIndex("center_name_state_lga_unique").on(
+      table.name,
+      table.state,
+      table.lga
+    ),
     index("idx_center_state").on(table.state),
     index("idx_center_lga").on(table.lga),
     index("idx_center_is_active").on(table.isActive),
@@ -43,7 +57,13 @@ export const centers = pgTable(
     index("idx_center_created_by").on(table.createdBy),
     index("idx_center_modified_by").on(table.modifiedBy),
     index("idx_center_modified_at").on(table.modifiedAt),
-    index("idx_center_created_at_is_active").on(table.createdAt, table.isActive),
+    index("idx_center_created_at_is_active").on(
+      table.createdAt,
+      table.isActive
+    ),
+    // Add indexes for the foreign keys
+    index("idx_center_created_by_id").on(table.createdById),
+    index("idx_center_modified_by_id").on(table.modifiedById),
   ]
 );
 
@@ -53,7 +73,9 @@ export const centers = pgTable(
 export const admins = pgTable(
   "admins",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     email: text("email").notNull().unique(),
     password: text("password").notNull(),
     name: text("name").notNull(),
@@ -75,8 +97,12 @@ export const admins = pgTable(
 export const adminSessions = pgTable(
   "admin_sessions",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    adminId: text("adminId").notNull().references(() => admins.id, { onDelete: "cascade" }),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    adminId: text("adminId")
+      .notNull()
+      .references(() => admins.id, { onDelete: "cascade" }),
     sessionId: text("sessionId").notNull().unique(),
     token: text("token").notNull().unique(),
     isActive: boolean("isActive").notNull().default(true),
@@ -104,8 +130,12 @@ export const adminSessions = pgTable(
 export const passwordResets = pgTable(
   "password_resets",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    adminId: text("adminId").notNull().references(() => admins.id, { onDelete: "cascade" }),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    adminId: text("adminId")
+      .notNull()
+      .references(() => admins.id, { onDelete: "cascade" }),
     token: text("token").notNull().unique(),
     isUsed: boolean("isUsed").notNull().default(false),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -124,7 +154,9 @@ export const passwordResets = pgTable(
 export const apiLogs = pgTable(
   "api_logs",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     endpoint: text("endpoint").notNull(),
     method: text("method").notNull(),
     status: integer("status").notNull(),
@@ -146,8 +178,12 @@ export const apiLogs = pgTable(
 export const adminActivities = pgTable(
   "admin_activities",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    adminId: text("adminId").notNull().references(() => admins.id, { onDelete: "cascade" }),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    adminId: text("adminId")
+      .notNull()
+      .references(() => admins.id, { onDelete: "cascade" }),
     activity: text("activity").notNull(),
     timestamp: timestamp("timestamp").notNull().defaultNow(),
   },
@@ -163,8 +199,12 @@ export const adminActivities = pgTable(
 export const auditLogs = pgTable(
   "audit_logs",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    adminId: text("adminId").notNull().references(() => admins.id, { onDelete: "cascade" }),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    adminId: text("adminId")
+      .notNull()
+      .references(() => admins.id, { onDelete: "cascade" }),
     action: text("action").notNull(),
     entity: text("entity").notNull(),
     entityId: text("entityId").notNull(),
@@ -181,10 +221,29 @@ export const auditLogs = pgTable(
 // Relations
 // ------------------------
 export const adminRelations = relations(admins, ({ many }) => ({
-  sessions: many(adminSessions),
+   sessions: many(adminSessions),
   passwordResets: many(passwordResets),
   auditLogs: many(auditLogs),
   adminActivities: many(adminActivities),
+  // Add reverse relations for centers
+  createdCenters: many(centers, { relationName: "center_created_by" }),
+  modifiedCenters: many(centers, { relationName: "center_modified_by" }),
+}));
+
+// ------------------------
+// Relations
+// ------------------------
+export const centerRelations = relations(centers, ({ one }) => ({
+  createdByAdmin: one(admins, {
+    fields: [centers.createdById],
+    references: [admins.id],
+    relationName: "center_created_by",
+  }),
+  modifiedByAdmin: one(admins, {
+    fields: [centers.modifiedById],
+    references: [admins.id],
+    relationName: "center_modified_by",
+  }),
 }));
 
 export const adminSessionRelations = relations(adminSessions, ({ one }) => ({
@@ -215,9 +274,7 @@ export const auditLogRelations = relations(auditLogs, ({ one }) => ({
 // ------------------------
 // Inferred Types
 // ------------------------
-export type Center = typeof centers.$inferSelect;
 export type NewCenter = typeof centers.$inferInsert;
-export type Admin = typeof admins.$inferSelect;
 export type NewAdmin = typeof admins.$inferInsert;
 export type AdminSession = typeof adminSessions.$inferSelect;
 export type NewAdminSession = typeof adminSessions.$inferInsert;
@@ -229,3 +286,19 @@ export type AdminActivity = typeof adminActivities.$inferSelect;
 export type NewAdminActivity = typeof adminActivities.$inferInsert;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
+
+// ------------------------
+// Inferred Types with Relations
+// ------------------------
+export type Center = typeof centers.$inferSelect & {
+  createdByAdmin?: Admin;
+  modifiedByAdmin?: Admin;
+};
+
+export type Admin = typeof admins.$inferSelect & {
+  createdCenters?: Center[];
+  modifiedCenters?: Center[];
+};
+
+
+

@@ -22,6 +22,20 @@
       "when": 1757994420501,
       "tag": "0002_late_manta",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1757998013624,
+      "tag": "0003_steep_jack_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1757998649744,
+      "tag": "0004_black_firedrake",
+      "breakpoints": true
     }
   ]
 }
