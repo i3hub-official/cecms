@@ -18,20 +18,6 @@ import {
 } from "lucide-react";
 import { Center } from "@/types/center";
 
-// interface Center {
-//   id: string;
-//   number: string;
-//   name: string;
-//   address: string;
-//   state: string;
-//   lga: string;
-//   isActive: boolean;
-//   createdAt: string;
-//   modifiedAt: string;
-//   createdBy: string;
-//   modifiedBy: string | null;
-// }
-
 interface Stats {
   total: number;
   active: number;
@@ -388,7 +374,7 @@ function ConfirmationModal({
   if (!modal.isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-transparent bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex items-center mb-4">
           {modal.type === "danger" && (
