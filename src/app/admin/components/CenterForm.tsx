@@ -19,73 +19,24 @@ import {
   Info,
   CheckCircle2,
 } from "lucide-react";
-import { Center } from "@/types/center";
-
-interface Stats {
-  total: number;
-  active: number;
-  inactive: number;
-  inactiveCenters: Center[];
-  recentActivity: Center[];
-}
-
-interface Duplicate {
-  centers: Center[];
-  similarity: number;
-  type: "name" | "address" | "location";
-}
-
-interface LocationData {
-  states: string[];
-  lgas: { [state: string]: string[] };
-}
-
-interface Pagination {
-  page: number;
-  limit: number;
-  total: number;
-  pages: number;
-}
-interface Notification {
-  id: string;
-  type: "success" | "error" | "warning" | "info";
-  title: string;
-  message: string;
-}
-
-interface ConfirmationModal {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  confirmText: string;
-  cancelText: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-  type: "danger" | "warning" | "info";
-}
-
-export interface CentersResponse {
-  centers: Center[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
-}
-
-export interface MergeResult {
-  success: boolean;
-  message: string;
-  mergedCount?: number;
-}
+import {
+  Center,
+  CentersResponse,
+  DashboardStats,
+  MergeResult,
+  Notification,
+  Stats,
+  Duplicate,
+  LocationData,
+} from "@/types/center";
+import type { ConfirmationModal } from "@/types/center";
 
 // Real API functions using your actual database
 const api = {
   async getStates(): Promise<string[]> {
     try {
       // Check if we're in a browser environment before using sessionStorage
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const cached = sessionStorage.getItem("cachedStates");
         if (cached) return JSON.parse(cached);
       }
@@ -105,12 +56,12 @@ const api = {
       }
 
       const states = data.states;
-      
+
       // Only cache if we're in a browser environment
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         sessionStorage.setItem("cachedStates", JSON.stringify(states));
       }
-      
+
       return states;
     } catch (error: unknown) {
       console.error("Error fetching states:", error);
@@ -126,7 +77,7 @@ const api = {
     try {
       // Check if we're in a browser environment before using sessionStorage
       let lgaMap = new Map<string, string[]>();
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const cachedLgas = sessionStorage.getItem("cachedLgas");
         lgaMap = cachedLgas
           ? new Map(Object.entries(JSON.parse(cachedLgas)))
@@ -158,7 +109,7 @@ const api = {
       const lgas = data.lgas;
 
       // Cache updated data only if we're in a browser environment
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         lgaMap.set(state, lgas);
         sessionStorage.setItem(
           "cachedLgas",
@@ -257,10 +208,18 @@ const api = {
             id: "error",
             name: "Failed to load statistics",
             state: "",
+            lga: "",
+            address: "N/A",
             number: "",
             isActive: false,
             createdAt: new Date().toISOString(),
             modifiedAt: new Date().toISOString(),
+            createdBy: "system",
+            createdById: "system",
+            createdByName: "System",
+            modifiedBy: "system",
+            modifiedById: "system",
+            modifiedByName: "System",
           },
         ],
       };
@@ -292,7 +251,10 @@ const api = {
     }
   },
 
-  async mergeCenters(primaryId: string, secondaryIds: string[]): Promise<MergeResult> {
+  async mergeCenters(
+    primaryId: string,
+    secondaryIds: string[]
+  ): Promise<MergeResult> {
     try {
       const response = await fetch("/api/centers/merge", {
         method: "POST",
@@ -330,7 +292,9 @@ const api = {
     }
   },
 
-  async createCenter(center: Omit<Center, "id" | "createdAt" | "modifiedAt">): Promise<Center> {
+  async createCenter(
+    center: Omit<Center, "id" | "createdAt" | "modifiedAt">
+  ): Promise<Center> {
     try {
       const response = await fetch("/api/centers", {
         method: "POST",
@@ -387,6 +351,7 @@ const api = {
       throw error;
     }
   },
+};
 
 // Helper function to generate center number
 const generateCenterNumber = (
@@ -704,7 +669,12 @@ export default function CenterManagementSystem() {
   const loadDuplicates = useCallback(async () => {
     try {
       const duplicatesData = await api.findDuplicates();
-      setDuplicates(duplicatesData);
+      const formattedDuplicates = duplicatesData.map((center) => ({
+        centers: [center],
+        similarity: 100, // Example similarity value, adjust as needed
+        type: "name" as const, // Use const assertion to enforce the literal type
+      }));
+      setDuplicates(formattedDuplicates);
     } catch (err) {
       console.error("Error loading duplicates:", err);
       addNotification({
