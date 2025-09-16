@@ -563,7 +563,7 @@ export default function AnalyticsPage() {
           },
         };
 
-        setData(mockData);
+        setData(result);
         setLastUpdated(new Date());
 
         if (isRefresh) {
