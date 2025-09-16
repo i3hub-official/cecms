@@ -1,12 +1,12 @@
 import { defineConfig } from "drizzle-kit";
 
-if (!process.env.cecms_DATABASE_URL)
-  throw new Error("cecms_DATABASE_URL is not set");
+if (!process.env.cecms_POSTGRES_URL)
+  throw new Error("cecms_POSTGRES_URL is not set");
 
 export default defineConfig({
   schema: "./src/lib/server/db/schema.ts",
   dialect: "postgresql",
-  dbCredentials: { url: process.env.cecms_DATABASE_URL! },
+  dbCredentials: { url: process.env.cecms_POSTGRES_URL! },
   verbose: true,
   strict: true,
 });

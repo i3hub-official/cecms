@@ -15,6 +15,13 @@
       "when": 1757970915672,
       "tag": "0001_thick_omega_red",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1757994420501,
+      "tag": "0002_late_manta",
+      "breakpoints": true
     }
   ]
 }
