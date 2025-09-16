@@ -22,63 +22,83 @@ export default function AdminLayoutWrapper({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /** 🔹 Redirect helper */
   const redirectToLogin = useCallback(() => {
-    localStorage.removeItem("user");
     sessionStorage.removeItem("user");
     setUser(null);
     router.push("/auth/signin");
   }, [router]);
 
-  const validateSession = useCallback(async () => {
-    try {
-      setLoading(true);
+  /** 🔹 Validate session against backend */
+  const validateSession = useCallback(
+    async (background = false) => {
+      try {
+        if (!background) setLoading(true);
 
-      // Clear any cached user data first
-      const cachedUser = localStorage.getItem("user");
-      if (cachedUser) {
-        localStorage.removeItem("user");
-      }
+        const controller = new AbortController();
+        const response = await fetch("/api/auth/validate", {
+          method: "GET",
+          credentials: "include",
+          signal: controller.signal,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        });
 
-      const response = await fetch("/api/auth/validate", {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-        },
-      });
+        if (response.status === 401) {
+          redirectToLogin();
+          return;
+        }
 
-      // Check if response is unauthorized
-      if (response.status === 401) {
+        if (!response.ok) {
+          console.error("Server error during validation:", response.status);
+          return; // Don’t force logout on server issues
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.user) {
+          setUser(data.user);
+          sessionStorage.setItem("user", JSON.stringify(data.user));
+        } else {
+          redirectToLogin();
+        }
+      } catch (error) {
+        console.error("Session validation error:", error);
+        // only redirect if token is missing/invalid; otherwise keep cached user
         redirectToLogin();
-        return;
+      } finally {
+        if (!background) setLoading(false);
       }
+    },
+    [redirectToLogin]
+  );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.user) {
-        setUser(data.user);
-        // Use sessionStorage instead of localStorage for better security
-        sessionStorage.setItem("user", JSON.stringify(data.user));
-      } else {
-        redirectToLogin();
-      }
-    } catch (error) {
-      console.error("Session validation error:", error);
-      redirectToLogin();
-    } finally {
-      setLoading(false);
-    }
-  }, [redirectToLogin]);
-
+  /** 🔹 On first mount: try cached user instantly, then validate */
   useEffect(() => {
-    validateSession();
+    const cached = sessionStorage.getItem("user");
+    if (cached) {
+      try {
+        const parsedUser: User = JSON.parse(cached);
+        setUser(parsedUser);
+        setLoading(false); // show UI immediately
+        validateSession(true); // run in background
+      } catch {
+        sessionStorage.removeItem("user");
+        validateSession();
+      }
+    } else {
+      validateSession();
+    }
+  }, [validateSession]);
+
+  /** 🔹 Revalidate on route changes */
+  useEffect(() => {
+    validateSession(true); // background check
   }, [pathname, validateSession]);
 
+  /** 🔹 Logout */
   const handleLogout = async () => {
     try {
       await fetch("/api/auth", {
@@ -92,7 +112,7 @@ export default function AdminLayoutWrapper({
     }
   };
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>

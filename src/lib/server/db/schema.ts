@@ -82,6 +82,7 @@ export const admins = pgTable(
     role: text("role").notNull().default("ADMIN"),
     isActive: boolean("isActive").notNull().default(true),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
+    lastLogin: timestamp("lastLogin").notNull().defaultNow(),
   },
   (table) => [
     index("idx_admin_email").on(table.email),
@@ -221,7 +222,7 @@ export const auditLogs = pgTable(
 // Relations
 // ------------------------
 export const adminRelations = relations(admins, ({ many }) => ({
-   sessions: many(adminSessions),
+  sessions: many(adminSessions),
   passwordResets: many(passwordResets),
   auditLogs: many(auditLogs),
   adminActivities: many(adminActivities),
@@ -299,6 +300,3 @@ export type Admin = typeof admins.$inferSelect & {
   createdCenters?: Center[];
   modifiedCenters?: Center[];
 };
-
-
-

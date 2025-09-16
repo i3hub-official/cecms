@@ -1,8 +1,8 @@
 // src/app/api/auth/signin/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
-import { comparePassword, generateToken, generateSessionId } from "@/lib/auth";
-import { admins, adminSessions } from "@/lib/server/db/schema";
+import { comparePassword, createAuthSession } from "@/lib/auth"; // Use createAuthSession instead
+import { admins } from "@/lib/server/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
@@ -39,31 +39,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate token and session
-    const token = generateToken({
-      userId: admin.id,
-      email: admin.email,
-      role: admin.role,
-    });
+    // Get user agent and IP for session tracking
+    const userAgent = request.headers.get("user-agent") || undefined;
+    const ipAddress =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
 
-    const sessionId = generateSessionId();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    // Store session in DB
-    await db.insert(adminSessions).values({
-      adminId: admin.id,
-      sessionId,
-      token,
-      expiresAt,
-      isActive: true,
-      createdAt: new Date(),
-      lastUsed: new Date(),
-      // Optional fields can be null if not provided
-      userAgent: null,
-      ipAddress: null,
-      location: null,
-      deviceType: null,
-    });
+    // Use createAuthSession to properly create both token and session
+    const { token, sessionId } = await createAuthSession(
+      admin.id,
+      admin.email,
+      admin.role,
+      admin.name,
+      userAgent,
+      ipAddress
+    );
 
     // Return user info
     const response = NextResponse.json({
@@ -75,6 +66,7 @@ export async function POST(request: NextRequest) {
         name: admin.name,
         role: admin.role,
       },
+      sessionId, // Optional: return session ID for client-side tracking
     });
 
     // ✅ Set secure HttpOnly cookie
@@ -86,8 +78,17 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
+    // Also set a non-HttpOnly cookie for client-side session awareness
+    response.cookies.set("session-active", "true", {
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60,
+      path: "/",
+    });
+
     // Set cache control headers
     response.headers.set("Cache-Control", "no-store, max-age=0");
+    response.headers.set("Authorization", `Bearer ${token}`);
 
     return response;
   } catch (error) {
