@@ -34,3 +34,72 @@ export interface LocationData {
   states: string[];
   lgas: { [state: string]: string[] };
 }
+
+// types.ts (create this file if it doesn't exist)
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+export interface CentersResponse {
+  centers: Center[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface DashboardStats {
+  total: number;
+  active: number;
+  inactive: number;
+  inactiveCenters: Center[];
+  recentActivity: Center[];
+}
+
+export interface MergeResult {
+  success: boolean;
+  message: string;
+  mergedCount?: number;
+}
+
+export interface Notification {
+  id: string;
+  type: "success" | "error" | "warning" | "info";
+  title: string;
+  message: string;
+}
+
+export interface ConfirmationModal {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  type: "danger" | "warning" | "info";
+}
+
+export interface Stats {
+  total: number;
+  active: number;
+  inactive: number;
+  inactiveCenters: Center[];
+  recentActivity: Center[];
+}
+
+export interface Duplicate {
+  centers: Center[];
+  similarity: number;
+  type: "name" | "address" | "location";
+}
+
+export interface LocationData {
+  states: string[];
+  lgas: { [state: string]: string[] };
+}

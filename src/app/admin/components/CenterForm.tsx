@@ -74,44 +74,107 @@ export interface CentersResponse {
   };
 }
 
+export interface MergeResult {
+  success: boolean;
+  message: string;
+  mergedCount?: number;
+}
+
 // Real API functions using your actual database
 const api = {
   async getStates(): Promise<string[]> {
-    const cached = sessionStorage.getItem("cachedStates");
-    if (cached) return JSON.parse(cached);
+    try {
+      // Check if we're in a browser environment before using sessionStorage
+      if (typeof window !== 'undefined') {
+        const cached = sessionStorage.getItem("cachedStates");
+        if (cached) return JSON.parse(cached);
+      }
 
-    const res = await fetch("https://apinigeria.vercel.app/api/v1/states");
-    if (!res.ok) throw new Error("Failed to fetch states");
-    const data = await res.json();
-    const states = data.states || [];
-    sessionStorage.setItem("cachedStates", JSON.stringify(states));
-    return states;
+      const res = await fetch("https://apinigeria.vercel.app/api/v1/states");
+
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch states: ${res.status} ${res.statusText}`
+        );
+      }
+
+      const data = await res.json();
+
+      if (!data || !Array.isArray(data.states)) {
+        throw new Error("Unexpected API response format for states");
+      }
+
+      const states = data.states;
+      
+      // Only cache if we're in a browser environment
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem("cachedStates", JSON.stringify(states));
+      }
+      
+      return states;
+    } catch (error: unknown) {
+      console.error("Error fetching states:", error);
+
+      // Provide graceful fallback (don't break flow)
+      return [
+        "Error: Unable to load states at this time. Please check your connection.",
+      ];
+    }
   },
 
   async getLgas(state: string): Promise<string[]> {
-    const cachedLgas = sessionStorage.getItem("cachedLgas");
-    const lgaMap = cachedLgas
-      ? new Map(Object.entries(JSON.parse(cachedLgas)))
-      : new Map();
+    try {
+      // Check if we're in a browser environment before using sessionStorage
+      let lgaMap = new Map<string, string[]>();
+      if (typeof window !== 'undefined') {
+        const cachedLgas = sessionStorage.getItem("cachedLgas");
+        lgaMap = cachedLgas
+          ? new Map(Object.entries(JSON.parse(cachedLgas)))
+          : new Map();
+      }
 
-    if (lgaMap.has(state)) return lgaMap.get(state) as string[];
+      if (lgaMap.has(state)) return lgaMap.get(state) as string[];
 
-    const res = await fetch(
-      `https://apinigeria.vercel.app/api/v1/lga?state=${encodeURIComponent(
-        state
-      )}`
-    );
-    if (!res.ok) throw new Error("Failed to fetch LGAs");
-    const data = await res.json();
-    const lgas = data.lgas || [];
+      const res = await fetch(
+        `https://apinigeria.vercel.app/api/v1/lga?state=${encodeURIComponent(
+          state
+        )}`
+      );
 
-    lgaMap.set(state, lgas);
-    sessionStorage.setItem(
-      "cachedLgas",
-      JSON.stringify(Object.fromEntries(lgaMap))
-    );
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch LGAs for "${state}": ${res.status} ${res.statusText}`
+        );
+      }
 
-    return lgas;
+      const data = await res.json();
+
+      if (!data || !Array.isArray(data.lgas)) {
+        throw new Error(
+          `Unexpected API response format for LGAs in "${state}"`
+        );
+      }
+
+      const lgas = data.lgas;
+
+      // Cache updated data only if we're in a browser environment
+      if (typeof window !== 'undefined') {
+        lgaMap.set(state, lgas);
+        sessionStorage.setItem(
+          "cachedLgas",
+          JSON.stringify(Object.fromEntries(lgaMap))
+        );
+      }
+
+      return lgas;
+    } catch (error: unknown) {
+      console.error(`Error fetching LGAs for state "${state}":`, error);
+
+      // Graceful fallback
+      return [
+        `Error: Unable to load LGAs for "${state}". Please check your connection.`,
+      ];
+    }
   },
 
   async getCenters(
@@ -129,65 +192,145 @@ const api = {
       });
 
       const response = await fetch(`/api/centers?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch centers");
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch centers (page=${page}, limit=${limit}, search="${search}") → ${response.status} ${response.statusText}`
+        );
+      }
 
       const data = await response.json();
+
+      if (!data || !Array.isArray(data.centers)) {
+        throw new Error("Unexpected API response format for centers");
+      }
+
       return {
-        centers: data.centers || [],
+        centers: data.centers,
         pagination: data.pagination || { page, limit, total: 0, pages: 0 },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching centers:", error);
-      throw new Error("Failed to load centers");
+
+      // Graceful fallback
+      return {
+        centers: [],
+        pagination: { page, limit, total: 0, pages: 0 },
+      };
     }
   },
 
-  async getStats() {
+  async getStats(): Promise<DashboardStats> {
     try {
       const response = await fetch("/api/dashboard");
-      if (!response.ok) throw new Error("Failed to fetch stats");
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch stats → ${response.status} ${response.statusText}`
+        );
+      }
 
       const data = await response.json();
+
+      if (!data?.data?.centers) {
+        throw new Error("Unexpected API response format for statistics");
+      }
+
       return {
-        total: data.data?.centers?.total || 0,
-        active: data.data?.centers?.active || 0,
-        inactive: data.data?.centers?.inactive || 0,
-        inactiveCenters: [],
-        recentActivity: data.data?.recentCenters || [],
+        total: data.data.centers.total || 0,
+        active: data.data.centers.active || 0,
+        inactive: data.data.centers.inactive || 0,
+        inactiveCenters: data.data.inactiveCenters || [],
+        recentActivity: data.data.recentCenters || [],
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching stats:", error);
-      throw new Error("Failed to load statistics");
+
+      // Graceful fallback
+      return {
+        total: 0,
+        active: 0,
+        inactive: 0,
+        inactiveCenters: [],
+        recentActivity: [
+          {
+            id: "error",
+            name: "Failed to load statistics",
+            state: "",
+            number: "",
+            isActive: false,
+            createdAt: new Date().toISOString(),
+            modifiedAt: new Date().toISOString(),
+          },
+        ],
+      };
     }
   },
 
-  async findDuplicates() {
+  async findDuplicates(): Promise<Center[]> {
     try {
       const response = await fetch("/api/centers/duplicates");
-      if (!response.ok) return [];
-      return await response.json();
-    } catch (error) {
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch duplicates → ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!Array.isArray(data)) {
+        throw new Error("Unexpected API response format for duplicates");
+      }
+
+      return data;
+    } catch (error: unknown) {
       console.error("Error finding duplicates:", error);
-      throw new Error("Failed to find duplicates");
+
+      // Graceful fallback
+      return [];
     }
   },
 
-  async mergeCenters(primaryId: string, secondaryIds: string[]) {
+  async mergeCenters(primaryId: string, secondaryIds: string[]): Promise<MergeResult> {
     try {
       const response = await fetch("/api/centers/merge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ primaryId, secondaryIds }),
       });
-      if (!response.ok) return null;
-      return await response.json();
-    } catch (error) {
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to merge centers (primary=${primaryId}, secondary=${secondaryIds.join(
+            ", "
+          )}) → ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!data) {
+        throw new Error("Unexpected API response format after merge");
+      }
+
+      return {
+        success: data.success || false,
+        message: data.message || "Centers merged successfully",
+        mergedCount: data.mergedCount,
+      };
+    } catch (error: unknown) {
       console.error("Error merging centers:", error);
-      throw new Error("Failed to merge centers");
+
+      // Graceful fallback
+      return {
+        success: false,
+        message: "Failed to merge centers. Please try again later.",
+      };
     }
   },
 
-  async createCenter(center: Omit<Center, "id" | "createdAt" | "modifiedAt">) {
+  async createCenter(center: Omit<Center, "id" | "createdAt" | "modifiedAt">): Promise<Center> {
     try {
       const response = await fetch("/api/centers", {
         method: "POST",
@@ -207,7 +350,7 @@ const api = {
     }
   },
 
-  async updateCenter(id: string, updates: Partial<Center>) {
+  async updateCenter(id: string, updates: Partial<Center>): Promise<Center> {
     try {
       const response = await fetch(`/api/centers/${id}`, {
         method: "PUT",
@@ -227,7 +370,7 @@ const api = {
     }
   },
 
-  async deleteCenter(id: string) {
+  async deleteCenter(id: string): Promise<boolean> {
     try {
       const response = await fetch(`/api/centers/${id}`, {
         method: "DELETE",
@@ -244,7 +387,6 @@ const api = {
       throw error;
     }
   },
-};
 
 // Helper function to generate center number
 const generateCenterNumber = (
@@ -1117,8 +1259,8 @@ export default function CenterManagementSystem() {
                               lga !== undefined &&
                               lga.trim() !== ""
                           )
-                          .map((lga) => (
-                            <option key={lga} value={lga}>
+                          .map((lga, index) => (
+                            <option key={`${lga}-${index}`} value={lga}>
                               {lga}
                             </option>
                           ))
