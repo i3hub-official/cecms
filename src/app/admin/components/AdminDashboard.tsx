@@ -181,14 +181,12 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 bg-card text-foreground">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-            Dashboard
-          </h1>
-          <p className="text-sm md:text-base text-gray-600">
+          <h1 className="text-xl md:text-2xl font-bold">Dashboard</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Overview of center management system
             {lastUpdated && (
               <span className="ml-2 text-xs md:text-sm">
@@ -200,7 +198,7 @@ export default function AdminDashboard() {
         <button
           onClick={() => loadDashboardData(true)}
           disabled={refreshing}
-          className="inline-flex items-center justify-center px-3 py-2 md:px-4 md:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm md:text-base"
+          className="inline-flex items-center justify-center px-3 py-2 md:px-4 md:py-2 bg-background/30 text-primary-foreground rounded-xl hover:bg-background/90 disabled:opacity-50 text-sm md:text-base transition-colors"
         >
           <RefreshCw
             className={`h-4 w-4 mr-1 md:mr-2 ${
@@ -210,66 +208,79 @@ export default function AdminDashboard() {
           Refresh
         </button>
       </div>
+
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4">
           <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-            <span className="text-red-700 text-sm md:text-base">{error}</span>
+            <AlertCircle className="h-5 w-5 text-destructive mr-2" />
+            <span className="text-destructive text-sm md:text-base">
+              {error}
+            </span>
           </div>
         </div>
       )}
 
       {/* Primary Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           {
             icon: Building,
             value: stats.centers.total,
             label: "Total Centers",
             subText: `${stats.centers.active} active • ${stats.centers.inactive} inactive`,
-            color: "blue",
+            color: "primary",
           },
           {
             icon: CheckCircle,
             value: stats.sessions.active,
             label: "Active Sessions",
             subText: `${stats.sessions.total} total`,
-            color: "green",
+            color: "primary",
           },
           {
             icon: Activity,
             value: stats.centers.recentlyModified,
             label: "Recent Activity (7d)",
             subText: `${stats.centers.recentlyCreated} new centers`,
-            color: "purple",
+            color: "primary",
           },
           {
             icon: Users,
             value: stats.admins.active,
             label: "Active Admins",
             subText: `${stats.admins.total} total`,
-            color: "orange",
+            color: "primary",
           },
         ].map((card, index) => {
           const Icon = card.icon;
           return (
             <div
               key={index}
-              className="card p-6 flex flex-col justify-between transition hover:shadow-md"
+              className="border border-border rounded-xl p-6 transition-all hover:shadow-md hover:border-primary bg-card"
             >
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Icon className={`h-8 w-8 text-${card.color}-600`} />
+              <div className="flex justify-between items-start mb-4">
+                <Icon
+                  className={`h-6 w-6 ${
+                    card.color === "primary"
+                      ? "text-primary"
+                      : card.color === "success"
+                      ? "text-success"
+                      : card.color === "purple"
+                      ? "text-purple-500"
+                      : "text-orange-500"
+                  }`}
+                />
+                <div className="text-2xl font-bold text-card-foreground">
+                  {card.value}
                 </div>
-                <div className="ml-4">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {card.value}
-                  </div>
-                  <div className="text-sm text-gray-600">{card.label}</div>
-                  <div className={`text-xs text-${card.color}-600 mt-1`}>
-                    {card.subText}
-                  </div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">
+                  {card.label}
+                </div>
+                <div className="text-xs text-muted-foreground/80 mt-2">
+                  {card.subText}
                 </div>
               </div>
             </div>
@@ -278,7 +289,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
         {[
           {
             title: "Security Status",
@@ -330,12 +341,13 @@ export default function AdminDashboard() {
         ].map((section, index) => {
           const Icon = section.icon;
           return (
-            <div key={index} className="card p-6">
+            <div
+              key={index}
+              className="border border-border rounded-xl p-6 transition-all hover:shadow-md bg-background/30"
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  {section.title}
-                </h3>
-                <Icon className="h-5 w-5 text-gray-400" />
+                <h3 className="text-lg font-medium">{section.title}</h3>
+                <Icon className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="space-y-3">
                 {section.items.map((item, itemIndex) => (
@@ -343,14 +355,16 @@ export default function AdminDashboard() {
                     key={itemIndex}
                     className="flex justify-between items-center"
                   >
-                    <span className="text-sm text-gray-600">{item.label}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {item.label}
+                    </span>
                     <span
                       className={`font-medium text-sm ${
                         item.status === "good"
                           ? "text-success"
                           : item.status === "bad"
-                          ? "text-danger"
-                          : "text-info"
+                          ? "text-destructive"
+                          : "text-primary"
                       }`}
                     >
                       {item.value}
@@ -366,41 +380,37 @@ export default function AdminDashboard() {
       {/* Data Tables */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Centers Table */}
-        <div className="card p-6 overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
-            <h2 className="text-lg font-medium text-gray-900">
-              Recently Added Centers
-            </h2>
-            <button className="btn btn-secondary text-sm py-2">
+        <div className="border border-border rounded-xl p-6 overflow-hidden transition-all hover:shadow-md">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2 sm:gap-0">
+            <h2 className="text-lg font-medium">Recently Added Centers</h2>
+            <button className="inline-flex items-center justify-center px-3 py-2 border border-border rounded-xl text-sm hover:bg-card hover:text-accent-foreground transition-colors">
               <Eye className="h-4 w-4 mr-2" />
               View All
             </button>
           </div>
 
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 bg-background/30">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-card">
                 <tr>
-                  <th className="px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Center
                   </th>
-                  <th className="px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Created
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {recentCenters.map((center) => (
                   <tr key={center.id}>
                     <td className="px-3 py-3 md:px-4 md:py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <div className="text-sm font-medium text-gray-900">
-                          {center.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-sm font-medium">{center.name}</div>
+                        <div className="text-xs text-muted-foreground">
                           #{center.number}
                         </div>
                       </div>
@@ -409,14 +419,14 @@ export default function AdminDashboard() {
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           center.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-success/20 text-success"
+                            : "bg-destructive/20 text-destructive"
                         }`}
                       >
                         {center.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-3 py-3 md:px-4 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
+                    <td className="px-3 py-3 md:px-4 md:py-4 whitespace-nowrap text-xs md:text-sm text-muted-foreground">
                       {formatDate(center.createdAt)}
                     </td>
                   </tr>
@@ -425,7 +435,7 @@ export default function AdminDashboard() {
             </table>
 
             {recentCenters.length === 0 && (
-              <div className="text-center py-6 md:py-8 text-gray-500 text-sm md:text-base">
+              <div className="text-center py-6 md:py-8 text-muted-foreground text-sm md:text-base">
                 No centers found. Add your first center to get started.
               </div>
             )}
@@ -433,20 +443,18 @@ export default function AdminDashboard() {
         </div>
 
         {/* Active Sessions Table */}
-        <div className="card p-6">
+        <div className="border border-border rounded-xl p-6 transition-all hover:shadow-md">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-medium text-gray-900">
-              Active Sessions
-            </h2>
-            <Shield className="h-5 w-5 text-gray-400" />
+            <h2 className="text-lg font-medium">Active Sessions</h2>
+            <Shield className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="space-y-4">
             {activeSessions.length === 0 ? (
               <div className="text-center py-4 md:py-6">
-                <div className="text-gray-400 mb-2">
+                <div className="text-muted-foreground mb-2">
                   <Shield className="h-8 w-8 mx-auto" />
                 </div>
-                <p className="text-gray-500 text-sm md:text-base">
+                <p className="text-muted-foreground text-sm md:text-base">
                   No active sessions data available
                 </p>
               </div>
@@ -454,21 +462,21 @@ export default function AdminDashboard() {
               activeSessions.map((session) => (
                 <div
                   key={session.id}
-                  className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-2 md:p-3 bg-background/30 rounded-lg"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 text-sm md:text-base truncate">
+                    <div className="font-medium text-sm md:text-base truncate">
                       {session.admin.name}
                     </div>
-                    <div className="text-xs md:text-sm text-gray-600 truncate">
+                    <div className="text-xs md:text-sm text-muted-foreground truncate">
                       {session.admin.email}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       Last used: {getTimeAgo(session.lastUsed)}
                     </div>
                   </div>
                   <div className="flex items-center ml-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <div className="w-2 h-2 bg-success rounded-full"></div>
                   </div>
                 </div>
               ))
@@ -478,11 +486,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="card p-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="border border-border rounded-xl p-6 transition-all hover:shadow-md">
+        <h2 className="text-lg font-medium mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-background/30">
           {[
             { icon: Building, label: "Manage Centers", href: "/admin/centers" },
             { icon: Shield, label: "View Sessions", href: "/admin/sessions" },
@@ -497,7 +503,7 @@ export default function AdminDashboard() {
             return (
               <button
                 key={index}
-                className="btn btn-secondary text-xs md:text-sm py-2"
+                className="inline-flex items-center justify-center px-3 py-2 border border-border bg-background/30 rounded-xl text-xs md:text-sm hover:bg-background hover:text-accent-foreground transition-colors"
                 onClick={() => (window.location.href = action.href)}
               >
                 <Icon className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
@@ -509,14 +515,14 @@ export default function AdminDashboard() {
       </div>
 
       {/* System Health Indicator */}
-      <div className="card p-4 bg-green-50 border border-green-200">
+      <div className="border border-success/20 rounded-xl p-4 bg-success/10">
         <div className="flex items-center">
           <CheckCircle className="h-5 w-5 text-success mr-2" />
           <div className="flex-1">
-            <div className="text-base font-medium text-green-900">
+            <div className="text-base font-medium text-success">
               System Status: All Systems Operational
             </div>
-            <div className="text-sm text-green-700">
+            <div className="text-sm text-success/80">
               Database connected • {stats.sessions.active} active sessions •
               Last updated{" "}
               {lastUpdated ? getTimeAgo(lastUpdated.toISOString()) : "recently"}

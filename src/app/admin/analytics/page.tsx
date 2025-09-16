@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   BarChart3,
   TrendingUp,
@@ -88,7 +88,7 @@ function NotificationContainer({
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`relative bg-white rounded-lg shadow-lg border-l-4 p-3 transition-all duration-300 ease-in-out transform animate-in slide-in-from-right-5 ${
+          className={`relative bg-card rounded-lg shadow-lg border-l-4 p-3 transition-all duration-300 ease-in-out transform animate-in slide-in-from-right-5 ${
             notification.type === "success"
               ? "border-success"
               : notification.type === "error"
@@ -140,8 +140,8 @@ function LoadingSkeleton() {
     <div className="animate-pulse space-y-4 sm:space-y-6">
       {/* Header skeleton */}
       <div className="space-y-3">
-        <div className="h-6 sm:h-8 bg-gray-200 rounded w-32 sm:w-48"></div>
-        <div className="h-4 bg-gray-200 rounded w-48 sm:w-64"></div>
+        <div className="h-6 sm:h-8 bg-card rounded w-32 sm:w-48"></div>
+        <div className="h-4 bg-card rounded w-48 sm:w-64"></div>
       </div>
 
       {/* Stats grid skeleton */}
@@ -149,19 +149,19 @@ function LoadingSkeleton() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="h-20 sm:h-24 lg:h-28 bg-gray-200 rounded-lg"
+            className="h-20 sm:h-24 lg:h-28 bg-card rounded-lg"
           ></div>
         ))}
       </div>
 
       {/* Charts skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-        <div className="h-48 sm:h-64 lg:h-72 bg-gray-200 rounded-lg"></div>
-        <div className="h-48 sm:h-64 lg:h-72 bg-gray-200 rounded-lg"></div>
+        <div className="h-48 sm:h-64 lg:h-72 bg-card rounded-lg"></div>
+        <div className="h-48 sm:h-64 lg:h-72 bg-card rounded-lg"></div>
       </div>
 
       {/* System health skeleton */}
-      <div className="h-32 sm:h-36 bg-gray-200 rounded-lg"></div>
+      <div className="h-32 sm:h-36 bg-card rounded-lg"></div>
     </div>
   );
 }
@@ -173,89 +173,60 @@ function MetricCard({
   label,
   subText,
   trend,
-  color = "blue",
-  loading = false,
-}: {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  value: number | string;
-  label: string;
-  subText?: string;
-  trend?: { value: number; direction: "up" | "down" };
-  color?: "blue" | "green" | "purple" | "orange" | "red" | "yellow";
-  loading?: boolean;
+  color,
+  loading,
+  className = "",
 }) {
-  const colorClasses = {
-    blue: "text-info bg-blue-50 border-blue-100",
-    green: "text-success bg-green-50 border-green-100",
-    purple: "text-purple-600 bg-purple-50 border-purple-100",
-    orange: "text-orange-600 bg-orange-50 border-orange-100",
-    red: "text-danger bg-red-50 border-red-100",
-    yellow: "text-info bg-yellow-50 border-yellow-100",
-  };
-
-  const trendColors = {
-    up: "text-success bg-green-50",
-    down: "text-danger bg-red-50",
-  };
-
   return (
     <div
-      className={`bg-white rounded-lg border p-3 sm:p-4 lg:p-6 ${colorClasses[color]} shadow-sm hover:shadow-md transition-all duration-200`}
+      className={`rounded-xl p-4 transition-all hover:shadow-md ${className}`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0">
-            {loading ? (
-              <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 animate-spin text-gray-400" />
-            ) : (
-              <Icon
-                className={`h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 ${
-                  colorClasses[color].split(" ")[0]
-                }`}
-              />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">
-              {loading ? (
-                <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
-              ) : typeof value === "number" ? (
-                value.toLocaleString()
-              ) : (
-                value
-              )}
-            </div>
-            <div className="text-xs sm:text-sm text-gray-600 truncate">
-              {label}
-            </div>
-          </div>
-        </div>
+      <div className="flex justify-between items-start mb-3">
+        <Icon
+          className={`h-5 w-5 ${
+            color === "blue"
+              ? "text-blue-500"
+              : color === "green"
+              ? "text-green-500"
+              : color === "purple"
+              ? "text-purple-500"
+              : color === "orange"
+              ? "text-orange-500"
+              : "text-gray-500"
+          }`}
+        />
 
-        {trend && !loading && (
+        {/* Trend indicator - keeping same size and location */}
+        {trend && (
           <div
-            className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
-              trendColors[trend.direction]
+            className={`flex items-center text-xs ${
+              trend.direction === "up"
+                ? "text-green-500"
+                : "text-primary-foreground"
             }`}
           >
             {trend.direction === "up" ? (
-              <TrendingUp className="h-3 w-3" />
+              <TrendingUp className="h-3 w-3 mr-1" />
             ) : (
-              <TrendingDown className="h-3 w-3" />
+              <TrendingDown className="h-3 w-3 mr-1" />
             )}
-            <span>{Math.abs(trend.value)}%</span>
+            {trend.value}%
           </div>
         )}
       </div>
 
-      {subText && !loading && (
-        <div
-          className={`text-xs mt-2 ${
-            colorClasses[color].split(" ")[0]
-          } font-medium truncate`}
-        >
-          {subText}
+      <div className="mb-2">
+        <div className="text-2xl font-bold text-card-foreground">
+          {loading ? (
+            <div className="h-7 w-12 bg-muted rounded animate-pulse"></div>
+          ) : (
+            value
+          )}
         </div>
-      )}
+        <div className="text-sm text-muted-foreground">{label}</div>
+      </div>
+
+      <div className="text-xs text-muted-foreground/80">{subText}</div>
     </div>
   );
 }
@@ -264,23 +235,41 @@ function MetricCard({
 function ActivityChart({
   data,
   loading,
+  timeRange = "7d"
 }: {
   data: TrendData[];
   loading: boolean;
+  timeRange?: string;
 }) {
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const updateContainerSize = () => {
+      if (chartContainerRef.current) {
+        setContainerWidth(chartContainerRef.current.offsetWidth);
+      }
+    };
+
+    updateContainerSize();
+    window.addEventListener('resize', updateContainerSize);
+    
+    return () => window.removeEventListener('resize', updateContainerSize);
+  }, []);
+
   if (loading) {
     return (
       <div className="h-48 sm:h-56 lg:h-64 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (!data.length) {
     return (
-      <div className="h-48 sm:h-56 lg:h-64 flex items-center justify-center text-gray-500">
+      <div className="h-48 sm:h-56 lg:h-64 flex items-center justify-center text-muted-foreground">
         <div className="text-center">
-          <BarChart3 className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 text-gray-300" />
+          <BarChart3 className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 text-muted-foreground/50" />
           <p className="text-sm">No activity data available</p>
         </div>
       </div>
@@ -290,17 +279,39 @@ function ActivityChart({
   const maxActivity = Math.max(...data.map((d) => d.activity));
   const maxCenters = Math.max(...data.map((d) => d.centers));
 
+  // Calculate bar width based on container width and number of data points
+  const calculateBarDimensions = () => {
+    const minBarWidth = 8;
+    const maxBarWidth = 20;
+    const spacing = 4;
+    
+    const availableWidth = containerWidth - (data.length * spacing);
+    const barWidth = Math.max(minBarWidth, Math.min(maxBarWidth, availableWidth / data.length));
+    
+    return {
+      barWidth,
+      spacing,
+      totalWidth: data.length * (barWidth + spacing)
+    };
+  };
+
+  const { barWidth, spacing, totalWidth } = calculateBarDimensions();
+
   return (
-    <div className="space-y-4">
-      <div className="h-48 sm:h-56 lg:h-64 flex items-end justify-between space-x-1 sm:space-x-2 px-2">
+    <div className="space-y-4" ref={chartContainerRef}>
+      <div 
+        className="h-48 sm:h-56 lg:h-64 flex items-end justify-start space-x-1 sm:space-x-2 px-2 overflow-x-auto"
+        style={{ minWidth: `${totalWidth}px` }}
+      >
         {data.map((day, index) => (
           <div
             key={day.date}
-            className="flex flex-col items-center space-y-1 flex-1 max-w-12"
+            className="flex flex-col items-center space-y-1"
+            style={{ width: `${barWidth}px`, minWidth: `${barWidth}px` }}
           >
             <div className="flex flex-col items-center space-y-0.5 w-full">
               <div
-                className="w-full bg-blue-500 rounded-t transition-all duration-300 hover:bg-blue-600 cursor-pointer"
+                className="w-full bg-primary rounded-t transition-all duration-300 hover:bg-primary/80 cursor-pointer"
                 style={{
                   height: `${Math.max(
                     (day.activity / maxActivity) * 120,
@@ -321,9 +332,9 @@ function ActivityChart({
                 ).toLocaleDateString()}`}
               ></div>
             </div>
-            <div className="text-xs text-gray-500 text-center font-medium">
+            <div className="text-xs text-muted-foreground text-center font-medium whitespace-nowrap">
               {new Date(day.date).toLocaleDateString("en-US", {
-                weekday: "short",
+                month: data.length > 14 ? "short" : "numeric",
                 day: "numeric",
               })}
             </div>
@@ -334,14 +345,14 @@ function ActivityChart({
       {/* Legend */}
       <div className="flex justify-center space-x-4 sm:space-x-6">
         <div className="flex items-center">
-          <div className="w-3 h-3 bg-blue-500 rounded mr-2"></div>
-          <span className="text-xs sm:text-sm text-gray-600 font-medium">
+          <div className="w-3 h-3 bg-primary rounded mr-2"></div>
+          <span className="text-xs sm:text-sm text-muted-foreground font-medium">
             Activities
           </span>
         </div>
         <div className="flex items-center">
           <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
-          <span className="text-xs sm:text-sm text-gray-600 font-medium">
+          <span className="text-xs sm:text-sm text-muted-foreground font-medium">
             Centers
           </span>
         </div>
@@ -364,10 +375,10 @@ function UsageDistribution({
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="flex justify-between mb-2">
-              <div className="h-4 w-24 bg-gray-200 rounded"></div>
-              <div className="h-4 w-12 bg-gray-200 rounded"></div>
+              <div className="h-4 w-24 text-primary-foreground rounded"></div>
+              <div className="h-4 w-12 text-primary-foreground rounded"></div>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2"></div>
+            <div className="w-full rounded-full h-2"></div>
           </div>
         ))}
       </div>
@@ -402,17 +413,19 @@ function UsageDistribution({
       {items.map((item, index) => (
         <div key={index}>
           <div className="flex justify-between items-center text-xs sm:text-sm mb-2">
-            <span className="text-gray-600 font-medium">{item.label}</span>
+            <span className="text-primary-foreground font-medium">
+              {item.label}
+            </span>
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-gray-900">
+              <span className="font-bold text-primary-foreground">
                 {item.value.toLocaleString()}
               </span>
-              <span className="text-gray-500 text-xs">
+              <span className="text-foreground text-xs">
                 ({item.percentage.toFixed(1)}%)
               </span>
             </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-card rounded-full h-2 overflow-hidden">
             <div
               className={`h-2 rounded-full transition-all duration-500 ease-out ${
                 item.color === "blue"
@@ -645,20 +658,20 @@ export default function AnalyticsPage() {
         removeNotification={removeNotification}
       />
 
-      <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6">
+      <div className="min-h-screen bg-background p-3 sm:p-4 lg:p-6">
         <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
           {/* Header */}
-          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
             <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
               <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-card-foreground">
                   Analytics Dashboard
                 </h1>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">
                   System usage and performance metrics
                 </p>
                 {lastUpdated && (
-                  <div className="flex items-center text-xs text-gray-500 mt-2">
+                  <div className="flex items-center text-xs text-muted-foreground mt-2">
                     <Clock className="h-3 w-3 mr-1" />
                     Last updated: {lastUpdated.toLocaleTimeString()}
                   </div>
@@ -669,7 +682,7 @@ export default function AnalyticsPage() {
                 <select
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-background disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={refreshing || loading}
                 >
                   <option value="7d">Last 7 days</option>
@@ -680,7 +693,7 @@ export default function AnalyticsPage() {
                 <button
                   onClick={() => loadAnalytics(true)}
                   disabled={refreshing || loading}
-                  className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                  className="inline-flex items-center justify-center px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
                 >
                   <RefreshCw
                     className={`h-4 w-4 mr-2 ${
@@ -695,17 +708,17 @@ export default function AnalyticsPage() {
 
           {/* Error Alert */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 shadow-sm">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 sm:p-4">
               <div className="flex items-start">
-                <AlertCircle className="h-5 w-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-destructive mr-3 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <span className="text-red-700 text-sm sm:text-base break-words">
+                  <span className="text-destructive text-sm sm:text-base break-words">
                     {error}
                   </span>
                 </div>
                 <button
                   onClick={() => setError(null)}
-                  className="ml-3 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-sm font-medium transition-colors flex-shrink-0"
+                  className="ml-3 bg-destructive/20 hover:bg-destructive/30 text-destructive px-3 py-1 rounded-xl text-sm font-medium transition-colors flex-shrink-0"
                 >
                   Dismiss
                 </button>
@@ -718,7 +731,7 @@ export default function AnalyticsPage() {
           ) : (
             <>
               {/* Key Metrics Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 bg-card p-3 sm:p-4 rounded-xl border border-border">
                 <MetricCard
                   icon={Database}
                   value={data.centerStats.total}
@@ -727,6 +740,7 @@ export default function AnalyticsPage() {
                   trend={{ value: 8.5, direction: "up" }}
                   color="blue"
                   loading={refreshing}
+                  className="bg-background/50 border border-border"
                 />
                 <MetricCard
                   icon={Globe}
@@ -736,6 +750,7 @@ export default function AnalyticsPage() {
                   trend={{ value: 12.3, direction: "up" }}
                   color="green"
                   loading={refreshing}
+                  className="bg-background/50 border border-border"
                 />
                 <MetricCard
                   icon={Users}
@@ -745,6 +760,7 @@ export default function AnalyticsPage() {
                   trend={{ value: 5.2, direction: "up" }}
                   color="purple"
                   loading={refreshing}
+                  className="bg-background/50 border border-border"
                 />
                 <MetricCard
                   icon={Activity}
@@ -754,32 +770,44 @@ export default function AnalyticsPage() {
                   trend={{ value: 2.1, direction: "down" }}
                   color="orange"
                   loading={refreshing}
+                  className="bg-background/50 border border-border"
                 />
               </div>
 
               {/* Charts Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 bg-background/20 p-3 sm:p-4 rounded-xl border border-border">
                 {/* Activity Trend Chart */}
-                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                <div className="bg-background/50 rounded-xl border border-border p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                    <h3 className="text-base sm:text-lg font-semibold text-card-foreground">
                       Activity Trend
                     </h3>
-                    <div className="flex items-center text-sm text-gray-500">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <TrendingUp className="h-4 w-4 mr-1" />
                       {timeRange}
                     </div>
                   </div>
-                  <ActivityChart data={data.trends} loading={refreshing} />
+                  <div className="w-full overflow-x-auto">
+                    <div
+                      className="min-w-[300px] sm:min-w-[400px] md:min-w-[500px] lg:min-w-0"
+                      style={{ height: "280px" }}
+                    >
+                      <ActivityChart
+                        data={data.trends}
+                        loading={refreshing}
+                        timeRange={timeRange}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Usage Distribution */}
-                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                    <h3 className="text-base sm:text-lg font-semibold text-card-foreground">
                       Usage Distribution
                     </h3>
-                    <div className="flex items-center text-sm text-gray-500">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <BarChart3 className="h-4 w-4 mr-1" />
                       Current period
                     </div>
@@ -789,9 +817,9 @@ export default function AnalyticsPage() {
               </div>
 
               {/* System Health */}
-              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+              <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                  <h3 className="text-base sm:text-lg font-semibold text-card-foreground">
                     System Health
                   </h3>
                   <div className="flex items-center text-sm text-success">
@@ -860,6 +888,8 @@ export default function AnalyticsPage() {
                           | "red"
                           | "yellow"
                       }
+                      trend={null}
+                      loading={false}
                     />
                   ))}
                 </div>

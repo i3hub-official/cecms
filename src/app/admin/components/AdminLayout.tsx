@@ -1,9 +1,11 @@
-// src/app/admin/components/AdminLayout.tsx
 "use client";
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { useTheme } from "@/app/components/ThemeContext";
 import {
+  Sun,
+  Moon,
   Building,
   Users,
   Settings,
@@ -27,7 +29,6 @@ interface AdminLayoutProps {
   children: React.ReactNode;
   user: User;
   onLogout: () => void;
-  /** If true, page content fills screen width */
   fluid?: boolean;
 }
 
@@ -35,8 +36,9 @@ export default function AdminLayout({
   children,
   user,
   onLogout,
-  fluid = false, // default capped
+  fluid = false,
 }: AdminLayoutProps) {
+  const { darkMode, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -63,14 +65,32 @@ export default function AdminLayout({
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-card text-card-foreground shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
+        {/* Sidebar Header */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-border">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-3">
             <Building className="h-8 w-8 text-primary" />
-            <div className="ml-3">
+            <div>
               <h1 className="text-lg font-semibold">CMS Admin</h1>
               <p className="text-xs text-muted-foreground">v1.0</p>
             </div>
           </div>
+
+          {/* Desktop Theme Toggle */}
+          <div className="hidden lg:flex items-center">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+              aria-label="Toggle theme"
+            >
+              {darkMode ? (
+                <Sun className="h-5 w-5 text-accent" />
+              ) : (
+                <Moon className="h-5 w-5 text-foreground" />
+              )}
+            </button>
+          </div>
+
+          {/* Mobile Close */}
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-muted-foreground hover:text-foreground transition-colors"
@@ -79,7 +99,7 @@ export default function AdminLayout({
           </button>
         </div>
 
-        {/* Nav links */}
+        {/* Navigation */}
         <nav className="mt-6 px-3 space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon;
@@ -106,7 +126,7 @@ export default function AdminLayout({
           })}
         </nav>
 
-        {/* User footer */}
+        {/* User Footer */}
         <div className="absolute bottom-0 inset-x-0 p-4 border-t border-border">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -140,22 +160,37 @@ export default function AdminLayout({
         />
       )}
 
-      {/* Main content */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Mobile top bar */}
         <header className="bg-card text-card-foreground shadow-sm border-b border-border lg:hidden">
           <div className="flex items-center justify-between px-4 h-16">
+            {/* Hamburger left */}
             <button
               onClick={() => setSidebarOpen(true)}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <Menu className="h-6 w-6" />
             </button>
-            <div className="flex items-center">
+
+            {/* Brand name center */}
+            <div className="flex-1 flex justify-center items-center">
               <Building className="h-6 w-6 text-primary mr-2" />
               <span className="font-medium">CMS Admin</span>
             </div>
-            <div className="w-6"></div>
+
+            {/* Theme toggle right */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+              aria-label="Toggle theme"
+            >
+              {darkMode ? (
+                <Sun className="h-5 w-5 text-accent" />
+              ) : (
+                <Moon className="h-5 w-5 text-foreground" />
+              )}
+            </button>
           </div>
         </header>
 
