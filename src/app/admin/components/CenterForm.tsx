@@ -15,8 +15,25 @@ import {
   X,
   RefreshCw,
   MoreVertical,
+  XCircle,
+  Info,
+  CheckCircle2,
 } from "lucide-react";
 import { Center } from "@/types/center";
+
+// interface Center {
+//   id: string;
+//   number: string;
+//   name: string;
+//   address: string;
+//   state: string;
+//   lga: string;
+//   isActive: boolean;
+//   createdAt: string;
+//   modifiedAt: string;
+//   createdBy: string;
+//   modifiedBy: string | null;
+// }
 
 interface Stats {
   total: number;
@@ -43,7 +60,6 @@ interface Pagination {
   total: number;
   pages: number;
 }
-
 interface Notification {
   id: string;
   type: "success" | "error" | "warning" | "info";
@@ -272,7 +288,7 @@ const generateCenterNumber = (
   return `${stateCode}${lgaCode}${randomDigits}`;
 };
 
-// Notification Component
+// Enhanced Notification Component
 function NotificationContainer({
   notifications,
   removeNotification,
@@ -281,81 +297,49 @@ function NotificationContainer({
   removeNotification: (id: string) => void;
 }) {
   return (
-    <div className="fixed top-4 right-4 z-50 flex space-x-2">
+    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`max-w-sm w-full shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden animate-in slide-in-from-right-5 ${
+          className={`relative bg-white rounded-lg shadow-lg border-l-4 p-3 transition-all duration-300 ease-in-out transform animate-in slide-in-from-right-5 ${
             notification.type === "success"
-              ? "bg-green-50 ring-green-200"
+              ? "border-green-500"
               : notification.type === "error"
-              ? "bg-red-50 ring-red-200"
+              ? "border-red-500"
               : notification.type === "warning"
-              ? "bg-yellow-50 ring-yellow-200"
-              : "bg-blue-50 ring-blue-200"
+              ? "border-yellow-500"
+              : "border-blue-500"
           }`}
         >
-          <div className="p-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                {notification.type === "success" && (
-                  <CheckCircle className="h-5 w-5 text-green-400" />
-                )}
-                {notification.type === "error" && (
-                  <AlertCircle className="h-5 w-5 text-red-400" />
-                )}
-                {notification.type === "warning" && (
-                  <AlertTriangle className="h-5 w-5 text-yellow-400" />
-                )}
-                {notification.type === "info" && (
-                  <AlertCircle className="h-5 w-5 text-blue-400" />
-                )}
-              </div>
-              <div className="ml-3 w-0 flex-1 pt-0.5">
-                <p
-                  className={`text-sm font-medium ${
-                    notification.type === "success"
-                      ? "text-green-900"
-                      : notification.type === "error"
-                      ? "text-red-900"
-                      : notification.type === "warning"
-                      ? "text-yellow-900"
-                      : "text-blue-900"
-                  }`}
-                >
-                  {notification.title}
-                </p>
-                <p
-                  className={`mt-1 text-sm ${
-                    notification.type === "success"
-                      ? "text-green-700"
-                      : notification.type === "error"
-                      ? "text-red-700"
-                      : notification.type === "warning"
-                      ? "text-yellow-700"
-                      : "text-blue-700"
-                  }`}
-                >
-                  {notification.message}
-                </p>
-              </div>
-              <div className="ml-4 flex-shrink-0 flex">
-                <button
-                  onClick={() => removeNotification(notification.id)}
-                  className={`rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    notification.type === "success"
-                      ? "focus:ring-green-500"
-                      : notification.type === "error"
-                      ? "focus:ring-red-500"
-                      : notification.type === "warning"
-                      ? "focus:ring-yellow-500"
-                      : "focus:ring-blue-500"
-                  }`}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              {notification.type === "success" && (
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              )}
+              {notification.type === "error" && (
+                <XCircle className="h-4 w-4 text-red-600" />
+              )}
+              {notification.type === "warning" && (
+                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              )}
+              {notification.type === "info" && (
+                <Info className="h-4 w-4 text-blue-600" />
+              )}
             </div>
+            <div className="ml-2 flex-1 min-w-0">
+              <h4 className="text-sm font-medium text-gray-900 truncate">
+                {notification.title}
+              </h4>
+              <p className="mt-1 text-xs text-gray-600 line-clamp-2">
+                {notification.message}
+              </p>
+            </div>
+            <button
+              onClick={() => removeNotification(notification.id)}
+              className="ml-2 inline-flex text-gray-400 hover:text-gray-600 transition-colors p-1"
+            >
+              <XCircle className="h-3 w-3" />
+            </button>
           </div>
         </div>
       ))}
@@ -374,7 +358,7 @@ function ConfirmationModal({
   if (!modal.isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex items-center mb-4">
           {modal.type === "danger" && (
@@ -659,11 +643,16 @@ export default function CenterManagementSystem() {
     });
   };
 
-  const formatShortDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
+  const formatShortDate = (date) => {
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - new Date(date).getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
   };
 
   const handleAdd = () => {
@@ -938,242 +927,276 @@ export default function CenterManagementSystem() {
         )}
 
         {/* Header and Controls */}
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex flex-col gap-6">
+            {/* Title Section */}
+            <div className="text-center lg:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Centers
               </h1>
-              <p className="text-sm sm:text-base text-gray-600">
-                Manage education centers
+              <p className="text-gray-600 mt-1">
+                Manage education centers efficiently
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
+            {/* Controls Row */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+              {/* Search */}
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
                   type="text"
                   placeholder="Search centers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 sm:pl-10 w-full sm:w-auto text-sm sm:text-base px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
 
-              <label className="flex items-center whitespace-nowrap">
+              {/* Checkbox */}
+              <label className="flex items-center whitespace-nowrap bg-gray-50 px-4 py-2.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                 <input
                   type="checkbox"
                   checked={includeInactive}
                   onChange={(e) => setIncludeInactive(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="ml-2 text-xs sm:text-sm text-gray-700">
+                <span className="ml-2 text-sm text-gray-700 font-medium">
                   Include inactive
                 </span>
               </label>
 
+              {/* Add Button */}
               <button
                 onClick={handleAdd}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-md flex items-center justify-center text-xs sm:text-sm font-medium whitespace-nowrap"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg flex items-center justify-center text-sm font-medium whitespace-nowrap transition-colors shadow-sm hover:shadow-md"
               >
-                <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                <Plus className="h-5 w-5 mr-2" />
                 Add Center
               </button>
             </div>
           </div>
         </div>
 
-        {/* Form Modal */}
+        {/* Enhanced Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop with blur */}
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-all duration-300"
+              onClick={() => setShowForm(false)}
+            />
+
+            {/* Modal content */}
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-100">
+              {/* Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-medium text-gray-900">
+                  <h2 className="text-xl font-semibold text-gray-900">
                     {editingCenter ? "Edit Center" : "Add New Center"}
                   </h2>
                   <button
                     onClick={() => setShowForm(false)}
-                    className="text-gray-400 hover:text-gray-500 p-1"
+                    className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-                {/* Center Name Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Center Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className={`w-full px-3 py-2 text-sm sm:text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.name ? "border-red-300" : "border-gray-300"
-                    }`}
-                    placeholder="Enter center name"
-                  />
-                  {formErrors.name && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.name}
-                    </p>
-                  )}
-                </div>
-
-                {/* Address Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address *
-                  </label>
-                  <textarea
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    className={`w-full px-3 py-2 text-sm sm:text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.address ? "border-red-300" : "border-gray-300"
-                    }`}
-                    rows={3}
-                    placeholder="Enter full address"
-                  />
-                  {formErrors.address && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.address}
-                    </p>
-                  )}
-                </div>
-
-                {/* State Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    State *
-                  </label>
-                  <select
-                    value={formData.state}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        state: e.target.value,
-                        lga: "",
-                      })
-                    }
-                    className={`w-full px-3 py-2 text-sm sm:text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.state ? "border-red-300" : "border-gray-300"
-                    }`}
-                  >
-                    <option value="">Select State</option>
-                    {locationData.states
-                      .filter(
-                        (state) =>
-                          state !== null &&
-                          state !== undefined &&
-                          state.trim() !== ""
-                      )
-                      .map((state) => (
-                        <option key={state} value={state}>
-                          {state}
-                        </option>
-                      ))}
-                  </select>
-                  {formErrors.state && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.state}
-                    </p>
-                  )}
-                </div>
-
-                {/* LGA Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    LGA *
-                  </label>
-                  <select
-                    value={formData.lga}
-                    onChange={(e) =>
-                      setFormData({ ...formData, lga: e.target.value })
-                    }
-                    className={`w-full px-3 py-2 text-sm sm:text-base border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.lga ? "border-red-300" : "border-gray-300"
-                    }`}
-                    disabled={!formData.state || isLoadingLgas}
-                  >
-                    <option value="">Select LGA</option>
-                    {isLoadingLgas ? (
-                      <option value="" disabled>
-                        Loading LGAs...
-                      </option>
-                    ) : (
-                      lgas
-                        .filter(
-                          (lga) =>
-                            lga !== null &&
-                            lga !== undefined &&
-                            lga.trim() !== ""
-                        )
-                        .map((lga) => (
-                          <option key={lga} value={lga}>
-                            {lga}
-                          </option>
-                        ))
+              {/* Form content */}
+              <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                  {/* Center Name Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Center Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        formErrors.name
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300"
+                      }`}
+                      placeholder="Enter center name"
+                    />
+                    {formErrors.name && (
+                      <p className="text-red-600 text-sm mt-1 flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {formErrors.name}
+                      </p>
                     )}
-                  </select>
-                  {formErrors.lga && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.lga}
-                    </p>
-                  )}
-                  {isLoadingLgas && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Loading LGAs for {formData.state}...
-                    </p>
-                  )}
-                  {!formData.state && !formErrors.lga && !isLoadingLgas && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Please select a state first
-                    </p>
-                  )}
-                </div>
-
-                {/* Active Checkbox */}
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) =>
-                      setFormData({ ...formData, isActive: e.target.checked })
-                    }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">
-                    Active Center
-                  </span>
-                </div>
-
-                {/* Form Buttons */}
-                <div className="sticky bottom-0 bg-white border-t border-gray-200 -mx-4 sm:-mx-6 px-4 sm:px-6 py-4 mt-6">
-                  <div className="flex flex-col-reverse sm:flex-row gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowForm(false)}
-                      className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      {editingCenter ? "Update Center" : "Create Center"}
-                    </button>
                   </div>
+
+                  {/* Address Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Address *
+                    </label>
+                    <textarea
+                      value={formData.address}
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                        formErrors.address
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300"
+                      }`}
+                      rows={3}
+                      placeholder="Enter full address"
+                    />
+                    {formErrors.address && (
+                      <p className="text-red-600 text-sm mt-1 flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {formErrors.address}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* State Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      State *
+                    </label>
+                    <select
+                      value={formData.state}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          state: e.target.value,
+                          lga: "",
+                        })
+                      }
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        formErrors.state
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      <option value="">Select State</option>
+                      {locationData.states
+                        .filter(
+                          (state) =>
+                            state !== null &&
+                            state !== undefined &&
+                            state.trim() !== ""
+                        )
+                        .map((state) => (
+                          <option key={state} value={state}>
+                            {state}
+                          </option>
+                        ))}
+                    </select>
+                    {formErrors.state && (
+                      <p className="text-red-600 text-sm mt-1 flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {formErrors.state}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* LGA Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      LGA *
+                    </label>
+                    <select
+                      value={formData.lga}
+                      onChange={(e) =>
+                        setFormData({ ...formData, lga: e.target.value })
+                      }
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        formErrors.lga
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300"
+                      }`}
+                      disabled={!formData.state || isLoadingLgas}
+                    >
+                      <option value="">Select LGA</option>
+                      {isLoadingLgas ? (
+                        <option value="" disabled>
+                          Loading LGAs...
+                        </option>
+                      ) : (
+                        lgas
+                          .filter(
+                            (lga) =>
+                              lga !== null &&
+                              lga !== undefined &&
+                              lga.trim() !== ""
+                          )
+                          .map((lga) => (
+                            <option key={lga} value={lga}>
+                              {lga}
+                            </option>
+                          ))
+                      )}
+                    </select>
+                    {formErrors.lga && (
+                      <p className="text-red-600 text-sm mt-1 flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {formErrors.lga}
+                      </p>
+                    )}
+                    {isLoadingLgas && (
+                      <p className="text-blue-600 text-sm mt-1 flex items-center">
+                        <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                        Loading LGAs for {formData.state}...
+                      </p>
+                    )}
+                    {!formData.state && !formErrors.lga && !isLoadingLgas && (
+                      <p className="text-gray-500 text-sm mt-1">
+                        Please select a state first
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Active Checkbox */}
+                  <div className="flex items-center bg-gray-50 p-4 rounded-lg">
+                    <input
+                      type="checkbox"
+                      checked={formData.isActive}
+                      onChange={(e) =>
+                        setFormData({ ...formData, isActive: e.target.checked })
+                      }
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <div className="ml-3">
+                      <span className="text-sm font-medium text-gray-900">
+                        Active Center
+                      </span>
+                      <p className="text-sm text-gray-500">
+                        Center is available and operational
+                      </p>
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl">
+                <div className="flex flex-col-reverse sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="flex-1 px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors font-medium shadow-sm hover:shadow-md"
+                  >
+                    {editingCenter ? "Update Center" : "Create Center"}
+                  </button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
@@ -1568,47 +1591,57 @@ export default function CenterManagementSystem() {
         {/* Bottom Section - Recent Activity and Quick Actions */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
           {/* Recent Centers */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
-              <h2 className="text-base lg:text-lg font-medium text-gray-900">
+          <div className="bg-white rounded-xl shadow-sm flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
                 Recent Centers
               </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Latest centers added to the system
+              </p>
             </div>
-            <div className="p-4 sm:p-6">
+            <div className="flex-1 p-6">
               {centers.length === 0 ? (
-                <div className="text-center text-gray-500 py-4 lg:py-6">
-                  <Building className="h-8 w-8 lg:h-12 lg:w-12 mx-auto mb-2 lg:mb-4 text-gray-300" />
-                  <p className="text-sm lg:text-base">No centers yet</p>
+                <div className="text-center text-gray-500 py-8">
+                  <Building className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-base font-medium">No centers yet</p>
+                  <p className="text-sm mt-1">
+                    Add your first center to get started
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-3 lg:space-y-4">
+                <div className="space-y-4">
                   {centers.slice(0, 5).map((center) => (
                     <div
                       key={center.id}
-                      className="flex items-center justify-between"
+                      className="relative p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
-                              center.isActive
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {center.isActive ? "Active" : "Inactive"}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {center.name}
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">
-                              #{center.number} • {center.state}
-                            </p>
-                          </div>
-                        </div>
+                      {/* Active/Inactive Badge - Top Right */}
+                      <span
+                        className={`absolute top-3 right-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          center.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {center.isActive ? "Active" : "Inactive"}
+                      </span>
+
+                      {/* Content - Adjusted padding to prevent badge overlap */}
+                      <div className="pr-16">
+                        {/* Center Name */}
+                        <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                          {center.name}
+                        </p>
+
+                        {/* Center Number + State */}
+                        <p className="text-xs text-gray-500 mt-1">
+                          #{center.number} • {center.state}
+                        </p>
                       </div>
-                      <div className="text-xs text-gray-400 whitespace-nowrap ml-2 flex-shrink-0">
+
+                      {/* Timestamp - Bottom Right */}
+                      <div className="absolute bottom-3 right-3 text-xs text-gray-400">
                         {formatShortDate(center.createdAt)}
                       </div>
                     </div>
@@ -1618,21 +1651,26 @@ export default function CenterManagementSystem() {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
-              <h2 className="text-base lg:text-lg font-medium text-gray-900">
+          {/* Enhanced Quick Actions */}
+          <div className="bg-white rounded-xl shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
                 Quick Actions
               </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Common tasks and utilities
+              </p>
             </div>
-            <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   {
                     icon: Plus,
                     label: "Add Center",
                     description: "Create new center",
                     color: "blue",
+                    bgColor: "bg-blue-50",
+                    hoverColor: "hover:bg-blue-100",
                     action: handleAdd,
                   },
                   {
@@ -1640,6 +1678,8 @@ export default function CenterManagementSystem() {
                     label: "Find Duplicates",
                     description: "Detect similar centers",
                     color: "yellow",
+                    bgColor: "bg-yellow-50",
+                    hoverColor: "hover:bg-yellow-100",
                     action: () => loadDuplicates(),
                   },
                   {
@@ -1647,6 +1687,8 @@ export default function CenterManagementSystem() {
                     label: "Test API",
                     description: "Try public lookup",
                     color: "green",
+                    bgColor: "bg-green-50",
+                    hoverColor: "hover:bg-green-100",
                     action: () => {
                       addNotification({
                         type: "info",
@@ -1664,6 +1706,8 @@ export default function CenterManagementSystem() {
                     label: "Refresh Data",
                     description: "Reload all data",
                     color: "purple",
+                    bgColor: "bg-purple-50",
+                    hoverColor: "hover:bg-purple-100",
                     action: () => {
                       addNotification({
                         type: "info",
@@ -1684,14 +1728,24 @@ export default function CenterManagementSystem() {
                     green: "text-green-600",
                     purple: "text-purple-600",
                   }[action.color];
+
                   return (
                     <button
                       key={index}
                       onClick={action.action}
-                      className={`flex items-center p-2 rounded-md text-sm font-medium ${colorClasses}`}
+                      className={`flex items-center p-4 rounded-xl ${action.bgColor} ${action.hoverColor} transition-all hover:shadow-sm border border-transparent hover:border-opacity-20`}
                     >
-                      <Icon className="h-5 w-5 mr-2" />
-                      {action.label}
+                      <div className="flex-shrink-0 p-2 bg-white rounded-lg shadow-sm">
+                        <Icon className={`h-5 w-5 ${colorClasses}`} />
+                      </div>
+                      <div className="ml-3 text-left">
+                        <div className={`text-sm font-medium ${colorClasses}`}>
+                          {action.label}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {action.description}
+                        </div>
+                      </div>
                     </button>
                   );
                 })}

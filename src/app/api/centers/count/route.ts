@@ -24,20 +24,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // const results = await db
-    // .select()
-    // .from(centers)
-    // .where(
-    //   and(
-    //     eq(centers.state, state),
-    //     eq(centers.lga, lga),
-    //     eq(centers.isActive, true)
-    //   )
-    // );
-
-    // const count = results.length;
-
-    // Count centers with the specified state, LGA, and active status
+       // Count centers with the specified state, LGA, and active status
     const [result] = await db
       .select({ count: sql<number>`count(*)` })
       .from(centers)
