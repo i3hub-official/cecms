@@ -118,8 +118,8 @@ export async function POST(request: NextRequest) {
         state,
         lga,
         isActive,
-        createdBy: authResult.user?.name || "system",
-        modifiedBy: authResult.user?.name || "system",
+        createdBy: authResult.user?.email || "system",
+        modifiedBy: authResult.user?.email || "system",
         createdAt: new Date(),
         modifiedAt: new Date(),
       })
