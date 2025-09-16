@@ -321,24 +321,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-// Optional: Add authentication middleware
-export async function middleware(request: NextRequest) {
-  // Add your authentication logic here
-  // For example, verify JWT token or session
-  
-  const authHeader = request.headers.get('authorization');
-  const sessionCookie = request.cookies.get('session');
-  
-  if (!authHeader && !sessionCookie) {
-    return NextResponse.json(
-      { error: 'Unauthorized - Authentication required' },
-      { status: 401 }
-    );
-  }
-  
-  // Validate the session/token here
-  // ...
-  
-  return NextResponse.next();
-}

@@ -4,17 +4,13 @@ import { chainMiddlewares } from "@/lib/middleware/middlewareChain";
 import { withSecurityHeaders } from "@/lib/middleware/securityHeaders";
 import { withRequestLogging } from "@/lib/middleware/requestLogging";
 import { withRateLimiter } from "@/lib/middleware/rateLimiting";
-// import { withAuthRedirect } from "@/lib/middleware/withAuthRedirect";
-// import { withSession } from "@/lib/middleware/withSession";
-// import { withPublicPaths } from "@/lib/middleware/withPublicPaths";
 import { withCors } from "@/lib/middleware/withCors";
 
 // ========= Matcher Config =========
-// Covers all non-static pages AND all API routes
 export const config = {
   matcher: [
-    "/api/:path*", // all API routes (for special handling)
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|robots.txt|health).*)", // app routes
+    "/api/:path*", 
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|robots.txt|health).*)",
   ],
 };
 
@@ -39,9 +35,6 @@ export async function middleware(request: NextRequest): Promise<Response> {
         return NextResponse.next();
       },
       withRateLimiter,
-      // withPublicPaths,
-      // withAuthRedirect, // logged-in users can’t see signin/signup
-      // withSession, // blocks private paths if no valid session
     ]);
   } catch (error) {
     console.error("Middleware chain error:", error);
