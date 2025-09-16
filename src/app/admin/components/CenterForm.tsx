@@ -1098,24 +1098,24 @@ export default function CenterManagementSystem() {
 
         {/* Enhanced Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop with blur */}
             <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-all duration-300"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setShowForm(false)}
             />
 
             {/* Modal content */}
-            <div className="relative bg-card rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-100">
+            <div className="relative bg-card rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden">
               {/* Header */}
-              <div className="sticky top-0 bg-card border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 rounded-t-xl sm:rounded-t-2xl">
+              <div className="sticky top-0 bg-card border-b border-border px-4 py-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg sm:text-xl font-semibold text-foreground">
+                  <h2 className="text-lg font-semibold text-foreground">
                     {editingCenter ? "Edit Center" : "Add New Center"}
                   </h2>
                   <button
                     onClick={() => setShowForm(false)}
-                    className="text-gray-400 hover:text-foreground/70 p-1 sm:p-2 rounded-lg hover:background/10 transition-colors"
+                    className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -1123,14 +1123,11 @@ export default function CenterManagementSystem() {
               </div>
 
               {/* Form content */}
-              <div className="overflow-y-auto max-h-[calc(95vh-140px)] sm:max-h-[calc(90vh-140px)]">
-                <form
-                  onSubmit={handleSubmit}
-                  className="p-4 sm:p-6 space-y-4 sm:space-y-5"
-                >
+              <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+                <form onSubmit={handleSubmit} className="p-4 space-y-4">
                   {/* Center Name Field */}
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Center Name *
                     </label>
                     <input
@@ -1139,16 +1136,16 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm ${
                         formErrors.name
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
+                          ? "border-destructive bg-destructive/10"
+                          : "border-border"
                       }`}
                       placeholder="Enter center name"
                     />
                     {formErrors.name && (
-                      <p className="text-danger text-sm mt-1 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
+                      <p className="text-destructive text-xs mt-1 flex items-center">
+                        <AlertCircle className="h-3 w-3 mr-1" />
                         {formErrors.name}
                       </p>
                     )}
@@ -1156,7 +1153,7 @@ export default function CenterManagementSystem() {
 
                   {/* Address Field */}
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Address *
                     </label>
                     <textarea
@@ -1164,17 +1161,17 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, address: e.target.value })
                       }
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none text-sm sm:text-base ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary resize-none text-sm ${
                         formErrors.address
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
+                          ? "border-destructive bg-destructive/10"
+                          : "border-border"
                       }`}
-                      rows={3}
+                      rows={2}
                       placeholder="Enter full address"
                     />
                     {formErrors.address && (
-                      <p className="text-danger text-sm mt-1 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
+                      <p className="text-destructive text-xs mt-1 flex items-center">
+                        <AlertCircle className="h-3 w-3 mr-1" />
                         {formErrors.address}
                       </p>
                     )}
@@ -1182,7 +1179,7 @@ export default function CenterManagementSystem() {
 
                   {/* State Field */}
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       State *
                     </label>
                     <select
@@ -1194,10 +1191,10 @@ export default function CenterManagementSystem() {
                           lga: "",
                         })
                       }
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm ${
                         formErrors.state
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
+                          ? "border-destructive bg-destructive/10"
+                          : "border-border"
                       }`}
                     >
                       <option value="">Select State</option>
@@ -1215,8 +1212,8 @@ export default function CenterManagementSystem() {
                         ))}
                     </select>
                     {formErrors.state && (
-                      <p className="text-danger text-sm mt-1 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
+                      <p className="text-destructive text-xs mt-1 flex items-center">
+                        <AlertCircle className="h-3 w-3 mr-1" />
                         {formErrors.state}
                       </p>
                     )}
@@ -1224,7 +1221,7 @@ export default function CenterManagementSystem() {
 
                   {/* LGA Field */}
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       LGA *
                     </label>
                     <select
@@ -1232,10 +1229,10 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, lga: e.target.value })
                       }
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm ${
                         formErrors.lga
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
+                          ? "border-destructive bg-destructive/10"
+                          : "border-border"
                       }`}
                       disabled={!formData.state || isLoadingLgas}
                     >
@@ -1260,39 +1257,39 @@ export default function CenterManagementSystem() {
                       )}
                     </select>
                     {formErrors.lga && (
-                      <p className="text-danger text-sm mt-1 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
+                      <p className="text-destructive text-xs mt-1 flex items-center">
+                        <AlertCircle className="h-3 w-3 mr-1" />
                         {formErrors.lga}
                       </p>
                     )}
                     {isLoadingLgas && (
-                      <p className="text-success text-sm mt-1 flex items-center">
-                        <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
-                        Loading LGAs for {formData.state}...
+                      <p className="text-success text-xs mt-1 flex items-center">
+                        <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                        Loading LGAs...
                       </p>
                     )}
                     {!formData.state && !formErrors.lga && !isLoadingLgas && (
-                      <p className="text-gray-500 text-sm mt-1">
-                        Please select a state first
+                      <p className="text-muted-foreground text-xs mt-1">
+                        Select state first
                       </p>
                     )}
                   </div>
 
                   {/* Active Checkbox */}
-                  <div className="flex items-center background p-3 sm:p-4 rounded-lg">
+                  <div className="flex items-center bg-background/30 p-3 rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.isActive}
                       onChange={(e) =>
                         setFormData({ ...formData, isActive: e.target.checked })
                       }
-                      className="h-4 w-4 text-success focus:ring-green-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-success focus:ring-primary border-border rounded"
                     />
-                    <div className="ml-3">
-                      <span className="text-sm font-medium text-primary">
+                    <div className="ml-2">
+                      <span className="text-sm text-foreground">
                         Active Center
                       </span>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Center is available and operational
                       </p>
                     </div>
@@ -1301,20 +1298,20 @@ export default function CenterManagementSystem() {
               </div>
 
               {/* Footer */}
-              <div className="sticky bottom-0 bg-card border-t border-gray-200 px-4 py-3 sm:px-6 sm:py-4 rounded-b-xl sm:rounded-b-2xl">
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
+              <div className="sticky bottom-0 bg-card border-t border-border px-4 py-3">
+                <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="flex-1 px-4 py-2.5 text-foreground bg-card border border-gray-300 rounded-lg hover:background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors font-medium text-sm sm:text-base"
+                    className="flex-1 px-3 py-2 text-foreground bg-card border border-border rounded-lg hover:bg-background text-sm font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors font-medium shadow-sm hover:shadow-md text-sm sm:text-base"
+                    className="flex-1 px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium"
                   >
-                    {editingCenter ? "Update Center" : "Create Center"}
+                    {editingCenter ? "Update" : "Create"}
                   </button>
                 </div>
               </div>
