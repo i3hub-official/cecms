@@ -21,20 +21,6 @@ import {
 } from "lucide-react";
 import { Center } from "@/types/center";
 
-// interface Center {
-//   id: string;
-//   number: string;
-//   name: string;
-//   address: string;
-//   state: string;
-//   lga: string;
-//   isActive: boolean;
-//   createdAt: string;
-//   modifiedAt: string;
-//   createdBy: string;
-//   modifiedBy: string | null;
-// }
-
 interface Stats {
   total: number;
   active: number;
