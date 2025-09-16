@@ -1,9 +1,9 @@
-// src/app/admin/layout.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import AdminLayout from "./components/AdminLayout";
+import { ThemeProvider } from "@/app/components/ThemeContext"; // import your ThemeProvider
 
 interface User {
   id: string;
@@ -53,7 +53,7 @@ export default function AdminLayoutWrapper({
 
         if (!response.ok) {
           console.error("Server error during validation:", response.status);
-          return; // Don’t force logout on server issues
+          return;
         }
 
         const data = await response.json();
@@ -66,7 +66,6 @@ export default function AdminLayoutWrapper({
         }
       } catch (error) {
         console.error("Session validation error:", error);
-        // only redirect if token is missing/invalid; otherwise keep cached user
         redirectToLogin();
       } finally {
         if (!background) setLoading(false);
@@ -83,7 +82,7 @@ export default function AdminLayoutWrapper({
         const parsedUser: User = JSON.parse(cached);
         setUser(parsedUser);
         setLoading(false); // show UI immediately
-        validateSession(true); // run in background
+        validateSession(true); // background validation
       } catch {
         sessionStorage.removeItem("user");
         validateSession();
@@ -114,9 +113,11 @@ export default function AdminLayoutWrapper({
 
   if (loading && !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <ThemeProvider>
+        <div className="min-h-screen flex items-center justify-center bg-background text-foreground transition-colors duration-300">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </ThemeProvider>
     );
   }
 
@@ -125,8 +126,10 @@ export default function AdminLayoutWrapper({
   }
 
   return (
-    <AdminLayout user={user} onLogout={handleLogout}>
-      {children}
-    </AdminLayout>
+    <ThemeProvider>
+      <AdminLayout user={user} onLogout={handleLogout}>
+        {children}
+      </AdminLayout>
+    </ThemeProvider>
   );
 }

@@ -1,26 +1,88 @@
 @import "tailwindcss";
 
+/* Default (Light) Theme */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #10b981;
+  --secondary: #06b6d4;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --accent: #f59e0b;
+  --card: #f9fafb;
+  --border: rgba(0, 0, 0, 0.1); /* subtle, faded border */
+  --nav-height: 73px;
+  --header-height: 64px;
 }
 
+/* Dark Theme Override (when .dark is applied) */
+.dark {
+  --background: #1a1a1a;
+  --foreground: #cbd5e1;
+  --primary: #34d399;
+  --secondary: #22d3ee;
+  --danger: #f87171;
+  --info: #60a5fa;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --accent: #fbbf24;
+  --card: #262626;
+  --border: rgba(255, 255, 255, 0.1); /* subtle, faded border for dark */
+}
+
+/* Hook into Tailwind */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-accent: var(--accent);
+  --color-card: var(--card);
+  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base body style */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: border-color 0.1s ease, background-color 0.1s ease, color 0.1s ease;
+}
+
+
+/* Mobile optimization for code blocks */
+pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+  opacity: 0;
 }

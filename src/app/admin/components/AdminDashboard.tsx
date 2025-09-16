@@ -347,10 +347,10 @@ export default function AdminDashboard() {
                     <span
                       className={`font-medium text-sm ${
                         item.status === "good"
-                          ? "text-green-600"
+                          ? "text-success"
                           : item.status === "bad"
-                          ? "text-red-600"
-                          : "text-blue-600"
+                          ? "text-danger"
+                          : "text-info"
                       }`}
                     >
                       {item.value}
@@ -511,7 +511,7 @@ export default function AdminDashboard() {
       {/* System Health Indicator */}
       <div className="card p-4 bg-green-50 border border-green-200">
         <div className="flex items-center">
-          <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+          <CheckCircle className="h-5 w-5 text-success mr-2" />
           <div className="flex-1">
             <div className="text-base font-medium text-green-900">
               System Status: All Systems Operational
@@ -523,7 +523,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           {refreshing && (
-            <RefreshCw className="h-5 w-5 text-green-600 animate-spin" />
+            <RefreshCw className="h-5 w-5 text-success animate-spin" />
           )}
         </div>
       </div>

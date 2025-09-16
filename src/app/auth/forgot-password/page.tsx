@@ -1,19 +1,18 @@
 "use client";
+import Link from "next/link";
 import React, { useState } from "react";
 import { Mail, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
+import { useTheme } from "../../components/ThemeContext";
 
 export default function ForgotPasswordPage() {
+  const { darkMode } = useTheme();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [resetToken, setResetToken] = useState("");
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
     if (error) setError("");
   };
@@ -38,24 +37,18 @@ export default function ForgotPasswordPage() {
     try {
       const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-
       const data = await response.json();
 
       if (response.ok) {
         setSuccess(true);
-        // In development, show the reset token for testing
-        if (data.resetToken) {
-          setResetToken(data.resetToken);
-        }
+        if (data.resetToken) setResetToken(data.resetToken);
       } else {
         setError(data.error || "Failed to send reset email");
       }
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -64,44 +57,42 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="mx-auto h-16 w-16 bg-green-600 rounded-full flex items-center justify-center">
-              <CheckCircle className="h-8 w-8 text-white" />
+          <div className="bg-background text-foreground rounded-2xl shadow-sm border border-border p-8 text-center transition-colors duration-300">
+            <div className="mx-auto h-16 w-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center transition-transform">
+              <CheckCircle className="h-8 w-8" />
             </div>
-            <h2 className="mt-6 text-2xl font-bold text-gray-900">
-              Check Your Email
-            </h2>
-            <p className="mt-4 text-gray-600">
+            <h2 className="mt-6 text-2xl font-bold">Check Your Email</h2>
+            <p className="mt-4 text-sm text-muted-foreground">
               If an account exists with <strong>{email}</strong>, we&apos;ve
-              sent a password reset link to that email address.
+              sent a password reset link.
             </p>
 
             {resetToken && (
-              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800 mb-2">
-                  <strong>Development Mode:</strong> Reset token for testing:
+              <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-2">
+                  <strong>Dev Mode:</strong> Reset token:
                 </p>
-                <code className="text-xs bg-yellow-100 px-2 py-1 rounded break-all">
+                <code className="text-xs bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded break-all text-yellow-800 dark:text-yellow-300">
                   {resetToken}
                 </code>
               </div>
             )}
 
             <div className="mt-6 space-y-3">
-              <a
+              <Link
                 href="/auth/reset-password"
-                className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                className="w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 Go to Reset Password
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/auth/signin"
-                className="w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                className="w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg border border-border text-foreground bg-background hover:bg-accent transition-colors"
               >
                 Back to Sign In
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -110,62 +101,63 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Header */}
+        <div className="bg-background text-foreground rounded-2xl shadow-sm border border-border p-8 transition-colors duration-300">
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center">
-              <Mail className="h-6 w-6 text-white" />
+            <div className="text-left mt-2">
+              <Link
+                href="/"
+                className="inline-flex items-center text-sm text-primary hover:underline transition-colors"
+              >
+                ← Back to Home
+              </Link>
             </div>
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">
-              Forgot Password?
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              No worries! Enter your email address and we&apos;ll send you a
-              reset link.
+            <div className="mx-auto h-12 w-12 bg-primary text-primary-foreground rounded-xl flex items-center justify-center transition-transform">
+              <Mail className="h-6 w-6" />
+            </div>
+            <h2 className="mt-6 text-3xl font-bold">Forgot Password?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              No worries! Enter your email and we&apos;ll send a reset link.
             </p>
           </div>
 
-          {/* Form */}
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
-                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-                <span className="text-sm text-red-700">{error}</span>
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-center space-x-3">
+                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                <span className="text-sm text-destructive">{error}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1 text-foreground">
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <input
-                  name="email"
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors"
-                  placeholder="Enter your email address"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={handleChange}
+                  className="block w-full pl-10 pr-3 py-3 rounded-lg border border-border placeholder-muted-foreground text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-colors bg-background"
                 />
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group relative w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
                   <span>Sending reset link...</span>
                 </div>
               ) : (
@@ -173,15 +165,14 @@ export default function ForgotPasswordPage() {
               )}
             </button>
 
-            {/* Back to Sign In */}
-            <div className="text-center">
-              <a
+            <div className="text-center mt-2">
+              <Link
                 href="/auth/signin"
-                className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500 hover:underline transition-colors font-medium"
+                className="inline-flex items-center text-sm text-primary hover:underline transition-colors"
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Back to Sign In
-              </a>
+              </Link>
             </div>
           </form>
         </div>

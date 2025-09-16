@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, User, Shield, Key, Save } from "lucide-react";
+import { Settings, User, Shield, Key, Save, Eye, EyeOff, Download, Copy } from "lucide-react";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -18,6 +18,12 @@ export default function SettingsPage() {
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
+  });
+
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
   });
 
   const [systemSettings, setSystemSettings] = useState({
@@ -87,6 +93,18 @@ export default function SettingsPage() {
     }
   };
 
+  const togglePasswordVisibility = (field: string) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field as keyof typeof prev]
+    }));
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert("Copied to clipboard!");
+  };
+
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
     { id: "security", label: "Security", icon: Shield },
@@ -95,18 +113,18 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-background text-foreground">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl font-bold">Settings</h1>
+        <p className="text-muted-foreground">
           Manage your account and system preferences
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar Navigation */}
-        <div className="card p-4">
+        <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-4 transition-colors duration-300">
           <nav className="space-y-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -116,13 +134,13 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     activeTab === tab.id
-                      ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      ? "bg-primary/10 text-primary border-r-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   }`}
                 >
                   <Icon
                     className={`mr-3 h-5 w-5 ${
-                      activeTab === tab.id ? "text-blue-600" : "text-gray-400"
+                      activeTab === tab.id ? "text-primary" : "text-muted-foreground"
                     }`}
                   />
                   {tab.label}
@@ -133,15 +151,19 @@ export default function SettingsPage() {
         </div>
 
         {/* Main Content */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 space-y-6">
           {activeTab === "profile" && (
-            <div className="card p-6 space-y-6">
-              <h2 className="text-lg font-medium text-gray-900">
-                Profile Information
-              </h2>
+            <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 space-y-6 transition-colors duration-300">
+              <div>
+                <h2 className="text-lg font-medium">Profile Information</h2>
+                <p className="text-sm text-muted-foreground">
+                  Update your personal information
+                </p>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-2">
                     Full Name
                   </label>
                   <input
@@ -153,11 +175,11 @@ export default function SettingsPage() {
                         name: e.target.value,
                       }))
                     }
-                    className="input"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-2">
                     Email Address
                   </label>
                   <input
@@ -169,19 +191,20 @@ export default function SettingsPage() {
                         email: e.target.value,
                       }))
                     }
-                    className="input"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background transition-colors"
                   />
                 </div>
               </div>
-              <div className="pt-4 border-t">
+              
+              <div className="pt-4 border-t border-border">
                 <button
                   onClick={handleProfileSave}
                   disabled={loading}
-                  className="btn btn-primary"
+                  className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {loading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full spinner mr-2"></div>
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
                       Saving...
                     </>
                   ) : (
@@ -197,82 +220,122 @@ export default function SettingsPage() {
 
           {activeTab === "security" && (
             <div className="space-y-6">
-              <div className="card p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">
-                  Change Password
-                </h2>
+              <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 transition-colors duration-300">
+                <div className="mb-6">
+                  <h2 className="text-lg font-medium">Change Password</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Update your password to keep your account secure
+                  </p>
+                </div>
+                
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium mb-2">
                       Current Password
                     </label>
-                    <input
-                      type="password"
-                      value={profileData.currentPassword}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({
-                          ...prev,
-                          currentPassword: e.target.value,
-                        }))
-                      }
-                      className="input"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPasswords.current ? "text" : "password"}
+                        value={profileData.currentPassword}
+                        onChange={(e) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            currentPassword: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background transition-colors pr-10"
+                      />
+                      <button
+                        onClick={() => togglePasswordVisibility("current")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium mb-2">
                       New Password
                     </label>
-                    <input
-                      type="password"
-                      value={profileData.newPassword}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({
-                          ...prev,
-                          newPassword: e.target.value,
-                        }))
-                      }
-                      className="input"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPasswords.new ? "text" : "password"}
+                        value={profileData.newPassword}
+                        onChange={(e) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            newPassword: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background transition-colors pr-10"
+                      />
+                      <button
+                        onClick={() => togglePasswordVisibility("new")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium mb-2">
                       Confirm New Password
                     </label>
-                    <input
-                      type="password"
-                      value={profileData.confirmPassword}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({
-                          ...prev,
-                          confirmPassword: e.target.value,
-                        }))
-                      }
-                      className="input"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPasswords.confirm ? "text" : "password"}
+                        value={profileData.confirmPassword}
+                        onChange={(e) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            confirmPassword: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background transition-colors pr-10"
+                      />
+                      <button
+                        onClick={() => togglePasswordVisibility("confirm")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="pt-4">
+                
+                <div className="pt-6 mt-6 border-t border-border">
                   <button
                     onClick={handlePasswordChange}
                     disabled={loading}
-                    className="btn btn-primary"
+                    className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                   >
-                    Change Password
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Updating...
+                      </>
+                    ) : (
+                      "Change Password"
+                    )}
                   </button>
                 </div>
               </div>
 
-              <div className="card p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">
-                  Security Settings
-                </h2>
-                <div className="space-y-4">
+              <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 transition-colors duration-300">
+                <div className="mb-6">
+                  <h2 className="text-lg font-medium">Security Settings</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Configure your security preferences
+                  </p>
+                </div>
+                
+                <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Session Timeout
-                      </p>
-                      <p className="text-sm text-gray-500">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Session Timeout</p>
+                      <p className="text-sm text-muted-foreground">
                         Automatically log out after inactivity
                       </p>
                     </div>
@@ -284,7 +347,7 @@ export default function SettingsPage() {
                           sessionTimeout: parseInt(e.target.value),
                         }))
                       }
-                      className="input w-32"
+                      className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background transition-colors"
                     >
                       <option value={1}>1 hour</option>
                       <option value={4}>4 hours</option>
@@ -292,12 +355,11 @@ export default function SettingsPage() {
                       <option value={24}>24 hours</option>
                     </select>
                   </div>
+                  
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Maximum Sessions
-                      </p>
-                      <p className="text-sm text-gray-500">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Maximum Sessions</p>
+                      <p className="text-sm text-muted-foreground">
                         Limit concurrent sessions per user
                       </p>
                     </div>
@@ -309,7 +371,7 @@ export default function SettingsPage() {
                           maxSessions: parseInt(e.target.value),
                         }))
                       }
-                      className="input w-32"
+                      className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background transition-colors"
                     >
                       <option value={1}>1 session</option>
                       <option value={3}>3 sessions</option>
@@ -323,17 +385,19 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "system" && (
-            <div className="card p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                System Configuration
-              </h2>
+            <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 transition-colors duration-300">
+              <div className="mb-6">
+                <h2 className="text-lg font-medium">System Configuration</h2>
+                <p className="text-sm text-muted-foreground">
+                  Manage system-wide settings and preferences
+                </p>
+              </div>
+              
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Enable Notifications
-                    </p>
-                    <p className="text-sm text-gray-500">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Enable Notifications</p>
+                    <p className="text-sm text-muted-foreground">
                       Receive system notifications
                     </p>
                   </div>
@@ -349,16 +413,14 @@ export default function SettingsPage() {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-muted-foreground/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Enable Audit Log
-                    </p>
-                    <p className="text-sm text-gray-500">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Enable Audit Log</p>
+                    <p className="text-sm text-muted-foreground">
                       Record system activities and changes
                     </p>
                   </div>
@@ -374,16 +436,14 @@ export default function SettingsPage() {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-muted-foreground/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      API Rate Limit
-                    </p>
-                    <p className="text-sm text-gray-500">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">API Rate Limit</p>
+                    <p className="text-sm text-muted-foreground">
                       Maximum API requests per minute
                     </p>
                   </div>
@@ -395,7 +455,7 @@ export default function SettingsPage() {
                         apiRateLimit: parseInt(e.target.value),
                       }))
                     }
-                    className="input w-32"
+                    className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background transition-colors"
                   >
                     <option value={100}>100 requests</option>
                     <option value={500}>500 requests</option>
@@ -405,7 +465,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="pt-6 mt-6 border-t">
+              <div className="pt-6 mt-6 border-t border-border">
                 <button
                   onClick={() => {
                     setLoading(true);
@@ -415,11 +475,11 @@ export default function SettingsPage() {
                     }, 1000);
                   }}
                   disabled={loading}
-                  className="btn btn-primary"
+                  className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {loading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full spinner mr-2"></div>
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
                       Saving...
                     </>
                   ) : (
@@ -434,13 +494,17 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "api" && (
-            <div className="card p-6 space-y-6">
-              <h2 className="text-lg font-medium text-gray-900">
-                API Configuration
-              </h2>
+            <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 space-y-6 transition-colors duration-300">
+              <div>
+                <h2 className="text-lg font-medium">API Configuration</h2>
+                <p className="text-sm text-muted-foreground">
+                  Manage your API keys and endpoints
+                </p>
+              </div>
+              
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-2">
                     API Key
                   </label>
                   <div className="flex items-center space-x-2">
@@ -448,46 +512,67 @@ export default function SettingsPage() {
                       type="text"
                       value="sk_**********************"
                       disabled
-                      className="input flex-1"
+                      className="flex-1 px-3 py-2 border border-border rounded-lg bg-muted-foreground/10 text-muted-foreground"
                     />
-                    <button className="btn btn-secondary">
-                      <Key className="h-4 w-4 mr-2" />
+                    <button 
+                      onClick={() => copyToClipboard("sk_**********************")}
+                      className="flex items-center px-3 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy
+                    </button>
+                    <button className="flex items-center px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                      <Key className="h-4 w-4 mr-1" />
                       Regenerate
                     </button>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-2">
                     Keep your API key secure. Do not share it publicly.
                   </p>
                 </div>
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium mb-2">
                     API Endpoint
                   </label>
-                  <input
-                    type="text"
-                    value="https://api.example.com/v1"
-                    disabled
-                    className="input"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value="https://api.example.com/v1"
+                      disabled
+                      className="flex-1 px-3 py-2 border border-border rounded-lg bg-muted-foreground/10 text-muted-foreground"
+                    />
+                    <button 
+                      onClick={() => copyToClipboard("https://api.example.com/v1")}
+                      className="flex items-center px-3 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy
+                    </button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
                     Base URL for all API requests
                   </p>
                 </div>
               </div>
-              <div className="pt-4 border-t">
-                <button
-                  onClick={() => alert("API documentation opened")}
-                  className="btn btn-secondary mr-3"
-                >
-                  View Documentation
-                </button>
-                <button
-                  onClick={() => alert("API settings saved")}
-                  className="btn btn-primary"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save API Settings
-                </button>
+              
+              <div className="pt-4 border-t border-border">
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => alert("API documentation opened")}
+                    className="flex items-center px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    View Documentation
+                  </button>
+                  <button
+                    onClick={() => alert("API settings saved")}
+                    className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save API Settings
+                  </button>
+                </div>
               </div>
             </div>
           )}

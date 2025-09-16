@@ -90,27 +90,27 @@ function NotificationContainer({
           key={notification.id}
           className={`relative bg-white rounded-lg shadow-lg border-l-4 p-3 transition-all duration-300 ease-in-out transform animate-in slide-in-from-right-5 ${
             notification.type === "success"
-              ? "border-green-500"
+              ? "border-success"
               : notification.type === "error"
-              ? "border-red-500"
+              ? "border-danger"
               : notification.type === "warning"
-              ? "border-yellow-500"
-              : "border-blue-500"
+              ? "border-warning"
+              : "border-info"
           }`}
         >
           <div className="flex items-start">
             <div className="flex-shrink-0">
               {notification.type === "success" && (
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
               )}
               {notification.type === "error" && (
-                <XCircle className="h-4 w-4 text-red-600" />
+                <XCircle className="h-4 w-4 text-danger" />
               )}
               {notification.type === "warning" && (
-                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                <AlertTriangle className="h-4 w-4 text-info" />
               )}
               {notification.type === "info" && (
-                <Info className="h-4 w-4 text-blue-600" />
+                <Info className="h-4 w-4 text-info" />
               )}
             </div>
             <div className="ml-2 flex-1 min-w-0">
@@ -185,17 +185,17 @@ function MetricCard({
   loading?: boolean;
 }) {
   const colorClasses = {
-    blue: "text-blue-600 bg-blue-50 border-blue-100",
-    green: "text-green-600 bg-green-50 border-green-100",
+    blue: "text-info bg-blue-50 border-blue-100",
+    green: "text-success bg-green-50 border-green-100",
     purple: "text-purple-600 bg-purple-50 border-purple-100",
     orange: "text-orange-600 bg-orange-50 border-orange-100",
-    red: "text-red-600 bg-red-50 border-red-100",
-    yellow: "text-yellow-600 bg-yellow-50 border-yellow-100",
+    red: "text-danger bg-red-50 border-red-100",
+    yellow: "text-info bg-yellow-50 border-yellow-100",
   };
 
   const trendColors = {
-    up: "text-green-600 bg-green-50",
-    down: "text-red-600 bg-red-50",
+    up: "text-success bg-green-50",
+    down: "text-danger bg-red-50",
   };
 
   return (
@@ -794,7 +794,7 @@ export default function AnalyticsPage() {
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                     System Health
                   </h3>
-                  <div className="flex items-center text-sm text-green-600">
+                  <div className="flex items-center text-sm text-success">
                     <CheckCircle2 className="h-4 w-4 mr-1" />
                     All systems operational
                   </div>

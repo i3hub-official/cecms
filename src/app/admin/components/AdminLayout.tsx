@@ -57,23 +57,23 @@ export default function AdminLayout({
   }, [pathname]);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-card text-card-foreground shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-border">
           <div className="flex items-center">
-            <Building className="h-8 w-8 text-blue-600" />
+            <Building className="h-8 w-8 text-primary" />
             <div className="ml-3">
-              <h1 className="text-lg font-semibold text-gray-900">CMS Admin</h1>
-              <p className="text-xs text-gray-500">v1.0</p>
+              <h1 className="text-lg font-semibold">CMS Admin</h1>
+              <p className="text-xs text-muted-foreground">v1.0</p>
             </div>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-400 hover:text-gray-600"
+            className="lg:hidden text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -91,13 +91,13 @@ export default function AdminLayout({
                 className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
                   ${
                     active
-                      ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      ? "bg-primary/10 text-primary border-r-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background hover:border-r-2 hover:border-primary"
                   }`}
               >
                 <Icon
                   className={`mr-3 h-5 w-5 ${
-                    active ? "text-blue-600" : "text-gray-400"
+                    active ? "text-primary" : "text-muted-foreground"
                   }`}
                 />
                 {item.name}
@@ -107,21 +107,23 @@ export default function AdminLayout({
         </nav>
 
         {/* User footer */}
-        <div className="absolute bottom-0 inset-x-0 p-4 border-t border-gray-200">
+        <div className="absolute bottom-0 inset-x-0 p-4 border-t border-border">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <Users className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+              <Users className="w-4 h-4 text-primary" />
             </div>
             <div className="ml-3 flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user.name}
+              <p className="text-sm font-medium truncate">{user.name}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user.email}
               </p>
-              <p className="text-xs text-gray-500 truncate">{user.email}</p>
-              <p className="text-xs text-gray-400 capitalize">{user.role}</p>
+              <p className="text-xs text-muted-foreground/70 capitalize">
+                {user.role}
+              </p>
             </div>
             <button
               onClick={onLogout}
-              className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+              className="ml-3 text-muted-foreground hover:text-foreground transition-colors"
               title="Logout"
             >
               <LogOut className="h-5 w-5" />
@@ -133,7 +135,7 @@ export default function AdminLayout({
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -141,17 +143,17 @@ export default function AdminLayout({
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         {/* Mobile top bar */}
-        <header className="bg-white shadow-sm border-b border-gray-200 lg:hidden">
+        <header className="bg-card text-card-foreground shadow-sm border-b border-border lg:hidden">
           <div className="flex items-center justify-between px-4 h-16">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <Menu className="h-6 w-6" />
             </button>
             <div className="flex items-center">
-              <Building className="h-6 w-6 text-blue-600 mr-2" />
-              <span className="font-medium text-gray-900">CMS Admin</span>
+              <Building className="h-6 w-6 text-primary mr-2" />
+              <span className="font-medium">CMS Admin</span>
             </div>
             <div className="w-6"></div>
           </div>

@@ -394,42 +394,42 @@ function NotificationContainer({
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`relative bg-white rounded-lg shadow-lg border-l-4 p-3 transition-all duration-300 ease-in-out transform animate-in slide-in-from-right-5 ${
+          className={`relative bg-card rounded-lg shadow-lg border-l-4 p-3 transition-all duration-300 ease-in-out transform animate-in slide-in-from-right-5 ${
             notification.type === "success"
-              ? "border-green-500"
+              ? "border-success"
               : notification.type === "error"
-              ? "border-red-500"
+              ? "border-danger"
               : notification.type === "warning"
-              ? "border-yellow-500"
-              : "border-blue-500"
+              ? "border-warning"
+              : "border-info"
           }`}
         >
           <div className="flex items-start">
             <div className="flex-shrink-0">
               {notification.type === "success" && (
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
               )}
               {notification.type === "error" && (
-                <XCircle className="h-4 w-4 text-red-600" />
+                <XCircle className="h-4 w-4 text-danger" />
               )}
               {notification.type === "warning" && (
-                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                <AlertTriangle className="h-4 w-4 text-warning" />
               )}
               {notification.type === "info" && (
-                <Info className="h-4 w-4 text-blue-600" />
+                <Info className="h-4 w-4 text-info" />
               )}
             </div>
             <div className="ml-2 flex-1 min-w-0">
-              <h4 className="text-sm font-medium text-gray-900 truncate">
+              <h4 className="text-sm font-medium text-foreground truncate">
                 {notification.title}
               </h4>
-              <p className="mt-1 text-xs text-gray-600 line-clamp-2">
+              <p className="mt-1 text-xs text-foreground/70 line-clamp-2">
                 {notification.message}
               </p>
             </div>
             <button
               onClick={() => removeNotification(notification.id)}
-              className="ml-2 inline-flex text-gray-400 hover:text-gray-600 transition-colors p-1"
+              className="ml-2 inline-flex text-gray-400 hover:text-foreground/70 transition-colors p-1"
             >
               <XCircle className="h-3 w-3" />
             </button>
@@ -452,27 +452,27 @@ function ConfirmationModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-card rounded-lg p-6 w-full max-w-md">
         <div className="flex items-center mb-4">
           {modal.type === "danger" && (
-            <AlertTriangle className="h-6 w-6 text-red-600 mr-3" />
+            <AlertTriangle className="h-6 w-6 text-danger mr-3" />
           )}
           {modal.type === "warning" && (
-            <AlertCircle className="h-6 w-6 text-yellow-600 mr-3" />
+            <AlertCircle className="h-6 w-6 text-warning mr-3" />
           )}
           {modal.type === "info" && (
-            <AlertCircle className="h-6 w-6 text-blue-600 mr-3" />
+            <AlertCircle className="h-6 w-6 text-info mr-3" />
           )}
-          <h3 className="text-lg font-medium text-gray-900">{modal.title}</h3>
+          <h3 className="text-lg font-medium text-foreground">{modal.title}</h3>
         </div>
-        <p className="text-gray-600 mb-6">{modal.message}</p>
+        <p className="text-foreground/70 mb-6">{modal.message}</p>
         <div className="flex flex-col-reverse sm:flex-row sm:space-x-3">
           <button
             onClick={() => {
               modal.onCancel();
               onClose();
             }}
-            className="mt-3 sm:mt-0 w-full sm:w-auto px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            className="mt-3 sm:mt-0 w-full sm:w-auto px-4 py-2 text-gray-700 bg-card border border-gray-300 rounded-md hover:background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             {modal.cancelText}
           </button>
@@ -918,7 +918,7 @@ export default function CenterManagementSystem() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Notifications */}
       <NotificationContainer
         notifications={notifications}
@@ -953,14 +953,14 @@ export default function CenterManagementSystem() {
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center">
-                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 mr-2 flex-shrink-0" />
-                <span className="text-yellow-700 text-sm sm:text-base">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-warning mr-2 flex-shrink-0" />
+                <span className="text-yellow-800 text-sm sm:text-base">
                   {duplicates.length} potential duplicate(s) found
                 </span>
               </div>
               <button
                 onClick={() => setShowDuplicates(!showDuplicates)}
-                className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium self-start sm:self-auto transition-colors"
+                className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium self-start sm:self-auto transition-colors"
               >
                 {showDuplicates ? "Hide" : "Review"}
               </button>
@@ -970,8 +970,8 @@ export default function CenterManagementSystem() {
 
         {/* Duplicates Review Panel */}
         {showDuplicates && duplicates.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6">
-            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
+          <div className="bg-card border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6">
+            <h3 className="text-base sm:text-lg font-medium text-foreground mb-3 sm:mb-4">
               Review Duplicates
             </h3>
             <div className="space-y-3 sm:space-y-4">
@@ -981,7 +981,7 @@ export default function CenterManagementSystem() {
                   className="border border-gray-200 rounded-lg p-3 sm:p-4"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                    <span className="text-xs sm:text-sm text-gray-600">
+                    <span className="text-xs sm:text-sm text-foreground/70">
                       {duplicate.similarity}% similarity ({duplicate.type}{" "}
                       match)
                     </span>
@@ -991,7 +991,7 @@ export default function CenterManagementSystem() {
                           duplicate.centers[1].id,
                         ])
                       }
-                      className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded text-xs sm:text-sm flex items-center self-start sm:self-auto transition-colors"
+                      className="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded text-xs sm:text-sm flex items-center self-start sm:self-auto transition-colors"
                     >
                       <Merge className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       Merge
@@ -1003,13 +1003,13 @@ export default function CenterManagementSystem() {
                         key={center.id}
                         className="border border-gray-100 rounded-lg p-3"
                       >
-                        <div className="font-medium text-gray-900 text-sm sm:text-base">
+                        <div className="font-medium text-foreground text-sm sm:text-base">
                           {center.name}
                         </div>
-                        <div className="text-xs sm:text-sm text-gray-600">
+                        <div className="text-xs sm:text-sm text-foreground/70">
                           #{center.number}
                         </div>
-                        <div className="text-xs sm:text-sm text-gray-600">
+                        <div className="text-xs sm:text-sm text-foreground/70">
                           {center.address}
                         </div>
                         <div className="text-xs text-gray-500 mt-2">
@@ -1025,15 +1025,15 @@ export default function CenterManagementSystem() {
         )}
 
         {/* Header and Controls */}
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="bg-card rounded-xl shadow-sm p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:gap-6">
             {/* Title Section with Mobile Refresh Button */}
             <div className="flex items-center justify-between">
               <div className="text-center sm:text-left">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
                   Centers
                 </h1>
-                <p className="text-gray-600 mt-1 text-sm sm:text-base">
+                <p className="text-foreground/70 mt-1 text-sm sm:text-base">
                   Manage education centers efficiently
                 </p>
               </div>
@@ -1050,10 +1050,10 @@ export default function CenterManagementSystem() {
                   loadDuplicates();
                   setSearchTerm("");
                 }}
-                className="sm:hidden p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                className="sm:hidden p-2 background hover:background/10 rounded-lg transition-colors"
                 title="Refresh data"
               >
-                <RefreshCw className="h-5 w-5 text-gray-600" />
+                <RefreshCw className="h-5 w-5 text-foreground/70" />
               </button>
             </div>
 
@@ -1067,17 +1067,17 @@ export default function CenterManagementSystem() {
                   placeholder="Search centers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 sm:pl-10 w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
+                  className="pl-9 sm:pl-10 w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base"
                 />
               </div>
 
               {/* Checkbox */}
-              <label className="flex items-center whitespace-nowrap bg-gray-50 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+              <label className="flex items-center whitespace-nowrap background px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg hover:background/10 transition-colors cursor-pointer">
                 <input
                   type="checkbox"
                   checked={includeInactive}
                   onChange={(e) => setIncludeInactive(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-success focus:ring-green-500 border-gray-300 rounded"
                 />
                 <span className="ml-2 text-sm font-medium text-gray-700">
                   Include inactive
@@ -1087,7 +1087,7 @@ export default function CenterManagementSystem() {
               {/* Add Button */}
               <button
                 onClick={handleAdd}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg flex items-center justify-center text-sm font-medium whitespace-nowrap transition-colors shadow-sm hover:shadow-md"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg flex items-center justify-center text-sm font-medium whitespace-nowrap transition-colors shadow-sm hover:shadow-md"
               >
                 <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Add Center
@@ -1106,16 +1106,16 @@ export default function CenterManagementSystem() {
             />
 
             {/* Modal content */}
-            <div className="relative bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-100">
+            <div className="relative bg-card rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-100">
               {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 rounded-t-xl sm:rounded-t-2xl">
+              <div className="sticky top-0 bg-card border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 rounded-t-xl sm:rounded-t-2xl">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+                  <h2 className="text-lg sm:text-xl font-semibold text-foreground">
                     {editingCenter ? "Edit Center" : "Add New Center"}
                   </h2>
                   <button
                     onClick={() => setShowForm(false)}
-                    className="text-gray-400 hover:text-gray-600 p-1 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="text-gray-400 hover:text-foreground/70 p-1 sm:p-2 rounded-lg hover:background/10 transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -1139,7 +1139,7 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base ${
                         formErrors.name
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
@@ -1147,7 +1147,7 @@ export default function CenterManagementSystem() {
                       placeholder="Enter center name"
                     />
                     {formErrors.name && (
-                      <p className="text-red-600 text-sm mt-1 flex items-center">
+                      <p className="text-danger text-sm mt-1 flex items-center">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.name}
                       </p>
@@ -1164,7 +1164,7 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, address: e.target.value })
                       }
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none text-sm sm:text-base ${
+                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none text-sm sm:text-base ${
                         formErrors.address
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
@@ -1173,7 +1173,7 @@ export default function CenterManagementSystem() {
                       placeholder="Enter full address"
                     />
                     {formErrors.address && (
-                      <p className="text-red-600 text-sm mt-1 flex items-center">
+                      <p className="text-danger text-sm mt-1 flex items-center">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.address}
                       </p>
@@ -1194,7 +1194,7 @@ export default function CenterManagementSystem() {
                           lga: "",
                         })
                       }
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base ${
                         formErrors.state
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
@@ -1215,7 +1215,7 @@ export default function CenterManagementSystem() {
                         ))}
                     </select>
                     {formErrors.state && (
-                      <p className="text-red-600 text-sm mt-1 flex items-center">
+                      <p className="text-danger text-sm mt-1 flex items-center">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.state}
                       </p>
@@ -1232,7 +1232,7 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, lga: e.target.value })
                       }
-                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                      className={`w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm sm:text-base ${
                         formErrors.lga
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
@@ -1260,13 +1260,13 @@ export default function CenterManagementSystem() {
                       )}
                     </select>
                     {formErrors.lga && (
-                      <p className="text-red-600 text-sm mt-1 flex items-center">
+                      <p className="text-danger text-sm mt-1 flex items-center">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.lga}
                       </p>
                     )}
                     {isLoadingLgas && (
-                      <p className="text-blue-600 text-sm mt-1 flex items-center">
+                      <p className="text-success text-sm mt-1 flex items-center">
                         <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
                         Loading LGAs for {formData.state}...
                       </p>
@@ -1279,17 +1279,17 @@ export default function CenterManagementSystem() {
                   </div>
 
                   {/* Active Checkbox */}
-                  <div className="flex items-center bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <div className="flex items-center background p-3 sm:p-4 rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.isActive}
                       onChange={(e) =>
                         setFormData({ ...formData, isActive: e.target.checked })
                       }
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-success focus:ring-green-500 border-gray-300 rounded"
                     />
                     <div className="ml-3">
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-foreground">
                         Active Center
                       </span>
                       <p className="text-sm text-gray-500">
@@ -1301,18 +1301,18 @@ export default function CenterManagementSystem() {
               </div>
 
               {/* Footer */}
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-3 sm:px-6 sm:py-4 rounded-b-xl sm:rounded-b-2xl">
+              <div className="sticky bottom-0 bg-card border-t border-gray-200 px-4 py-3 sm:px-6 sm:py-4 rounded-b-xl sm:rounded-b-2xl">
                 <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="flex-1 px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors font-medium text-sm sm:text-base"
+                    className="flex-1 px-4 py-2.5 text-gray-700 bg-card border border-gray-300 rounded-lg hover:background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors font-medium text-sm sm:text-base"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors font-medium shadow-sm hover:shadow-md text-sm sm:text-base"
+                    className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors font-medium shadow-sm hover:shadow-md text-sm sm:text-base"
                   >
                     {editingCenter ? "Update Center" : "Create Center"}
                   </button>
@@ -1323,7 +1323,7 @@ export default function CenterManagementSystem() {
         )}
 
         {/* Centers Table/Cards with Skeleton Loading */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-card rounded-lg shadow overflow-hidden">
           {loading ? (
             // Skeleton Loading
             <div className="p-3 sm:p-6 lg:p-8">
@@ -1382,7 +1382,7 @@ export default function CenterManagementSystem() {
               <div className="hidden lg:block">
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
-                    <thead className="bg-gray-50">
+                    <thead className="background">
                       <tr>
                         {[
                           "Center Details",
@@ -1400,7 +1400,7 @@ export default function CenterManagementSystem() {
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-gray-200">
                       {[...Array(5)].map((_, i) => (
                         <tr key={i} className="animate-pulse">
                           <td className="px-4 xl:px-6 py-4">
@@ -1433,18 +1433,18 @@ export default function CenterManagementSystem() {
 
               {/* Loading text */}
               <div className="text-center mt-4">
-                <p className="text-sm text-gray-600">Loading centers...</p>
+                <p className="text-sm text-foreground/70">Loading centers...</p>
               </div>
             </div>
           ) : centers.length === 0 ? (
             <div className="p-6 lg:p-8 text-center">
-              <div className="w-12 h-12 lg:w-16 lg:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 lg:mb-4">
+              <div className="w-12 h-12 lg:w-16 lg:h-16 background/10 rounded-full flex items-center justify-center mx-auto mb-3 lg:mb-4">
                 <Search className="h-6 w-6 lg:h-8 lg:w-8 text-gray-400" />
               </div>
-              <h3 className="text-base lg:text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-base lg:text-lg font-medium text-foreground mb-2">
                 No centers found
               </h3>
-              <p className="text-sm text-gray-600 mb-3 lg:mb-4">
+              <p className="text-sm text-foreground/70 mb-3 lg:mb-4">
                 {searchTerm
                   ? "Try adjusting your search terms."
                   : "Get started by adding your first center."}
@@ -1452,7 +1452,7 @@ export default function CenterManagementSystem() {
               {!searchTerm && (
                 <button
                   onClick={handleAdd}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm lg:text-base font-medium transition-colors"
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm lg:text-base font-medium transition-colors"
                 >
                   <Plus className="h-4 w-4 lg:h-5 lg:w-5 mr-1 lg:mr-2 inline" />
                   Add First Center
@@ -1466,7 +1466,7 @@ export default function CenterManagementSystem() {
                 {centers.map((center) => (
                   <div
                     key={center.id}
-                    className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-card border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1 min-w-0">
@@ -1494,10 +1494,10 @@ export default function CenterManagementSystem() {
                             #{center.number}
                           </span>
                         </div>
-                        <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
+                        <h3 className="text-sm font-medium text-foreground mb-1 line-clamp-2">
                           {center.name}
                         </h3>
-                        <p className="text-xs text-gray-600 mb-1 line-clamp-2">
+                        <p className="text-xs text-foreground/70 mb-1 line-clamp-2">
                           {center.address}
                         </p>
                         <div className="text-xs text-gray-500 flex items-center">
@@ -1511,7 +1511,7 @@ export default function CenterManagementSystem() {
                             mobileMenuOpen === center.id ? null : center.id
                           )
                         }
-                        className="text-gray-400 hover:text-gray-600 p-1 ml-2 transition-colors"
+                        className="text-gray-400 hover:text-foreground/70 p-1 ml-2 transition-colors"
                       >
                         <MoreVertical className="h-4 w-4" />
                       </button>
@@ -1524,7 +1524,7 @@ export default function CenterManagementSystem() {
                             handleEdit(center);
                             setMobileMenuOpen(null);
                           }}
-                          className="flex items-center text-blue-600 text-xs px-3 py-1 rounded border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors"
+                          className="flex items-center text-success text-xs px-3 py-1 rounded border border-green-200 bg-green-50 hover:bg-green-100 transition-colors"
                         >
                           <Edit className="h-3 w-3 mr-1" />
                           Edit
@@ -1534,7 +1534,7 @@ export default function CenterManagementSystem() {
                             handleDelete(center);
                             setMobileMenuOpen(null);
                           }}
-                          className="flex items-center text-red-600 text-xs px-3 py-1 rounded border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+                          className="flex items-center text-danger text-xs px-3 py-1 rounded border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
                         >
                           <Trash2 className="h-3 w-3 mr-1" />
                           {center.isActive ? "Deactivate" : "Delete"}
@@ -1555,7 +1555,7 @@ export default function CenterManagementSystem() {
                 {centers.map((center) => (
                   <div
                     key={center.id}
-                    className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-card border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1 min-w-0">
@@ -1583,11 +1583,11 @@ export default function CenterManagementSystem() {
                             #{center.number}
                           </span>
                         </div>
-                        <h3 className="text-sm font-medium text-gray-900 mb-1 truncate">
+                        <h3 className="text-sm font-medium text-foreground mb-1 truncate">
                           {center.name}
                         </h3>
                         <p
-                          className="text-xs text-gray-600 mb-1 line-clamp-2"
+                          className="text-xs text-foreground/70 mb-1 line-clamp-2"
                           title={center.address}
                         >
                           {center.address}
@@ -1602,14 +1602,14 @@ export default function CenterManagementSystem() {
                       <div className="flex space-x-1 ml-2">
                         <button
                           onClick={() => handleEdit(center)}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                          className="text-success hover:text-green-800 p-1 rounded transition-colors"
                           title="Edit center"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(center)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
+                          className="text-danger hover:text-red-800 p-1 rounded transition-colors"
                           title={
                             center.isActive
                               ? "Deactivate center"
@@ -1630,7 +1630,7 @@ export default function CenterManagementSystem() {
 
               {/* Desktop Table */}
               <table className="hidden lg:table min-w-full">
-                <thead className="bg-gray-50">
+                <thead className="background">
                   <tr>
                     <th className="px-4 xl:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Center Details
@@ -1649,15 +1649,15 @@ export default function CenterManagementSystem() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card divide-y divide-gray-200">
                   {centers.map((center) => (
                     <tr
                       key={center.id}
-                      className="hover:bg-gray-50 transition-colors"
+                      className="hover:background transition-colors"
                     >
                       <td className="px-4 xl:px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-foreground">
                             {center.name}
                           </div>
                           <div className="text-sm text-gray-500">
@@ -1668,7 +1668,7 @@ export default function CenterManagementSystem() {
                       <td className="px-4 xl:px-6 py-4">
                         <div>
                           <div
-                            className="text-sm text-gray-900 max-w-xs truncate"
+                            className="text-sm text-foreground max-w-xs truncate"
                             title={center.address}
                           >
                             {center.address}
@@ -1712,14 +1712,14 @@ export default function CenterManagementSystem() {
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => handleEdit(center)}
-                            className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                            className="text-success hover:text-green-800 p-1 rounded transition-colors"
                             title="Edit center"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(center)}
-                            className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
+                            className="text-danger hover:text-red-800 p-1 rounded transition-colors"
                             title={
                               center.isActive
                                 ? "Deactivate center"
@@ -1740,9 +1740,9 @@ export default function CenterManagementSystem() {
 
         {/* Pagination Controls */}
         {pagination && pagination.pages > 1 && (
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4">
+          <div className="bg-card rounded-lg shadow p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-              <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+              <div className="text-xs sm:text-sm text-foreground/70 text-center sm:text-left">
                 Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                 {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
                 of {pagination.total} centers
@@ -1751,17 +1751,17 @@ export default function CenterManagementSystem() {
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={pagination.page === 1}
-                  className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 min-w-[60px] sm:min-w-[70px] transition-colors"
+                  className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm bg-card border border-gray-300 rounded-md disabled:opacity-50 hover:background min-w-[60px] sm:min-w-[70px] transition-colors"
                 >
                   Previous
                 </button>
-                <span className="px-2 py-1 text-xs sm:text-sm text-gray-600">
+                <span className="px-2 py-1 text-xs sm:text-sm text-foreground/70">
                   {pagination.page} / {pagination.pages}
                 </span>
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={pagination.page === pagination.pages}
-                  className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 min-w-[60px] sm:min-w-[70px] transition-colors"
+                  className="px-2 py-1 sm:px-3 sm:py-1 text-xs sm:text-sm bg-card border border-gray-300 rounded-md disabled:opacity-50 hover:background min-w-[60px] sm:min-w-[70px] transition-colors"
                 >
                   Next
                 </button>
@@ -1777,7 +1777,7 @@ export default function CenterManagementSystem() {
               icon: Building,
               value: stats.total,
               label: "Total Centers",
-              color: "blue",
+              color: "green",
             },
             {
               icon: CheckCircle,
@@ -1800,16 +1800,15 @@ export default function CenterManagementSystem() {
           ].map((stat, index) => {
             const Icon = stat.icon;
             const colorClasses = {
-              blue: "text-blue-600",
-              green: "text-green-600",
-              red: "text-red-600",
-              yellow: "text-yellow-600",
+              green: "text-success",
+              red: "text-danger",
+              yellow: "text-warning",
             }[stat.color];
 
             return (
               <div
                 key={index}
-                className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow"
+                className="bg-card rounded-lg shadow p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -1818,10 +1817,10 @@ export default function CenterManagementSystem() {
                     />
                   </div>
                   <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
-                    <div className="text-base sm:text-lg lg:text-2xl font-bold text-gray-900">
+                    <div className="text-base sm:text-lg lg:text-2xl font-bold text-foreground">
                       {stat.value || 0}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-600 truncate">
+                    <div className="text-xs sm:text-sm text-foreground/70 truncate">
                       {stat.label}
                     </div>
                   </div>
@@ -1834,19 +1833,19 @@ export default function CenterManagementSystem() {
         {/* Bottom Section - Recent Activity and Quick Actions */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
           {/* Recent Centers */}
-          <div className="bg-white rounded-xl shadow-sm flex flex-col hover:shadow-md transition-shadow">
+          <div className="bg-card rounded-xl shadow-sm flex flex-col hover:shadow-md transition-shadow">
             <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+              <h2 className="text-base sm:text-lg font-semibold text-foreground">
                 Recent Centers
               </h2>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-foreground/70 mt-1">
                 Latest centers added to the system
               </p>
             </div>
             <div className="flex-1 p-4 sm:p-6">
               {centers.length === 0 ? (
                 <div className="text-center text-gray-500 py-6 sm:py-8">
-                  <Building className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-gray-300" />
+                  <Building className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-primary" />
                   <p className="text-sm sm:text-base font-medium">
                     No centers yet
                   </p>
@@ -1859,7 +1858,7 @@ export default function CenterManagementSystem() {
                   {centers.slice(0, 5).map((center) => (
                     <div
                       key={center.id}
-                      className="relative p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="relative p-3 sm:p-4 bg-background rounded-lg hover:background/10 transition-colors"
                     >
                       {/* Active/Inactive Badge - Top Right */}
                       <span
@@ -1875,7 +1874,7 @@ export default function CenterManagementSystem() {
                       {/* Content - Adjusted padding to prevent badge overlap */}
                       <div className="pr-14 sm:pr-16">
                         {/* Center Name */}
-                        <p className="text-xs sm:text-sm font-medium text-gray-900 line-clamp-2">
+                        <p className="text-xs sm:text-sm font-medium text-foreground line-clamp-2">
                           {center.name}
                         </p>
 
@@ -1897,12 +1896,12 @@ export default function CenterManagementSystem() {
           </div>
 
           {/* Enhanced Quick Actions */}
-          <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow">
             <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+              <h2 className="text-base sm:text-lg font-semibold text-foreground">
                 Quick Actions
               </h2>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-foreground/70 mt-1">
                 Common tasks and utilities
               </p>
             </div>
@@ -1913,9 +1912,9 @@ export default function CenterManagementSystem() {
                     icon: Plus,
                     label: "Add Center",
                     description: "Create new center",
-                    color: "blue",
-                    bgColor: "bg-blue-50",
-                    hoverColor: "hover:bg-blue-100",
+                    color: "green",
+                    bgColor: "bg-background",
+                    hoverColor: "hover:bg-green-100",
                     action: handleAdd,
                   },
                   {
@@ -1923,7 +1922,7 @@ export default function CenterManagementSystem() {
                     label: "Find Duplicates",
                     description: "Detect similar centers",
                     color: "yellow",
-                    bgColor: "bg-yellow-50",
+                    bgColor: "bg-background",
                     hoverColor: "hover:bg-yellow-100",
                     action: () => loadDuplicates(),
                   },
@@ -1932,7 +1931,7 @@ export default function CenterManagementSystem() {
                     label: "Test API",
                     description: "Try public lookup",
                     color: "green",
-                    bgColor: "bg-green-50",
+                    bgColor: "bg-background",
                     hoverColor: "hover:bg-green-100",
                     action: () => {
                       addNotification({
@@ -1950,9 +1949,9 @@ export default function CenterManagementSystem() {
                     icon: RefreshCw,
                     label: "Refresh Data",
                     description: "Reload all data",
-                    color: "purple",
-                    bgColor: "bg-purple-50",
-                    hoverColor: "hover:bg-purple-100",
+                    color: "green",
+                    bgColor: "bg-background",
+                    hoverColor: "hover:bg-green-100",
                     action: () => {
                       addNotification({
                         type: "info",
@@ -1968,10 +1967,8 @@ export default function CenterManagementSystem() {
                 ].map((action, index) => {
                   const Icon = action.icon;
                   const colorClasses = {
-                    blue: "text-blue-600",
-                    yellow: "text-yellow-600",
-                    green: "text-green-600",
-                    purple: "text-purple-600",
+                    green: "text-success",
+                    yellow: "text-warning",
                   }[action.color];
 
                   return (
@@ -1980,7 +1977,7 @@ export default function CenterManagementSystem() {
                       onClick={action.action}
                       className={`flex items-center p-3 sm:p-4 rounded-xl ${action.bgColor} ${action.hoverColor} transition-all hover:shadow-sm border border-transparent hover:border-opacity-20`}
                     >
-                      <div className="flex-shrink-0 p-2 bg-white rounded-lg shadow-sm">
+                      <div className="flex-shrink-0 p-2 bg-card rounded-lg shadow-sm">
                         <Icon
                           className={`h-4 w-4 sm:h-5 sm:w-5 ${colorClasses}`}
                         />
@@ -1991,7 +1988,7 @@ export default function CenterManagementSystem() {
                         >
                           {action.label}
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-foreground/70">
                           {action.description}
                         </div>
                       </div>

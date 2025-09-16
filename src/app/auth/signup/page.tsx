@@ -33,6 +33,41 @@ export default function SignUpPage() {
     if (error) setError("");
   };
 
+  // Password strength calculation
+  const calculatePasswordStrength = (password: string) => {
+    if (!password) return 0;
+
+    let strength = 0;
+
+    // Length check
+    if (password.length >= 8) strength += 20;
+    if (password.length >= 12) strength += 10;
+
+    // Character variety checks
+    if (/[A-Z]/.test(password)) strength += 20;
+    if (/[a-z]/.test(password)) strength += 20;
+    if (/[0-9]/.test(password)) strength += 20;
+    if (/[^A-Za-z0-9]/.test(password)) strength += 20;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 20;
+
+    return Math.min(strength, 100);
+  };
+
+  const passwordStrength = calculatePasswordStrength(formData.password);
+
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength < 40) return "bg-destructive";
+    if (passwordStrength < 85) return "bg-accent";
+    return "bg-primary";
+  };
+
+  const getPasswordStrengthText = () => {
+    if (!formData.password) return "";
+    if (passwordStrength < 40) return "Weak";
+    if (passwordStrength < 85) return "Medium";
+    return "Strong";
+  };
+
   const validatePassword = (password: string) => {
     return password.length >= 8;
   };
@@ -97,23 +132,23 @@ export default function SignUpPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="mx-auto h-16 w-16 bg-green-600 rounded-full flex items-center justify-center">
-              <CheckCircle className="h-8 w-8 text-white" />
+          <div className="bg-background text-foreground rounded-2xl shadow-sm border border-border p-8 text-center transition-colors duration-300">
+            <div className="mx-auto h-16 w-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center transition-transform">
+              <CheckCircle className="h-8 w-8" />
             </div>
-            <h2 className="mt-6 text-2xl font-bold text-gray-900">
+            <h2 className="mt-6 text-2xl font-bold">
               Account Created Successfully!
             </h2>
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 text-sm text-muted-foreground">
               Your account has been created. You can now sign in with your
               credentials.
             </p>
             <div className="mt-6">
               <a
                 href="/auth/signin"
-                className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                className="w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 Go to Sign In
               </a>
@@ -125,18 +160,16 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-background text-foreground rounded-2xl shadow-sm border border-border p-8 transition-colors duration-300">
           {/* Header */}
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center">
-              <User className="h-6 w-6 text-white" />
+            <div className="mx-auto h-12 w-12 bg-primary text-primary-foreground rounded-xl flex items-center justify-center transition-transform">
+              <User className="h-6 w-6" />
             </div>
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">
-              Create Account
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <h2 className="mt-6 text-3xl font-bold">Create Account</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               Sign up to get started with your admin account
             </p>
           </div>
@@ -144,28 +177,28 @@ export default function SignUpPage() {
           {/* Form */}
           <div className="mt-8 space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
-                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-                <span className="text-sm text-red-700">{error}</span>
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-center space-x-3">
+                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                <span className="text-sm text-destructive">{error}</span>
               </div>
             )}
 
             <div className="space-y-4">
               {/* Name Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Full Name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
+                    <User className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <input
                     name="name"
                     type="text"
                     autoComplete="name"
                     required
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors"
+                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-border placeholder-muted-foreground text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-colors bg-background"
                     placeholder="Enter your full name"
                     value={formData.name}
                     onChange={handleChange}
@@ -175,19 +208,19 @@ export default function SignUpPage() {
 
               {/* Email Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
+                    <Mail className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <input
                     name="email"
                     type="email"
                     autoComplete="email"
                     required
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors"
+                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-border placeholder-muted-foreground text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-colors bg-background"
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={handleChange}
@@ -197,19 +230,19 @@ export default function SignUpPage() {
 
               {/* Password Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                    <Lock className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <input
                     name="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required
-                    className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors"
+                    className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-border placeholder-muted-foreground text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-colors bg-background"
                     placeholder="Create a password (min. 8 characters)"
                     value={formData.password}
                     onChange={handleChange}
@@ -220,29 +253,49 @@ export default function SignUpPage() {
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <EyeOff className="h-5 w-5 text-muted-foreground hover:text-foreground" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <Eye className="h-5 w-5 text-muted-foreground hover:text-foreground" />
                     )}
                   </button>
                 </div>
+
+                {/* Password Strength Indicator */}
+                {formData.password && (
+                  <div className="mt-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs text-muted-foreground">
+                        Password strength: {getPasswordStrengthText()}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {passwordStrength}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted-foreground/20 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full ${getPasswordStrengthColor()}`}
+                        style={{ width: `${passwordStrength}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Confirm Password Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Confirm Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                    <Lock className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <input
                     name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required
-                    className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors"
+                    className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-border placeholder-muted-foreground text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-colors bg-background"
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
@@ -253,9 +306,9 @@ export default function SignUpPage() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <EyeOff className="h-5 w-5 text-muted-foreground hover:text-foreground" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      <Eye className="h-5 w-5 text-muted-foreground hover:text-foreground" />
                     )}
                   </button>
                 </div>
@@ -263,8 +316,12 @@ export default function SignUpPage() {
             </div>
 
             {/* Password Requirements */}
-            <div className="text-xs text-gray-500">
-              <p>Password must be at least 8 characters long</p>
+            <div className="text-xs text-muted-foreground">
+              <p>
+                Password must be at least 8 characters long and include
+                uppercase, lowercase, numbers, and special characters for better
+                security.
+              </p>
             </div>
 
             {/* Submit Button */}
@@ -272,11 +329,11 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="group relative w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? (
                   <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
                     <span>Creating account...</span>
                   </div>
                 ) : (
@@ -287,11 +344,11 @@ export default function SignUpPage() {
 
             {/* Sign In Link */}
             <div className="text-center">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 Already have an account?{" "}
                 <a
                   href="/auth/signin"
-                  className="text-indigo-600 hover:text-indigo-500 hover:underline transition-colors font-medium"
+                  className="text-primary hover:text-primary/80 hover:underline transition-colors font-medium"
                 >
                   Sign in here
                 </a>
