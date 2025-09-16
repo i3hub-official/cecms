@@ -378,8 +378,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* Data Tables */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Centers Table */}
+      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
+        {/* Centers Table - Wider on xl screens */}
         <div className="border border-border rounded-xl p-6 overflow-hidden transition-all hover:shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2 sm:gap-0">
             <h2 className="text-lg font-medium">Recently Added Centers</h2>
@@ -442,7 +442,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Active Sessions Table */}
+        {/* Active Sessions Table - Narrower on xl screens */}
         <div className="border border-border rounded-xl p-6 transition-all hover:shadow-md">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-medium">Active Sessions</h2>

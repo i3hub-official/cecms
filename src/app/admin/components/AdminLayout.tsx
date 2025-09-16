@@ -54,15 +54,15 @@ export default function AdminLayout({
   const isActivePath = (href: string) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
-  useEffect(() => {
+  const handleNavigationClick = () => {
     setSidebarOpen(false);
-  }, [pathname]);
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-card text-card-foreground shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-card text-card-foreground shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Sidebar Header */}
@@ -100,7 +100,7 @@ export default function AdminLayout({
         </div>
 
         {/* Navigation */}
-        <nav className="mt-6 px-3 space-y-1">
+        <nav className="mt-6 px-3 space-y-1 flex-1">
           {navigation.map((item) => {
             const Icon = item.icon;
             const active = isActivePath(item.href);
@@ -108,6 +108,7 @@ export default function AdminLayout({
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={handleNavigationClick}
                 className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
                   ${
                     active
@@ -126,8 +127,8 @@ export default function AdminLayout({
           })}
         </nav>
 
-        {/* User Footer */}
-        <div className="absolute bottom-0 inset-x-0 p-4 border-t border-border">
+        {/* User Footer - Always visible and fixed */}
+        <div className="sticky bottom-0 bg-card border-t border-border p-4 mt-auto">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
               <Users className="w-4 h-4 text-primary" />
@@ -143,7 +144,7 @@ export default function AdminLayout({
             </div>
             <button
               onClick={onLogout}
-              className="ml-3 text-muted-foreground hover:text-foreground transition-colors"
+              className="ml-3 p-2 text-muted-foreground hover:text-foreground hover:bg-background rounded-lg transition-colors"
               title="Logout"
             >
               <LogOut className="h-5 w-5" />
