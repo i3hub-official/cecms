@@ -8,6 +8,7 @@ import {
   CheckCircle,
   Shield,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function ResetPasswordPage() {
   const [formData, setFormData] = useState({
@@ -129,6 +130,14 @@ export default function ResetPasswordPage() {
         <div className="bg-background text-foreground rounded-2xl shadow-sm border border-border p-8 transition-colors duration-300">
           {/* Header */}
           <div className="text-center">
+            <div className="text-left mb-6">
+              <Link
+                href="/"
+                className="inline-flex items-center text-sm text-primary hover:underline transition-colors"
+              >
+                ← Back to Home
+              </Link>
+            </div>
             <div className="mx-auto h-12 w-12 bg-primary text-primary-foreground rounded-xl flex items-center justify-center transition-transform">
               <Shield className="h-6 w-6" />
             </div>

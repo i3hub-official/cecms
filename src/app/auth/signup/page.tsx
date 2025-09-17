@@ -9,6 +9,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -134,6 +135,14 @@ export default function SignUpPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <div className="max-w-md w-full">
+          <div className="text-left mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center text-sm text-primary hover:underline transition-colors"
+            >
+              ← Back to Home
+            </Link>
+          </div>
           <div className="bg-background text-foreground rounded-2xl shadow-sm border border-border p-8 text-center transition-colors duration-300">
             <div className="mx-auto h-16 w-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center transition-transform">
               <CheckCircle className="h-8 w-8" />
@@ -165,6 +174,14 @@ export default function SignUpPage() {
         <div className="bg-background text-foreground rounded-2xl shadow-sm border border-border p-8 transition-colors duration-300">
           {/* Header */}
           <div className="text-center">
+            <div className="text-left mb-6">
+              <Link
+                href="/"
+                className="inline-flex items-center text-sm text-primary hover:underline transition-colors"
+              >
+                ← Back to Home
+              </Link>
+            </div>
             <div className="mx-auto h-12 w-12 bg-primary text-primary-foreground rounded-xl flex items-center justify-center transition-transform">
               <User className="h-6 w-6" />
             </div>

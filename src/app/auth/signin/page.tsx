@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function SignInPage() {
   const [formData, setFormData] = useState({
@@ -66,12 +67,18 @@ export default function SignInPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="bg-background text-foreground rounded-2xl shadow-sm border border-border p-8 transition-colors duration-300">
           <div className="text-center">
+            <div className="text-left mb-6">
+              <Link
+                href="/"
+                className="inline-flex items-center text-sm text-primary hover:underline transition-colors"
+              >
+                ← Back to Home
+              </Link>
+            </div>
             <div className="mx-auto h-12 w-12 bg-primary text-primary-foreground rounded-xl flex items-center justify-center transition-transform">
               <Lock className="h-6 w-6" />
             </div>
-            <h2 className="mt-6 text-3xl font-bold">
-              Welcome back
-            </h2>
+            <h2 className="mt-6 text-3xl font-bold">Welcome back</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Sign in to your account to continue
             </p>

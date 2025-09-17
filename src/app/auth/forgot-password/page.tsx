@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="bg-background text-foreground rounded-2xl shadow-sm border border-border p-8 transition-colors duration-300">
           <div className="text-center">
-            <div className="text-left mt-2">
+            <div className="text-left mb-6">
               <Link
                 href="/"
                 className="inline-flex items-center text-sm text-primary hover:underline transition-colors"
