@@ -226,7 +226,7 @@ const api = {
     }
   },
 
-  async findDuplicates(): Promise<Center[]> {
+  async findDuplicates(): Promise<Duplicate[]> {
     try {
       const response = await fetch("/api/centers/duplicates");
 
@@ -242,6 +242,7 @@ const api = {
         throw new Error("Unexpected API response format for duplicates");
       }
 
+      // The API now returns the correct Duplicate[] structure
       return data;
     } catch (error: unknown) {
       console.error("Error finding duplicates:", error);
@@ -678,12 +679,9 @@ export default function CenterManagementSystem() {
   const loadDuplicates = useCallback(async () => {
     try {
       const duplicatesData = await api.findDuplicates();
-      const formattedDuplicates = duplicatesData.map((center) => ({
-        centers: [center],
-        similarity: 100, // Example similarity value, adjust as needed
-        type: "name" as const, // Use const assertion to enforce the literal type
-      }));
-      setDuplicates(formattedDuplicates);
+
+      // The API already returns the correct structure, so don't transform it
+      setDuplicates(duplicatesData);
     } catch (err) {
       console.error("Error loading duplicates:", err);
       addNotification({
@@ -1050,20 +1048,6 @@ export default function CenterManagementSystem() {
           </div>
         )}
 
-        {/* Debug info - only show if there's an unexpected state */}
-        {showDuplicates && duplicates.length === 0 && (
-          <div className="bg-muted/20 border border-border rounded-lg p-4 mt-4">
-            <h4 className="text-sm font-medium text-foreground mb-2">
-              Debug Info: No duplicates to show
-            </h4>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <div>showDuplicates: {showDuplicates.toString()}</div>
-              <div>duplicates count: {duplicates.length}</div>
-              <div>duplicates data: {JSON.stringify(duplicates)}</div>
-            </div>
-          </div>
-        )}
-
         {/* Header and Controls */}
         <div className="bg-card rounded-xl shadow-sm p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:gap-6">
@@ -1358,6 +1342,66 @@ export default function CenterManagementSystem() {
             </div>
           </div>
         )}
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+          {[
+            {
+              icon: Building,
+              value: stats.total,
+              label: "Total Centers",
+              color: "green",
+            },
+            {
+              icon: CheckCircle,
+              value: stats.active,
+              label: "Active Centers",
+              color: "green",
+            },
+            {
+              icon: AlertCircle,
+              value: stats.inactive,
+              label: "Inactive Centers",
+              color: "red",
+            },
+            {
+              icon: AlertTriangle,
+              value: duplicates.length,
+              label: "Duplicates Found",
+              color: "yellow",
+            },
+          ].map((stat, index) => {
+            const Icon = stat.icon;
+            const colorClasses = {
+              green: "text-success",
+              red: "text-danger",
+              yellow: "text-warning",
+            }[stat.color];
+
+            return (
+              <div
+                key={index}
+                className="bg-card rounded-lg shadow p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <Icon
+                      className={`h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 ${colorClasses}`}
+                    />
+                  </div>
+                  <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                    <div className="text-base sm:text-lg lg:text-2xl font-bold text-foreground">
+                      {stat.value || 0}
+                    </div>
+                    <div className="text-xs sm:text-sm text-foreground/70 truncate">
+                      {stat.label}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
         {/* Centers Table/Cards with Skeleton Loading */}
         <div className="bg-card rounded-lg shadow overflow-hidden">
@@ -1806,66 +1850,6 @@ export default function CenterManagementSystem() {
             </div>
           </div>
         )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-          {[
-            {
-              icon: Building,
-              value: stats.total,
-              label: "Total Centers",
-              color: "green",
-            },
-            {
-              icon: CheckCircle,
-              value: stats.active,
-              label: "Active Centers",
-              color: "green",
-            },
-            {
-              icon: AlertCircle,
-              value: stats.inactive,
-              label: "Inactive Centers",
-              color: "red",
-            },
-            {
-              icon: AlertTriangle,
-              value: duplicates.length,
-              label: "Duplicates Found",
-              color: "yellow",
-            },
-          ].map((stat, index) => {
-            const Icon = stat.icon;
-            const colorClasses = {
-              green: "text-success",
-              red: "text-danger",
-              yellow: "text-warning",
-            }[stat.color];
-
-            return (
-              <div
-                key={index}
-                className="bg-card rounded-lg shadow p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Icon
-                      className={`h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 ${colorClasses}`}
-                    />
-                  </div>
-                  <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
-                    <div className="text-base sm:text-lg lg:text-2xl font-bold text-foreground">
-                      {stat.value || 0}
-                    </div>
-                    <div className="text-xs sm:text-sm text-foreground/70 truncate">
-                      {stat.label}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
 
         {/* Bottom Section - Recent Activity and Quick Actions */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
