@@ -99,9 +99,9 @@ const ThemeToggle = () => {
       aria-label="Toggle theme"
     >
       {isDark ? (
-        <SunIcon className="h-5 w-5 text-yellow-500" />
+        <SunIcon className="h-5 w-5 text-primary-foreground" />
       ) : (
-        <MoonIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        <MoonIcon className="h-5 w-5 text-foreground dark:text-gray-400" />
       )}
     </button>
   );

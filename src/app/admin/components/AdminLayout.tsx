@@ -137,7 +137,7 @@ export default function AdminLayout({
                   aria-label="Toggle theme"
                 >
                   {darkMode ? (
-                    <Sun className="h-5 w-5 text-accent" />
+                    <Sun className="h-5 w-5 text-primary-foreground" />
                   ) : (
                     <Moon className="h-5 w-5 text-foreground" />
                   )}
@@ -246,7 +246,7 @@ export default function AdminLayout({
               aria-label="Toggle theme"
             >
               {darkMode ? (
-                <Sun className="h-5 w-5 text-accent" />
+                <Sun className="h-5 w-5 text-primary-foreground" />
               ) : (
                 <Moon className="h-5 w-5 text-foreground" />
               )}
