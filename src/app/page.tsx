@@ -4,7 +4,6 @@ import HeaderContext from "./components/landingpage/HeaderContext";
 import WelcomeContext from "./components/landingpage/WelcomeContext";
 import QuickStatsContext from "./components/landingpage/QuickStatsContext";
 import AdministrativeFuncContext from "./components/landingpage/AdministrativeFuncContext";
-import QuickActionContext from "./components/landingpage/QuickActionContext";
 import FooterContext from "./components/landingpage/FooterContext";
 
 export default function CECMSAdminPortal() {
@@ -27,9 +26,6 @@ export default function CECMSAdminPortal() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Administrative Functions */}
           <AdministrativeFuncContext />
-
-          {/* Quick Actions & Recent Activity */}
-          <QuickActionContext />
         </div>
 
         {/* Footer Actions */}
