@@ -1768,7 +1768,7 @@ export default function CenterManagementSystem() {
                         </button>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                    <div className="text-xs text-gray-500 pt-2 border-t border-border">
                       Updated {formatShortDate(center.modifiedAt)}
                       {center.modifiedBy && ` by ${center.modifiedBy}`}
                     </div>
