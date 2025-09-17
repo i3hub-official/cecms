@@ -40,7 +40,7 @@ export default function HeaderContext() {
           {/* Left side - Logo and title */}
           <div className="flex items-center space-x-4">
             <div className="h-10 w-10 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Shield className="h-6 w-6 text-foreground" />
+              <Shield className="h-6 w-6 text-success" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">

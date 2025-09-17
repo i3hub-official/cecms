@@ -30,7 +30,7 @@ const AdministrativeFuncContext = () => {
                 {feature.actions.slice(0, 2).map((action, actionIndex) => (
                   <div
                     key={actionIndex}
-                    className="flex items-center space-x-2 text-xs text-muted-foreground"
+                    className="flex items-center space-x-2 text-xs text-success"
                   >
                     <CheckCircle className="h-3 w-3" />
                     <span>{action}</span>
