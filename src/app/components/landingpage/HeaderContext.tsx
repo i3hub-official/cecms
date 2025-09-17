@@ -39,8 +39,8 @@ export default function HeaderContext() {
         <div className="hidden md:flex justify-between items-center py-4">
           {/* Left side - Logo and title */}
           <div className="flex items-center space-x-4">
-            <div className="h-10 w-10 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Shield className="h-6 w-6 text-success" />
+            <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
+              <Shield className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">
@@ -98,8 +98,8 @@ export default function HeaderContext() {
 
           {/* Middle - Shortened brand */}
           <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Shield className="h-5 w-5 text-foreground" />
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+              <Shield className="h-5 w-5 text-primary-foreground" />
             </div>
             <h1 className="text-lg font-bold text-foreground">CECMS</h1>
           </div>
