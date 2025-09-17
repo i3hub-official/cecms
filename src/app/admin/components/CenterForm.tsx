@@ -506,6 +506,7 @@ export default function CenterManagementSystem() {
   const [includeInactive, setIncludeInactive] = useState(false);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState<ConfirmationModal>(
     {
       isOpen: false,
@@ -788,35 +789,39 @@ export default function CenterManagementSystem() {
 
   const handleDelete = async (center: Center) => {
     const action = center.isActive ? "deactivate" : "permanently delete";
+    const actionTitle = action.charAt(0).toUpperCase() + action.slice(1);
 
     showConfirmation({
-      title: `${action.charAt(0).toUpperCase() + action.slice(1)} Center`,
+      title: `${actionTitle} Center`,
       message: `Are you sure you want to ${action} "${center.name}"? This action cannot be undone.`,
-      confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+      confirmText: actionTitle,
       cancelText: "Cancel",
       type: "danger",
       onConfirm: async () => {
+        // Show immediate feedback
+        addNotification({
+          type: "info",
+          title: "Processing Request",
+          message: `Please wait while we ${action} ${center.name}... You will be notified once it's done.`,
+        });
+
         try {
           await api.deleteCenter(center.id);
-          await loadCenters();
-          await loadStats();
+          await Promise.all([loadCenters(), loadStats()]);
+
           setError(null);
           addNotification({
             type: "success",
-            title: "Center Deleted",
-            message: `${center.name} has been ${
-              center.isActive ? "deactivated" : "deleted"
-            } successfully.`,
+            title: "Success",
+            message: `${center.name} has been ${action}d successfully.`,
           });
         } catch (err) {
           const errorMsg =
-            err instanceof Error
-              ? err.message
-              : "Failed to delete center. Please try again.";
+            err instanceof Error ? err.message : "Failed to delete center.";
           setError(errorMsg);
           addNotification({
             type: "error",
-            title: "Delete Failed",
+            title: "Error",
             message: errorMsg,
           });
         }
@@ -826,7 +831,8 @@ export default function CenterManagementSystem() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e?.preventDefault();
+    setIsSubmitting(true);
 
     if (!validateForm()) {
       return;
@@ -886,10 +892,18 @@ export default function CenterManagementSystem() {
         title: "Save Failed",
         message: errorMsg,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const [isMerging, setIsMerging] = useState<string | null>(null);
+
   const handleMerge = async (primaryId: string, secondaryIds: string[]) => {
+    // Set merging state for this specific operation
+    const mergeId = `${primaryId}-${secondaryIds.join("-")}`;
+    setIsMerging(mergeId);
+
     showConfirmation({
       title: "Merge Centers",
       message:
@@ -899,24 +913,45 @@ export default function CenterManagementSystem() {
       type: "warning",
       onConfirm: async () => {
         try {
+          // Show processing notification
+          addNotification({
+            type: "info",
+            title: "Merging Centers...",
+            message:
+              "Please wait while we merge the selected centers. This may take a moment.",
+          });
+          // Perform the merge
           await api.mergeCenters(primaryId, secondaryIds);
-          await loadCenters();
-          await loadStats();
-          await loadDuplicates();
+
+          // Reload all data in parallel for better performance
+          await Promise.all([loadCenters(), loadStats(), loadDuplicates()]);
+
           addNotification({
             type: "success",
-            title: "Centers Merged",
+            title: "Merge Completed",
             message: "Centers have been merged successfully.",
           });
         } catch (err) {
+          console.error("Merge error:", err);
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : "Failed to merge centers. Please try again.";
+
           addNotification({
             type: "error",
             title: "Merge Failed",
-            message: "Failed to merge centers. Please try again.",
+            message: errorMessage,
           });
+        } finally {
+          // Clear merging state
+          setIsMerging(null);
         }
       },
-      onCancel: () => {},
+      onCancel: () => {
+        // Clear merging state if user cancels
+        setIsMerging(null);
+      },
     });
   };
 
@@ -1011,10 +1046,24 @@ export default function CenterManagementSystem() {
                             duplicate.centers[1].id,
                           ])
                         }
-                        className="bg-success/20 hover:bg-success/30 text-success px-3 py-1 rounded text-sm flex items-center transition-colors"
+                        disabled={
+                          isMerging ===
+                          `${duplicate.centers[0].id}-${duplicate.centers[1].id}`
+                        }
+                        className="bg-success/20 hover:bg-success/30 text-success px-3 py-1 rounded text-sm flex items-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Merge className="h-4 w-4 mr-1" />
-                        Merge
+                        {isMerging ===
+                        `${duplicate.centers[0].id}-${duplicate.centers[1].id}` ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                            Merging...
+                          </>
+                        ) : (
+                          <>
+                            <Merge className="h-4 w-4 mr-1" />
+                            Merge
+                          </>
+                        )}
                       </button>
                     </div>
 
@@ -1126,7 +1175,7 @@ export default function CenterManagementSystem() {
             {/* Backdrop with blur */}
             <div
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowForm(false)}
+              onClick={isSubmitting ? undefined : () => setShowForm(false)}
             />
 
             {/* Modal content */}
@@ -1138,8 +1187,11 @@ export default function CenterManagementSystem() {
                     {editingCenter ? "Edit Center" : "Add New Center"}
                   </h2>
                   <button
-                    onClick={() => setShowForm(false)}
-                    className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
+                    onClick={
+                      isSubmitting ? undefined : () => setShowForm(false)
+                    }
+                    disabled={isSubmitting}
+                    className="text-muted-foreground hover:text-foreground p-1 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -1160,7 +1212,8 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm ${
+                      disabled={isSubmitting}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
                         formErrors.name
                           ? "border-destructive bg-destructive/10"
                           : "border-border"
@@ -1185,7 +1238,8 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, address: e.target.value })
                       }
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary resize-none text-sm ${
+                      disabled={isSubmitting}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary resize-none text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
                         formErrors.address
                           ? "border-destructive bg-destructive/10"
                           : "border-border"
@@ -1215,7 +1269,8 @@ export default function CenterManagementSystem() {
                           lga: "",
                         })
                       }
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm ${
+                      disabled={isSubmitting}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
                         formErrors.state
                           ? "border-destructive bg-destructive/10"
                           : "border-border"
@@ -1253,12 +1308,14 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, lga: e.target.value })
                       }
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm ${
+                      disabled={
+                        !formData.state || isLoadingLgas || isSubmitting
+                      }
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
                         formErrors.lga
                           ? "border-destructive bg-destructive/10"
                           : "border-border"
                       }`}
-                      disabled={!formData.state || isLoadingLgas}
                     >
                       <option value="">Select LGA</option>
                       {isLoadingLgas ? (
@@ -1307,7 +1364,8 @@ export default function CenterManagementSystem() {
                       onChange={(e) =>
                         setFormData({ ...formData, isActive: e.target.checked })
                       }
-                      className="h-4 w-4 text-success focus:ring-primary border-border rounded"
+                      disabled={isSubmitting}
+                      className="h-4 w-4 text-success focus:ring-primary border-border rounded disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <div className="ml-2">
                       <span className="text-sm text-foreground">
@@ -1327,15 +1385,24 @@ export default function CenterManagementSystem() {
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="flex-1 px-3 py-2 text-foreground bg-card border border-border rounded-lg hover:bg-background text-sm font-medium"
+                    disabled={isSubmitting}
+                    className="flex-1 px-3 py-2 text-foreground bg-card border border-border rounded-lg hover:bg-background text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium"
+                    disabled={isSubmitting}
+                    className="flex-1 px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {editingCenter ? "Update" : "Create"}
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        {editingCenter ? "Updating..." : "Creating..."}
+                      </>
+                    ) : (
+                      <>{editingCenter ? "Update" : "Create"}</>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1413,21 +1480,21 @@ export default function CenterManagementSystem() {
                 {[...Array(5)].map((_, i) => (
                   <div
                     key={i}
-                    className="border border-gray-200 rounded-lg p-3 animate-pulse"
+                    className="border border-border rounded-lg p-3 animate-pulse"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="h-5 bg-gray-200 rounded-full w-16"></div>
-                          <div className="h-4 bg-gray-200 rounded w-12"></div>
+                          <div className="h-5 bg-background rounded-full w-16"></div>
+                          <div className="h-4 bg-background rounded w-12"></div>
                         </div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2 mb-1"></div>
-                        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                        <div className="h-4 bg-background rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-background rounded w-1/2 mb-1"></div>
+                        <div className="h-3 bg-background rounded w-2/3"></div>
                       </div>
-                      <div className="h-4 w-4 bg-gray-200 rounded"></div>
+                      <div className="h-4 w-4 bg-background rounded"></div>
                     </div>
-                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-3 bg-background rounded w-1/3"></div>
                   </div>
                 ))}
               </div>
@@ -1437,24 +1504,24 @@ export default function CenterManagementSystem() {
                 {[...Array(4)].map((_, i) => (
                   <div
                     key={i}
-                    className="border border-gray-200 rounded-lg p-4 animate-pulse"
+                    className="border border-border rounded-lg p-4 animate-pulse"
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="h-5 bg-gray-200 rounded-full w-20"></div>
-                          <div className="h-4 bg-gray-200 rounded w-16"></div>
+                          <div className="h-5 bg-background rounded-full w-20"></div>
+                          <div className="h-4 bg-background rounded w-16"></div>
                         </div>
-                        <div className="h-5 bg-gray-200 rounded w-4/5 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                        <div className="h-5 bg-background rounded w-4/5 mb-2"></div>
+                        <div className="h-4 bg-background rounded w-3/4 mb-1"></div>
+                        <div className="h-4 bg-background rounded w-2/3"></div>
                       </div>
                       <div className="flex space-x-1">
-                        <div className="h-8 w-8 bg-gray-200 rounded"></div>
-                        <div className="h-8 w-8 bg-gray-200 rounded"></div>
+                        <div className="h-8 w-8 bg-background rounded"></div>
+                        <div className="h-8 w-8 bg-background rounded"></div>
                       </div>
                     </div>
-                    <div className="h-3 bg-gray-200 rounded w-2/5"></div>
+                    <div className="h-3 bg-background rounded w-2/5"></div>
                   </div>
                 ))}
               </div>
@@ -1485,24 +1552,24 @@ export default function CenterManagementSystem() {
                       {[...Array(5)].map((_, i) => (
                         <tr key={i} className="animate-pulse">
                           <td className="px-4 xl:px-6 py-4">
-                            <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
-                            <div className="h-3 bg-gray-200 rounded w-20"></div>
+                            <div className="h-4 bg-background rounded w-32 mb-2"></div>
+                            <div className="h-3 bg-background rounded w-20"></div>
                           </td>
                           <td className="px-4 xl:px-6 py-4">
-                            <div className="h-4 bg-gray-200 rounded w-48 mb-2"></div>
-                            <div className="h-3 bg-gray-200 rounded w-32"></div>
+                            <div className="h-4 bg-background rounded w-48 mb-2"></div>
+                            <div className="h-3 bg-background rounded w-32"></div>
                           </td>
                           <td className="px-4 xl:px-6 py-4">
-                            <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                            <div className="h-6 bg-background rounded-full w-16"></div>
                           </td>
                           <td className="px-4 xl:px-6 py-4">
-                            <div className="h-3 bg-gray-200 rounded w-24 mb-1"></div>
-                            <div className="h-3 bg-gray-200 rounded w-20"></div>
+                            <div className="h-3 bg-background rounded w-24 mb-1"></div>
+                            <div className="h-3 bg-background rounded w-20"></div>
                           </td>
                           <td className="px-4 xl:px-6 py-4 text-right">
                             <div className="flex justify-end space-x-2">
-                              <div className="h-6 w-6 bg-gray-200 rounded"></div>
-                              <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                              <div className="h-6 w-6 bg-background rounded"></div>
+                              <div className="h-6 w-6 bg-background rounded"></div>
                             </div>
                           </td>
                         </tr>
@@ -1547,7 +1614,7 @@ export default function CenterManagementSystem() {
                 {centers.map((center) => (
                   <div
                     key={center.id}
-                    className="bg-card border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1 min-w-0">
@@ -1599,7 +1666,7 @@ export default function CenterManagementSystem() {
                     </div>
 
                     {mobileMenuOpen === center.id && (
-                      <div className="flex justify-end space-x-2 pt-2 border-t border-gray-100 animate-fadeIn">
+                      <div className="flex justify-end space-x-2 pt-2 border-t border-border animate-fadeIn">
                         <button
                           onClick={() => {
                             handleEdit(center);
@@ -1623,7 +1690,7 @@ export default function CenterManagementSystem() {
                       </div>
                     )}
 
-                    <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
+                    <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-border">
                       Updated {formatShortDate(center.modifiedAt)}
                       {center.modifiedBy && ` by ${center.modifiedByName}`}
                     </div>
