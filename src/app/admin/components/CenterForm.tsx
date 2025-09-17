@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Search,
   Plus,
@@ -552,23 +552,26 @@ export default function CenterManagementSystem() {
   const [isLoadingLgas, setIsLoadingLgas] = useState(false);
   const [lgas, setLgas] = useState<string[]>([]);
 
-  const lgaCache = new Map<string, string[]>();
+  const lgaCache = useMemo(() => new Map<string, string[]>(), []);
 
   // Notification functions
-  const addNotification = (notification: Omit<Notification, "id">) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const newNotification = { ...notification, id };
-    setNotifications((prev) => [...prev, newNotification]);
+  const addNotification = useCallback(
+    (notification: Omit<Notification, "id">) => {
+      const id = Math.random().toString(36).substr(2, 9);
+      const newNotification = { ...notification, id };
+      setNotifications((prev) => [...prev, newNotification]);
 
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-      removeNotification(id);
-    }, 5000);
-  };
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        removeNotification(id);
+      }, 5000);
+    },
+    []
+  );
 
-  const removeNotification = (id: string) => {
+  const removeNotification = useCallback((id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
+  }, []);
 
   // Confirmation modal functions
   const showConfirmation = (options: Omit<ConfirmationModal, "isOpen">) => {
@@ -612,7 +615,13 @@ export default function CenterManagementSystem() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, searchTerm, includeInactive]);
+  }, [
+    pagination.page,
+    pagination.limit,
+    searchTerm,
+    includeInactive,
+    addNotification,
+  ]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -729,7 +738,7 @@ export default function CenterManagementSystem() {
     };
 
     fetchLgas();
-  }, [formData.state]);
+  }, [formData.state, addNotification, lgaCache]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -947,20 +956,19 @@ export default function CenterManagementSystem() {
             </button>
           </div>
         )}
-
         {/* Duplicates Alert */}
         {duplicates.length > 0 && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+          <div className="bg-warning/20 border border-warning/30 rounded-lg p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center">
                 <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-warning mr-2 flex-shrink-0" />
-                <span className="text-yellow-800 text-sm sm:text-base">
+                <span className="text-foreground text-sm sm:text-base">
                   {duplicates.length} potential duplicate(s) found
                 </span>
               </div>
               <button
                 onClick={() => setShowDuplicates(!showDuplicates)}
-                className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium self-start sm:self-auto transition-colors"
+                className="bg-warning/30 hover:bg-warning/40 text-foreground px-3 py-1 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium self-start sm:self-auto transition-colors"
               >
                 {showDuplicates ? "Hide" : "Review"}
               </button>
@@ -970,56 +978,88 @@ export default function CenterManagementSystem() {
 
         {/* Duplicates Review Panel */}
         {showDuplicates && duplicates.length > 0 && (
-          <div className="bg-card border border-gray-200 rounded-lg p-3 sm:p-4 lg:p-6">
-            <h3 className="text-base sm:text-lg font-medium text-foreground mb-3 sm:mb-4">
-              Review Duplicates
-            </h3>
-            <div className="space-y-3 sm:space-y-4">
-              {duplicates.map((duplicate, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-lg p-3 sm:p-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                    <span className="text-xs sm:text-sm text-foreground/70">
-                      {duplicate.similarity}% similarity ({duplicate.type}{" "}
-                      match)
-                    </span>
-                    <button
-                      onClick={() =>
-                        handleMerge(duplicate.centers[0].id, [
-                          duplicate.centers[1].id,
-                        ])
-                      }
-                      className="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded text-xs sm:text-sm flex items-center self-start sm:self-auto transition-colors"
-                    >
-                      <Merge className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                      Merge
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                    {duplicate.centers.map((center) => (
-                      <div
-                        key={center.id}
-                        className="border border-gray-100 rounded-lg p-3"
+          <div className="bg-card border border-border rounded-lg p-4 mt-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-foreground">
+                Review Potential Duplicates ({duplicates.length})
+              </h3>
+              <button
+                onClick={() => setShowDuplicates(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {duplicates.map((duplicate, index) => {
+                if (!duplicate?.centers || duplicate.centers.length < 2) {
+                  return null;
+                }
+
+                return (
+                  <div
+                    key={`duplicate-${index}-${duplicate.centers[0]?.id}-${duplicate.centers[1]?.id}`}
+                    className="border border-border rounded-lg p-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                      <span className="text-sm text-muted-foreground">
+                        {duplicate.similarity || "Unknown"}% similarity (
+                        {duplicate.type || "unknown"} match)
+                      </span>
+                      <button
+                        onClick={() =>
+                          handleMerge(duplicate.centers[0].id, [
+                            duplicate.centers[1].id,
+                          ])
+                        }
+                        className="bg-success/20 hover:bg-success/30 text-success px-3 py-1 rounded text-sm flex items-center transition-colors"
                       >
-                        <div className="font-medium text-foreground text-sm sm:text-base">
-                          {center.name}
-                        </div>
-                        <div className="text-xs sm:text-sm text-foreground/70">
-                          #{center.number}
-                        </div>
-                        <div className="text-xs sm:text-sm text-foreground/70">
-                          {center.address}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-2">
-                          Created: {formatShortDate(center.createdAt)}
-                        </div>
-                      </div>
-                    ))}
+                        <Merge className="h-4 w-4 mr-1" />
+                        Merge
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {duplicate.centers
+                        .slice(0, 2)
+                        .map((center, centerIndex) => (
+                          <div
+                            key={`center-${center.id}-${index}-${centerIndex}`}
+                            className="border border-border rounded-lg p-3"
+                          >
+                            <div className="font-medium text-foreground text-sm">
+                              {center.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              #{center.number}
+                            </div>
+                            <div className="text-xs text-muted-foreground line-clamp-2">
+                              {center.address}
+                            </div>
+                            <div className="text-xs text-muted-foreground/70 mt-2">
+                              Created: {formatShortDate(center.createdAt)}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Debug info - only show if there's an unexpected state */}
+        {showDuplicates && duplicates.length === 0 && (
+          <div className="bg-muted/20 border border-border rounded-lg p-4 mt-4">
+            <h4 className="text-sm font-medium text-foreground mb-2">
+              Debug Info: No duplicates to show
+            </h4>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>showDuplicates: {showDuplicates.toString()}</div>
+              <div>duplicates count: {duplicates.length}</div>
+              <div>duplicates data: {JSON.stringify(duplicates)}</div>
             </div>
           </div>
         )}
