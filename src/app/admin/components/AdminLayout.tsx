@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/app/components/ThemeContext";
@@ -9,7 +8,6 @@ import {
   Sun,
   Moon,
   Building,
-  Users,
   Settings,
   LogOut,
   Menu,
@@ -35,12 +33,10 @@ interface AdminLayoutProps {
 
 const maskEmail = (email: string): string => {
   if (!email || !email.includes("@")) return email;
-
   const [localPart, domain] = email.split("@");
   const firstChars = localPart.substring(0, 2);
   const lastChar =
     localPart.length > 2 ? localPart.substring(localPart.length - 1) : "";
-
   return `${firstChars}***${lastChar}@${domain}`;
 };
 
@@ -67,7 +63,6 @@ const getAvatarColor = (name: string): string => {
     "bg-teal-500",
   ];
   if (!name) return colors[0];
-
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -87,6 +82,17 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowLogoutModal(false);
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: Home },
     { name: "Centers", href: "/admin/centers", icon: Building },
@@ -103,101 +109,112 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-card text-card-foreground shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-border">
-          <div className="flex items-center space-x-3">
-            <Building className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-lg font-semibold">CMS Admin</h1>
-              <p className="text-xs text-muted-foreground">v1.0</p>
-            </div>
-          </div>
-
-          <div className="hidden lg:flex items-center">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
-              aria-label="Toggle theme"
-            >
-              {darkMode ? (
-                <Sun className="h-5 w-5 text-accent" />
-              ) : (
-                <Moon className="h-5 w-5 text-foreground" />
-              )}
-            </button>
-          </div>
-
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-muted-foreground hover:text-foreground transition-colors"
+      {/* Sidebar (Desktop Static + Mobile Animated) */}
+      <AnimatePresence>
+        {(sidebarOpen || typeof window !== "undefined") && (
+          <motion.aside
+            key="sidebar"
+            initial={{ x: "-100%" }}
+            animate={{ x: sidebarOpen ? 0 : "-100%" }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "tween", duration: 0.3 }}
+            className={`fixed inset-y-0 left-0 z-50 w-64 bg-card text-card-foreground shadow-lg flex flex-col lg:static lg:translate-x-0`}
           >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+            {/* Sidebar Header */}
+            <div className="flex items-center justify-between h-16 px-6 border-b border-border">
+              <div className="flex items-center space-x-3">
+                <Building className="h-8 w-8 text-primary" />
+                <div>
+                  <h1 className="text-lg font-semibold">CMS Admin</h1>
+                  <p className="text-xs text-muted-foreground">v1.0</p>
+                </div>
+              </div>
 
-        {/* Navigation */}
-        <nav className="mt-6 px-3 space-y-1 flex-1">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            const active = isActivePath(item.href);
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
+              <div className="hidden lg:flex items-center">
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {darkMode ? (
+                    <Sun className="h-5 w-5 text-accent" />
+                  ) : (
+                    <Moon className="h-5 w-5 text-foreground" />
+                  )}
+                </button>
+              </div>
+
+              <button
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                  ${
-                    active
-                      ? "bg-primary/10 text-primary border-r-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background hover:border-r-2 hover:border-primary"
-                  }`}
+                className="lg:hidden text-muted-foreground hover:text-foreground transition-colors"
               >
-                <Icon
-                  className={`mr-3 h-5 w-5 ${
-                    active ? "text-primary" : "text-muted-foreground"
-                  }`}
-                />
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
+                <X className="h-6 w-6" />
+              </button>
+            </div>
 
-        {/* User Footer */}
-        <div className="sticky bottom-0 bg-card border-t border-border p-4 mt-auto">
-          <div className="flex items-center">
-            <div
-              className={`w-8 h-8 ${avatarColor} rounded-full flex items-center justify-center text-white text-xs font-medium`}
-            >
-              {initials}
+            {/* Navigation */}
+            <nav className="mt-6 px-3 space-y-1 flex-1">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                const active = isActivePath(item.href);
+
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      router.push(item.href); // 🚀 client-side navigation (fast)
+                      setSidebarOpen(false); // close sidebar on mobile
+                    }}
+                    className={`flex w-full items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
+          ${
+            active
+              ? "bg-primary/10 text-primary border-r-2 border-primary"
+              : "text-muted-foreground hover:text-foreground hover:bg-background hover:border-r-2 hover:border-primary"
+          }`}
+                  >
+                    <Icon
+                      className={`mr-3 h-5 w-5 ${
+                        active ? "text-primary" : "text-muted-foreground"
+                      }`}
+                    />
+                    {item.name}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* User Footer */}
+            <div className="sticky bottom-0 bg-card border-t border-border p-4 mt-auto">
+              <div className="flex items-center">
+                <div
+                  className={`w-8 h-8 ${avatarColor} rounded-full flex items-center justify-center text-white text-xs font-medium`}
+                >
+                  {initials}
+                </div>
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user.name}</p>
+                  <p
+                    className="text-xs text-muted-foreground truncate"
+                    title={user.email}
+                  >
+                    {maskEmail(user.email)}
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 capitalize">
+                    {user.role}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowLogoutModal(true)}
+                  className="ml-3 p-2 text-muted-foreground hover:text-foreground hover:bg-background rounded-lg transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </div>
             </div>
-            <div className="ml-3 flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.name}</p>
-              <p
-                className="text-xs text-muted-foreground truncate"
-                title={user.email}
-              >
-                {maskEmail(user.email)}
-              </p>
-              <p className="text-xs text-muted-foreground/70 capitalize">
-                {user.role}
-              </p>
-            </div>
-            <button
-              onClick={() => setShowLogoutModal(true)}
-              className="ml-3 p-2 text-muted-foreground hover:text-foreground hover:bg-background rounded-lg transition-colors"
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </aside>
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -250,6 +267,7 @@ export default function AdminLayout({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowLogoutModal(false)} // overlay closes modal
           >
             <motion.div
               key="modal"
@@ -258,6 +276,7 @@ export default function AdminLayout({
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="bg-card text-card-foreground rounded-2xl shadow-lg max-w-sm w-full p-6"
+              onClick={(e) => e.stopPropagation()} // prevent overlay click
             >
               {/* User avatar + info */}
               <div className="flex items-center gap-3 mb-4">
