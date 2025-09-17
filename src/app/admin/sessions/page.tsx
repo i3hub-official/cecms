@@ -64,7 +64,7 @@ export default function SessionsPage() {
     setRevoking(true);
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/admin/sessions", {
+      const response = await fetch("/api/sessions", {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -96,7 +96,7 @@ export default function SessionsPage() {
 
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch(`/api/admin/sessions/${sessionId}`, {
+      const response = await fetch(`/api/sessions/${sessionId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
