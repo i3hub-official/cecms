@@ -1,0 +1,44 @@
+/////////////==========================================================================
+
+// Start scheduled cleanup (usually in your server startup)
+import { cleanupScheduler } from '@/lib/cleanup';
+
+// Start the scheduler
+cleanupScheduler.start();
+
+// Stop when needed
+cleanupScheduler.stop();
+
+/////////////==========================================================================
+
+
+// CLEAN UP STATS
+import { getCleanupStats } from '@/lib/cleanup';
+
+const stats = await getCleanupStats();
+console.log('Items pending cleanup:', stats);
+
+
+/////////////==========================================================================
+
+
+
+// Add to your startup (src/app/layout.tsx or server startup):
+
+import { cleanupScheduler } from '@/lib/cleanup';
+
+if (process.env.NODE_ENV === 'production') {
+  cleanupScheduler.start();
+  cleanupScheduler.runOnStartup();
+}
+
+/////////////==========================================================================
+
+// Create a cron job (optional) for additional reliability:
+
+//bash
+# Run every day at 2 AM
+0 2 * * * curl -X POST https://yourapp.com/api/admin/cleanup -H "Content-Type: application/json" -d '{"type":"full"}'
+
+
+/////////////==========================================================================
