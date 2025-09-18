@@ -1,4 +1,3 @@
-// src/lib/middleware/requestLogging.ts
 import type { NextRequest } from 'next/server';
 
 export async function withRequestLogging(request: NextRequest) {

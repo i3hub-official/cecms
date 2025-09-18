@@ -1,6 +1,6 @@
 {
-  "id": "67e5ed30-b9f0-4f63-9085-00c5e0d1f0fc",
-  "prevId": "06ff1a39-7e0d-482e-87fe-d1f238469b7f",
+  "id": "90db44fd-b144-4240-87e8-d6c261a514f4",
+  "prevId": "ce55be49-14ae-4afe-a27c-70b11b48d054",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -305,6 +305,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "email": {
           "name": "email",
           "type": "text",
@@ -350,39 +356,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "failed_login_attempts": {
-          "name": "failed_login_attempts",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "last_failed_login": {
-          "name": "last_failed_login",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "failedLoginAttempts": {
-          "name": "failedLoginAttempts",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "accountLocked": {
-          "name": "accountLocked",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "account_locked_until": {
-          "name": "account_locked_until",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -450,6 +423,13 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
+        "admins_phone_unique": {
+          "name": "admins_phone_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "phone"
+          ]
+        },
         "admins_email_unique": {
           "name": "admins_email_unique",
           "nullsNotDistinct": false,
@@ -1801,89 +1781,6 @@
           "nullsNotDistinct": false,
           "columns": [
             "token"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.token_blacklist": {
-      "name": "token_blacklist",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "jti": {
-          "name": "jti",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "reason": {
-          "name": "reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "token_blacklist_jti_idx": {
-          "name": "token_blacklist_jti_idx",
-          "columns": [
-            {
-              "expression": "jti",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "token_blacklist_expires_at_idx": {
-          "name": "token_blacklist_expires_at_idx",
-          "columns": [
-            {
-              "expression": "expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "token_blacklist_jti_unique": {
-          "name": "token_blacklist_jti_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "jti"
           ]
         }
       },

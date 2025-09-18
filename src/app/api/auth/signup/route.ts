@@ -7,11 +7,11 @@ import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json();
+    const { name, phone, email, password } = await request.json();
 
-    if (!name || !email || !password) {
+    if (!name || !phone || !email || !password) {
       return NextResponse.json(
-        { error: "Name, email, and password are required" },
+        { error: "Name, phone, email, and password are required" },
         { status: 400 }
       );
     }
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (existingAdmin) {
       return NextResponse.json(
-        { error: "An account with this email already exists" },
+        { error: "This email address is already in use" },
         { status: 409 }
       );
     }
@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       .insert(admins)
       .values({
         name,
+        phone,
         email,
         password: hashedPassword,
         role: "ADMIN",

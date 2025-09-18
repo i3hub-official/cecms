@@ -123,15 +123,12 @@ export async function DELETE(request: NextRequest) {
     // Deactivate session
     await db
       .update(adminSessions)
-      .set({ 
-        isActive: false, 
-        expiresAt: new Date() 
+      .set({
+        isActive: false,
+        expiresAt: new Date(),
       })
       .where(
-        and(
-          eq(adminSessions.token, token),
-          eq(adminSessions.isActive, true)
-        )
+        and(eq(adminSessions.token, token), eq(adminSessions.isActive, true))
       );
 
     // Create success response
