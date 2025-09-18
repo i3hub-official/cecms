@@ -218,6 +218,130 @@ export const auditLogs = pgTable(
   ]
 );
 
+// ===================================================================================
+// API KEY MANAGEMENT TABLES - BEGIN
+// ===================================================================================
+
+// ------------------------
+// API Key Model
+// ------------------------
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    key: text("key").notNull().unique(), // Hashed API key
+    prefix: text("prefix").notNull(), // First 8 chars for identification
+    name: text("name").notNull(),
+    description: text("description"),
+
+    // Admin relationship
+    adminId: text("admin_id")
+      .notNull()
+      .references(() => admins.id, { onDelete: "cascade" }),
+
+    // Permissions
+    canRead: boolean("can_read").default(true).notNull(),
+    canWrite: boolean("can_write").default(false).notNull(),
+    canDelete: boolean("can_delete").default(false).notNull(),
+    canManageKeys: boolean("can_manage_keys").default(false).notNull(),
+
+    // Scopes (comma-separated endpoints or wildcards)
+    allowedEndpoints: text("allowed_endpoints").default("*").notNull(),
+
+    // Rate limiting
+    rateLimit: integer("rate_limit").default(100).notNull(), // Requests per minute
+    rateLimitPeriod: integer("rate_limit_period").default(60).notNull(), // Seconds
+
+    // Status
+    isActive: boolean("is_active").default(true).notNull(),
+    expiresAt: timestamp("expires_at"),
+
+    // Metadata
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    lastUsed: timestamp("last_used"),
+    usageCount: integer("usage_count").default(0).notNull(),
+  },
+  (table) => [
+    uniqueIndex("api_key_key_idx").on(table.key),
+    index("api_key_prefix_idx").on(table.prefix),
+    index("api_key_admin_id_idx").on(table.adminId),
+    index("api_key_is_active_idx").on(table.isActive),
+    index("api_key_created_at_idx").on(table.createdAt),
+    index("api_key_expires_at_idx").on(table.expiresAt),
+  ]
+);
+
+// ------------------------
+// API Usage Log Model
+// ------------------------
+export const apiUsageLogs = pgTable(
+  "api_usage_logs",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    apiKeyId: text("api_key_id")
+      .notNull()
+      .references(() => apiKeys.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull(),
+    method: text("method").notNull(),
+    statusCode: integer("status_code").notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    requestTime: integer("request_time"), // Response time in ms
+    requestSize: integer("request_size"), // Request size in bytes
+    responseSize: integer("response_size"), // Response size in bytes
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("api_usage_api_key_id_idx").on(table.apiKeyId),
+    index("api_usage_endpoint_idx").on(table.endpoint),
+    index("api_usage_method_idx").on(table.method),
+    index("api_usage_status_code_idx").on(table.statusCode),
+    index("api_usage_created_at_idx").on(table.createdAt),
+    index("api_usage_ip_address_idx").on(table.ipAddress),
+  ]
+);
+
+// ------------------------
+// API Rate Limit Model
+// ------------------------
+export const apiRateLimits = pgTable(
+  "api_rate_limits",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    apiKeyId: text("api_key_id")
+      .notNull()
+      .references(() => apiKeys.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull(),
+    requestCount: integer("request_count").default(0).notNull(),
+    windowStart: timestamp("window_start").notNull(),
+    windowEnd: timestamp("window_end").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("api_rate_limit_unique_idx").on(
+      table.apiKeyId,
+      table.endpoint,
+      table.windowStart
+    ),
+    index("api_rate_limit_api_key_id_idx").on(table.apiKeyId),
+    index("api_rate_limit_endpoint_idx").on(table.endpoint),
+    index("api_rate_limit_window_start_idx").on(table.windowStart),
+    index("api_rate_limit_window_end_idx").on(table.windowEnd),
+  ]
+);
+
+// ===================================================================================
+// API KEY MANAGEMENT TABLES - END
+// ===================================================================================
+
 // ------------------------
 // Relations
 // ------------------------
@@ -226,14 +350,11 @@ export const adminRelations = relations(admins, ({ many }) => ({
   passwordResets: many(passwordResets),
   auditLogs: many(auditLogs),
   adminActivities: many(adminActivities),
-  // Add reverse relations for centers
   createdCenters: many(centers, { relationName: "center_created_by" }),
   modifiedCenters: many(centers, { relationName: "center_modified_by" }),
+  apiKeys: many(apiKeys), // Added relation for API keys
 }));
 
-// ------------------------
-// Relations
-// ------------------------
 export const centerRelations = relations(centers, ({ one }) => ({
   createdByAdmin: one(admins, {
     fields: [centers.createdById],
@@ -269,7 +390,36 @@ export const adminActivityRelations = relations(adminActivities, ({ one }) => ({
 }));
 
 export const auditLogRelations = relations(auditLogs, ({ one }) => ({
-  admin: one(admins, { fields: [auditLogs.adminId], references: [admins.id] }),
+  admin: one(admins, {
+    fields: [auditLogs.adminId],
+    references: [admins.id],
+  }),
+}));
+
+// ------------------------
+// API Key Relations
+// ------------------------
+export const apiKeyRelations = relations(apiKeys, ({ one, many }) => ({
+  admin: one(admins, {
+    fields: [apiKeys.adminId],
+    references: [admins.id],
+  }),
+  usageLogs: many(apiUsageLogs),
+  rateLimits: many(apiRateLimits),
+}));
+
+export const apiUsageLogRelations = relations(apiUsageLogs, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [apiUsageLogs.apiKeyId],
+    references: [apiKeys.id],
+  }),
+}));
+
+export const apiRateLimitRelations = relations(apiRateLimits, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [apiRateLimits.apiKeyId],
+    references: [apiKeys.id],
+  }),
 }));
 
 // ------------------------
@@ -289,6 +439,16 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
 
 // ------------------------
+// API Key Types
+// ------------------------
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type NewApiKey = typeof apiKeys.$inferInsert;
+export type ApiUsageLog = typeof apiUsageLogs.$inferSelect;
+export type NewApiUsageLog = typeof apiUsageLogs.$inferInsert;
+export type ApiRateLimit = typeof apiRateLimits.$inferSelect;
+export type NewApiRateLimit = typeof apiRateLimits.$inferInsert;
+
+// ------------------------
 // Inferred Types with Relations
 // ------------------------
 export type Center = typeof centers.$inferSelect & {
@@ -299,4 +459,11 @@ export type Center = typeof centers.$inferSelect & {
 export type Admin = typeof admins.$inferSelect & {
   createdCenters?: Center[];
   modifiedCenters?: Center[];
+  apiKeys?: ApiKey[]; // Added API keys relation
+};
+
+export type ApiKeyWithRelations = ApiKey & {
+  admin?: Admin;
+  usageLogs?: ApiUsageLog[];
+  rateLimits?: ApiRateLimit[];
 };

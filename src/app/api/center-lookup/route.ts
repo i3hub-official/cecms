@@ -1,11 +1,20 @@
-// src/app/api/centers-lookup/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { centers } from "@/lib/server/db/schema";
 import { eq, ilike, and } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { authenticateRequest } from "@/lib/middleware/withAuth";
 
 export async function GET(request: NextRequest) {
+  // Authenticate the request
+  const authResult = await authenticateRequest(request);
+
+  if (!authResult.success) {
+    return NextResponse.json(
+      { error: authResult.error },
+      { status: authResult.status || 401 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const number = searchParams.get("number");
@@ -17,7 +26,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Using ilike for case-insensitive search (PostgreSQL specific)
     const [center] = await db
       .select({
         id: centers.id,
@@ -31,15 +39,6 @@ export async function GET(request: NextRequest) {
       .from(centers)
       .where(and(ilike(centers.number, number), eq(centers.isActive, true)))
       .limit(1);
-
-    // Alternative approach using SQL expression for case-insensitive comparison
-    // if ilike doesn't work as expected:
-    // .where(
-    //   and(
-    //     sql`LOWER(${centers.number}) = LOWER(${number})`,
-    //     eq(centers.isActive, true)
-    //   )
-    // )
 
     if (!center) {
       return NextResponse.json({ error: "Center not found" }, { status: 404 });
