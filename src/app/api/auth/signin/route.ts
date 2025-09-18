@@ -1,10 +1,9 @@
 // src/app/api/auth/signin/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
-import { comparePassword } from "@/lib/auth"; // Keep password comparison
+import { comparePassword, createAuthSession } from "@/lib/auth"; // Use createAuthSession instead
 import { admins } from "@/lib/server/db/schema";
 import { eq, and } from "drizzle-orm";
-import { createJWT } from "@/lib/utils/jwt"; // Import JWT creation function
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,40 +39,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update last login timestamp
-    await db
-      .update(admins)
-      .set({ lastLogin: new Date() })
-      .where(eq(admins.id, admin.id));
+    // Get user agent and IP for session tracking
+    const userAgent = request.headers.get("user-agent") || undefined;
+    const ipAddress =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
 
-    // Create JWT token (expires in 2 hours as per your JWT_EXPIRES_IN setting)
-    const token = await createJWT({
-      adminId: admin.id,
-      email: admin.email,
-      name: admin.name,
-      role: admin.role,
-    });
+    // Use createAuthSession to properly create both token and session
+    const { token, sessionId } = await createAuthSession(
+      admin.id,
+      admin.email,
+      admin.role,
+      admin.name,
+      userAgent,
+      ipAddress
+    );
 
-    // Return user info with JWT token
+    // Return user info
     const response = NextResponse.json({
       success: true,
       message: "Signed in successfully",
-      token, // Return the JWT token in response body
       user: {
         id: admin.id,
         email: admin.email,
         name: admin.name,
         role: admin.role,
       },
-      expiresIn: process.env.JWT_EXPIRES_IN || "2h", // Inform client about token expiration
+      sessionId, // Optional: return session ID for client-side tracking
     });
 
-    // ✅ Optional: Set secure HttpOnly cookie with the token
+    // ✅ Set secure HttpOnly cookie
     response.cookies.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 2 * 60 * 60, // 2 hours (matches JWT expiration)
+      maxAge: 24 * 60 * 60, // 24 hours
       path: "/",
     });
 
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set("session-active", "true", {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 2 * 60 * 60, // 2 hours
+      maxAge: 24 * 60 * 60,
       path: "/",
     });
 

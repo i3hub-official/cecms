@@ -15,7 +15,6 @@ export default function SignUpPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
     password: "",
     confirmPassword: "",
   });
@@ -86,12 +85,6 @@ export default function SignUpPage() {
       return;
     }
 
-    if (!formData.phone) {
-      setError("Phone number is required");
-      setLoading(false);
-      return;
-    }
-
     if (!formData.email) {
       setError("Email is required");
       setLoading(false);
@@ -118,7 +111,6 @@ export default function SignUpPage() {
         },
         body: JSON.stringify({
           name: formData.name.trim(),
-          phone: formData.phone,
           email: formData.email,
           password: formData.password,
         }),
@@ -128,13 +120,7 @@ export default function SignUpPage() {
 
       if (response.ok) {
         setSuccess(true);
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          password: "",
-          confirmPassword: "",
-        });
+        setFormData({ name: "", email: "", password: "", confirmPassword: "" });
       } else {
         setError(data.error || "Sign up failed");
       }
@@ -232,28 +218,6 @@ export default function SignUpPage() {
                     className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-border placeholder-muted-foreground text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-colors bg-background"
                     placeholder="Enter your full name"
                     value={formData.name}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              {/* Phone Field */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <input
-                    name="phone"
-                    type="tel"
-                    autoComplete="tel"
-                    required
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-border placeholder-muted-foreground text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-colors bg-background"
-                    placeholder="Enter your phone number"
-                    value={formData.phone}
                     onChange={handleChange}
                   />
                 </div>
