@@ -31,9 +31,9 @@ export interface LogContext {
   passwordLength?: number;
   hasToken?: boolean;
   token?: string;
-  responseData?: string;
-  status?: string;
+  status?: number;
   stack?: string;
+  statusText?: string;
 }
 
 function format(
@@ -57,17 +57,29 @@ export const logger = {
     msg: string,
     ctx: LogContext = {},
     extra: Record<string, unknown> = {}
-  ) => console.log(format("INFO", msg, ctx, extra)),
+  ) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.error(format("INFO", msg, ctx, extra));
+    }
+  },
   warn: (
     msg: string,
     ctx: LogContext = {},
     extra: Record<string, unknown> = {}
-  ) => console.warn(format("WARN", msg, ctx, extra)),
+  ) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.error(format("WARN", msg, ctx, extra));
+    }
+  },
   error: (
     msg: string,
     ctx: LogContext = {},
     extra: Record<string, unknown> = {}
-  ) => console.error(format("ERROR", msg, ctx, extra)),
+  ) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.error(format("ERROR", msg, ctx, extra));
+    }
+  },
   debug: (
     msg: string,
     ctx: LogContext = {},

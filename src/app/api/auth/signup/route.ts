@@ -161,8 +161,7 @@ export async function POST(request: NextRequest) {
             requestId,
             ip,
             email: emailTrimmed,
-            responseData: data,
-          });
+                      });
           return NextResponse.json(
             {
               error:
