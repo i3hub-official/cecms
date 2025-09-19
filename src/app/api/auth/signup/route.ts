@@ -129,29 +129,39 @@ export async function POST(request: NextRequest) {
 
     // External email validation (optional - you can remove this if not needed)
     try {
-      // Create a timeout promise that will reject after 5 seconds
-      const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Request timed out")), 5000)
+      // Create AbortController for better timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(
+        `https://apinigeria.vercel.app/api/checkemail?email=${encodeURIComponent(
+          emailTrimmed
+        )}`,
+        {
+          signal: controller.signal,
+          headers: {
+            "User-Agent": "YourApp/1.0",
+          },
+        }
       );
 
-      const response = await Promise.race([
-        fetch(
-          `https://apinigeria.vercel.app/api/checkemail?email=${encodeURIComponent(
-            emailTrimmed
-          )}`
-        ),
-        timeout, // This will race the fetch request against the timeout
-      ]);
+      clearTimeout(timeoutId);
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as {
+          isDisposable?: boolean;
+          isValid?: boolean;
+        };
 
-        // Check if the email is disposable (true means disposable)
-        if (data.isDisposable) {
+        // Check multiple possible response formats
+        const isDisposable = data.isDisposable || data.isValid === false;
+
+        if (isDisposable) {
           logger.warn("Disposable email address detected", {
             requestId,
             ip,
             email: emailTrimmed,
+            responseData: data,
           });
           return NextResponse.json(
             {
@@ -161,14 +171,39 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
+      } else {
+        logger.warn("Email validation service returned error", {
+          requestId,
+          ip,
+          status: response.status,
+          statusText: response.statusText,
+        });
       }
     } catch (error) {
-      // Continue if email validation service is down or request times out
-      logger.warn("Email validation service unavailable", {
-        requestId,
-        ip,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      // Handle different types of errors
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          logger.warn("Email validation request timed out", {
+            requestId,
+            ip,
+            email: emailTrimmed,
+          });
+        } else {
+          logger.warn("Email validation service unavailable", {
+            requestId,
+            ip,
+            error: error.message,
+            stack: error.stack,
+          });
+        }
+      } else {
+        logger.warn("Email validation service unavailable", {
+          requestId,
+          ip,
+          error: String(error),
+        });
+      }
+      // Continue with signup process if validation fails
     }
 
     // Check if admin already exists

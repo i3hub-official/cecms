@@ -30,7 +30,10 @@ export interface LogContext {
   phoneLength?: number;
   passwordLength?: number;
   hasToken?: boolean;
-  token?: string; // Added token property
+  token?: string;
+  responseData?: string;
+  status?: string;
+  stack?: string;
 }
 
 function format(
