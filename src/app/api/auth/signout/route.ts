@@ -1,11 +1,18 @@
 // src/app/api/auth/signout/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
-import { adminSessions } from "@/lib/server/db/schema";
-import { eq } from "drizzle-orm";
+import { adminSessions, adminActivities } from "@/lib/server/db/schema";
+import { eq, and } from "drizzle-orm";
+import { getClientIp } from "@/lib/utils/client-ip";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
+  const requestId = logger.requestId();
+  const ip = getClientIp(request) || "unknown";
+  
   try {
+    logger.info("Signout attempt", { requestId, ip });
+
     const authHeader = request.headers.get("authorization");
     let token = authHeader?.startsWith("Bearer ")
       ? authHeader.substring(7)
@@ -16,13 +23,24 @@ export async function POST(request: NextRequest) {
     }
 
     if (!token) {
+      logger.warn("No token provided for signout", { requestId, ip });
       return NextResponse.json(
         { success: false, error: "No token provided" },
         { status: 401 }
       );
     }
 
-    // Update session to mark as inactive
+    // Verify JWT to get user info for logging
+    const { verifyJWT } = await import("@/lib/utils/jwt");
+    const jwtResult = await verifyJWT(token);
+    
+    let adminId: string | null = null;
+    
+    if (jwtResult.isValid && jwtResult.payload) {
+      adminId = jwtResult.payload.userId;
+    }
+
+    // Update session to mark as inactive - FIXED the where clause
     await db
       .update(adminSessions)
       .set({ 
@@ -30,17 +48,43 @@ export async function POST(request: NextRequest) {
         expiresAt: new Date() 
       })
       .where(
-        eq(adminSessions.token, token) && 
-        eq(adminSessions.isActive, true)
+        and(
+          eq(adminSessions.token, token),
+          eq(adminSessions.isActive, true)
+        )
       );
+
+    // Log admin activity if we have adminId
+    if (adminId) {
+      await db.insert(adminActivities).values({
+        id: crypto.randomUUID(),
+        adminId,
+        activity: "USER_LOGOUT",
+        timestamp: new Date(),
+      });
+    }
+
+    logger.info("User signed out successfully", {
+      requestId,
+      ip,
+      adminId: adminId || "unknown"
+    });
 
     const response = NextResponse.json({
       success: true,
       message: "Logged out successfully",
     });
 
+    // Clear auth cookies
     response.cookies.set("auth-token", "", {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 0,
+      path: "/",
+    });
+
+    response.cookies.set("session-active", "", {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 0,
@@ -51,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Logout error:", error);
+    logger.error("Signout error", { requestId, ip }, { error });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

@@ -99,7 +99,7 @@ export default function AdminLayoutWrapper({
   /** 🔹 Logout */
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth", {
+      await fetch("/api/auth/signout", {
         // ← This should match your route
         method: "DELETE",
         credentials: "include", // ← Add this

@@ -38,7 +38,7 @@ export class EmailService {
       // In production, integrate with your email service (SendGrid, AWS SES, etc.)
       if (process.env.NODE_ENV === "production") {
         // Implement actual email sending logic here
-        // await this.sendViaEmailService(emailOptions);
+        //  await this.sendViaEmailService(emailOptions);
         logger.info("Password reset email sent (production)", {
           email,
           userId,
@@ -55,7 +55,9 @@ export class EmailService {
 
       return true;
     } catch (error) {
-      logger.error("Failed to send password reset email", { error: error instanceof Error ? error.message : String(error) });
+      logger.error("Failed to send password reset email", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return false;
     }
   }
@@ -88,7 +90,9 @@ export class EmailService {
 
       return true;
     } catch (error) {
-      logger.error("Failed to send password changed email", { error: error instanceof Error ? error.message : String(error) });
+      logger.error("Failed to send password changed email", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return false;
     }
   }
