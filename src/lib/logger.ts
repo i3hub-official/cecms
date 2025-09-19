@@ -35,8 +35,11 @@ export interface LogContext {
   stack?: string;
   statusText?: string;
   count?: number;
-  }
-  
+  messageId?: string;
+  to?: string;
+  subject?: string;
+  baseUrlUsed?: string;
+}
 
 function format(
   level: string,

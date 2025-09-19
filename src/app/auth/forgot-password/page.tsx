@@ -82,12 +82,6 @@ export default function ForgotPasswordPage() {
 
             <div className="mt-6 space-y-3">
               <Link
-                href="/auth/reset-password"
-                className="w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Go to Reset Password
-              </Link>
-              <Link
                 href="/auth/signin"
                 className="w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg border border-border text-foreground bg-background hover:bg-accent transition-colors"
               >
