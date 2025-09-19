@@ -76,6 +76,7 @@ export const admins = pgTable(
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
+    phone: text("phone").notNull().unique(),
     email: text("email").notNull().unique(),
     password: text("password").notNull(),
     name: text("name").notNull(),

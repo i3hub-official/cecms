@@ -1,15 +1,25 @@
 // src/app/api/auth/signin/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
-import { comparePassword, createAuthSession } from "@/lib/auth"; // Use createAuthSession instead
-import { admins } from "@/lib/server/db/schema";
+import { comparePassword } from "@/lib/auth";
+import { admins, adminActivities, adminSessions } from "@/lib/server/db/schema";
 import { eq, and } from "drizzle-orm";
+import { createJWT } from "@/lib/utils/jwt";
+import { generateSessionId } from "@/lib/session-manager";
+import { getClientIp } from "@/lib/utils/client-ip";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
+  const requestId = logger.requestId();
+  const ip = getClientIp(request) || "unknown";
+
   try {
+    logger.info("Login attempt", { requestId, ip });
+
     const { email, password } = await request.json();
 
     if (!email || !password) {
+      logger.warn("Missing credentials", { requestId, ip });
       return NextResponse.json(
         { success: false, error: "Email and password are required" },
         { status: 400 }
@@ -24,6 +34,11 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!admin) {
+      logger.warn("Invalid credentials - admin not found", {
+        requestId,
+        ip,
+        email,
+      });
       return NextResponse.json(
         { success: false, error: "Invalid credentials" },
         { status: 401 }
@@ -33,30 +48,72 @@ export async function POST(request: NextRequest) {
     // Verify password
     const isPasswordValid = await comparePassword(password, admin.password);
     if (!isPasswordValid) {
+      logger.warn("Invalid credentials - wrong password", {
+        requestId,
+        ip,
+        email,
+        userId: admin.id,
+      });
       return NextResponse.json(
         { success: false, error: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    // Get user agent and IP for session tracking
-    const userAgent = request.headers.get("user-agent") || undefined;
-    const ipAddress =
-      request.headers.get("x-forwarded-for") ||
-      request.headers.get("x-real-ip") ||
-      "unknown";
+    // Generate session ID
+    const sessionId = generateSessionId();
 
-    // Use createAuthSession to properly create both token and session
-    const { token, sessionId } = await createAuthSession(
-      admin.id,
-      admin.email,
-      admin.role,
-      admin.name,
+    // Create JWT token using jose library
+    const token = await createJWT({
+      userId: admin.id,
+      email: admin.email,
+      role: admin.role,
+      sessionId: sessionId,
+    });
+
+    const userAgent = request.headers.get("user-agent") || null;
+    const ipAddress = getClientIp(request) || null;
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Store session in database
+    await db.insert(adminSessions).values({
+      id: crypto.randomUUID(),
+      adminId: admin.id,
+      sessionId,
+      token,
+      expiresAt,
+      isActive: true,
+      createdAt: new Date(),
+      lastUsed: new Date(),
       userAgent,
-      ipAddress
-    );
+      ipAddress,
+      location: null,
+      deviceType: null,
+    });
 
-    // Return user info
+    // Update last login time
+    await db
+      .update(admins)
+      .set({ lastLogin: new Date() })
+      .where(eq(admins.id, admin.id));
+
+    // Log admin activity
+    await db.insert(adminActivities).values({
+      id: crypto.randomUUID(),
+      adminId: admin.id,
+      activity: "USER_LOGIN_SUCCESS",
+      timestamp: new Date(),
+    });
+
+    logger.info("User logged in successfully", {
+      requestId,
+      ip,
+      userId: admin.id,
+      email: admin.email,
+      sessionId,
+    });
+
+    // Create response with user data
     const response = NextResponse.json({
       success: true,
       message: "Signed in successfully",
@@ -66,10 +123,10 @@ export async function POST(request: NextRequest) {
         name: admin.name,
         role: admin.role,
       },
-      sessionId, // Optional: return session ID for client-side tracking
+      sessionId,
     });
 
-    // ✅ Set secure HttpOnly cookie
+    // Set secure HttpOnly cookie
     response.cookies.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -78,7 +135,7 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
-    // Also set a non-HttpOnly cookie for client-side session awareness
+    // Set a non-HttpOnly cookie for client-side session awareness
     response.cookies.set("session-active", "true", {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -92,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Signin error:", error);
+    logger.error("Login error", { requestId, ip }, { error });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

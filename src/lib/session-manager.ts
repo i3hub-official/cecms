@@ -1,18 +1,15 @@
-// lib/session-manager.ts
+// src/lib/session-manager
 import { db } from "@/lib/server/db/index";
 import { adminSessions, admins } from "@/lib/server/db/schema";
-import { eq, and, or, lt, gt, desc } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
+import { logger } from "./logger";
+import { randomBytes } from "crypto";
 
 const SESSION_CONFIG = {
   SESSION_EXPIRY_HOURS: 24,
   CLEANUP_DAYS: 7,
   EXTEND_IF_LESS_THAN_HOURS: 4,
 };
-
-// 🔹 Always log with context
-function log(ctx: string, data: unknown) {
-  console.log(`[SESSION] ${ctx}`, data || "");
-}
 
 // ------------------------
 // Create new session
@@ -34,7 +31,7 @@ export async function createSession(
     .values({
       adminId,
       token,
-      sessionId, // use the same one you put in token
+      sessionId,
       isActive: true,
       createdAt: now,
       lastUsed: now,
@@ -43,8 +40,8 @@ export async function createSession(
       ipAddress: ipAddress || null,
     })
     .returning();
-  log("Created new session", { sessionId: session.sessionId, adminId });
 
+  logger.info("Created new session", { sessionId: session.sessionId, adminId });
   return session;
 }
 
@@ -53,7 +50,7 @@ export async function createSession(
 // ------------------------
 export async function getSessionByToken(token: string) {
   try {
-    log("Looking up session by token", "");
+    logger.debug("Looking up session by token");
     const [row] = await db
       .select({
         session: adminSessions,
@@ -78,7 +75,7 @@ export async function getSessionByToken(token: string) {
       .limit(1);
 
     if (!row) {
-      log("No active session for token", "");
+      logger.debug("No active session for token");
       return null;
     }
 
@@ -98,10 +95,12 @@ export async function getSessionByToken(token: string) {
 
       row.session.expiresAt = newExpiry;
       row.session.lastUsed = now;
-      log("Extended session expiry", { sessionId: row.session.sessionId });
+      logger.debug("Extended session expiry", {
+        sessionId: row.session.sessionId,
+      });
     }
 
-    log("Session found", {
+    logger.debug("Session found", {
       sessionId: row.session.sessionId,
       adminId: row.admin.id,
       email: row.admin.email,
@@ -109,7 +108,9 @@ export async function getSessionByToken(token: string) {
 
     return { ...row.session, admin: row.admin };
   } catch (err) {
-    console.error("[SESSION] Error in getSessionByToken", err);
+    logger.error("Error in getSessionByToken", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }
@@ -140,7 +141,7 @@ export async function updateSessionLastUsed(
           update.expiresAt = new Date(
             now.getTime() + SESSION_CONFIG.SESSION_EXPIRY_HOURS * 60 * 60 * 1000
           );
-          log("Extended expiry on lastUsed update", { sessionId });
+          logger.debug("Extended expiry on lastUsed update", { sessionId });
         }
       }
     }
@@ -151,15 +152,17 @@ export async function updateSessionLastUsed(
       .where(eq(adminSessions.sessionId, sessionId))
       .returning();
 
-    log("Updated lastUsed", {
+    logger.debug("Updated lastUsed", {
       sessionId,
-      lastUsed: updated?.lastUsed,
-      expiresAt: updated?.expiresAt,
+      lastUsed: updated?.lastUsed?.toISOString(),
+      expiresAt: updated?.expiresAt?.toISOString(),
     });
 
     return updated;
   } catch (err) {
-    console.error("[SESSION] Error in updateSessionLastUsed", err);
+    logger.error("Error in updateSessionLastUsed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }
@@ -174,6 +177,17 @@ export async function revokeSession(sessionId: string) {
     .where(eq(adminSessions.sessionId, sessionId))
     .returning();
 
-  log("Session revoked", { sessionId, success: !!res });
+  logger.info("Session revoked", { sessionId, success: !!res });
   return res;
+}
+
+export function generateSessionId(): string {
+  return randomBytes(16).toString("hex");
+}
+
+/**
+ * Generate a secure random token for various purposes
+ */
+export function generateSecureToken(length: number = 32): string {
+  return randomBytes(length).toString("hex");
 }

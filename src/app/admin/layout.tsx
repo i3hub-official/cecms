@@ -1,3 +1,4 @@
+// src/app/admin/layout.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -35,11 +36,9 @@ export default function AdminLayoutWrapper({
       try {
         if (!background) setLoading(true);
 
-        const controller = new AbortController();
         const response = await fetch("/api/auth/validate", {
           method: "GET",
-          credentials: "include",
-          signal: controller.signal,
+          credentials: "include", // ← This is crucial!
           headers: {
             "Cache-Control": "no-cache, no-store, must-revalidate",
             Pragma: "no-cache",
@@ -101,8 +100,9 @@ export default function AdminLayoutWrapper({
   const handleLogout = async () => {
     try {
       await fetch("/api/auth", {
+        // ← This should match your route
         method: "DELETE",
-        credentials: "include",
+        credentials: "include", // ← Add this
       });
     } catch (error) {
       console.error("Logout error:", error);
@@ -110,7 +110,6 @@ export default function AdminLayoutWrapper({
       redirectToLogin();
     }
   };
-
   if (loading && !user) {
     return (
       <ThemeProvider>

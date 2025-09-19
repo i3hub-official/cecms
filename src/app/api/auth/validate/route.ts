@@ -6,31 +6,23 @@ export async function GET(request: NextRequest) {
   try {
     const validationResult = await validateSession(request);
 
-    if (!validationResult.isValid || !validationResult.user) {
+    if (!validationResult.isValid) {
       return NextResponse.json(
-        {
-          success: false,
-          error: validationResult.error || "Invalid session",
-        },
-        { status: 401 } // Make sure to return 401 status
+        { success: false, error: validationResult.error },
+        { status: 401 }
       );
     }
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       user: validationResult.user,
+      sessionId: validationResult.sessionId,
     });
-
-    response.headers.set("Cache-Control", "no-store, max-age=0");
-    return response;
   } catch (error) {
-    console.error("Session validation error:", error);
+    console.error("Validation error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
 }
-
-
-//BK
