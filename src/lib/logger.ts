@@ -34,7 +34,9 @@ export interface LogContext {
   status?: number;
   stack?: string;
   statusText?: string;
-}
+  count?: number;
+  }
+  
 
 function format(
   level: string,

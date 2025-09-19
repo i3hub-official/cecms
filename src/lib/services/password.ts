@@ -74,7 +74,7 @@ export class PasswordService {
           "If an account exists with this email, a reset link has been sent",
       };
     } catch (error) {
-      logger.error("Password reset request failed", error);
+      logger.error("Password reset request failed");
       return {
         success: false,
         message: "Failed to process password reset request",
@@ -93,13 +93,19 @@ export class PasswordService {
       // Validate password strength
       const passwordValidation = this.validatePasswordStrength(newPassword);
       if (!passwordValidation.valid) {
-        return { success: false, message: passwordValidation.message };
+        return {
+          success: false,
+          message: passwordValidation.message || "Invalid password",
+        };
       }
 
       // Verify token and get user info
       const tokenInfo = await this.verifyResetToken(token);
       if (!tokenInfo.valid) {
-        return { success: false, message: tokenInfo.message };
+        return {
+          success: false,
+          message: tokenInfo.message || "Invalid or expired token",
+        };
       }
 
       // Hash new password
@@ -148,7 +154,9 @@ export class PasswordService {
 
       return { success: true, message: "Password reset successfully" };
     } catch (error) {
-      logger.error("Password reset failed", error);
+      logger.error("Password reset failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return { success: false, message: "Failed to reset password" };
     }
   }
@@ -165,7 +173,10 @@ export class PasswordService {
       // Validate password strength
       const passwordValidation = this.validatePasswordStrength(newPassword);
       if (!passwordValidation.valid) {
-        return { success: false, message: passwordValidation.message };
+        return {
+          success: false,
+          message: passwordValidation.message || "Invalid password",
+        };
       }
 
       // Get user with current password hash
@@ -219,7 +230,9 @@ export class PasswordService {
 
       return { success: true, message: "Password changed successfully" };
     } catch (error) {
-      logger.error("Password change failed", error);
+      logger.error("Password change failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return { success: false, message: "Failed to change password" };
     }
   }
@@ -272,7 +285,9 @@ export class PasswordService {
         userId: resetRecord.adminId,
       };
     } catch (error) {
-      logger.error("Token verification failed", error);
+      logger.error("Token verification failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return { valid: false, message: "Invalid reset token" };
     }
   }
@@ -284,7 +299,7 @@ export class PasswordService {
     userId: string,
     email: string
   ): Promise<string> {
-    const { generateSecureToken } = await import("@/lib/utils/password-reset");
+    const { generateSecureToken } = await import("@/lib/session-manager");
     const token = generateSecureToken(32);
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
@@ -374,7 +389,9 @@ export class PasswordService {
         timestamp: new Date(),
       });
     } catch (error) {
-      logger.error("Failed to log admin activity", error);
+      logger.error("Failed to log admin activity", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -389,11 +406,13 @@ export class PasswordService {
         .execute();
 
       logger.info("Cleaned up expired password reset tokens", {
-        count: result.rowCount,
+        count: result.count || 0,
       });
-      return result.rowCount || 0;
+      return result.count || 0;
     } catch (error) {
-      logger.error("Failed to cleanup expired tokens", error);
+      logger.error("Failed to cleanup expired tokens", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return 0;
     }
   }
