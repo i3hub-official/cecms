@@ -61,7 +61,7 @@ export class EmailService {
     }
 
     // Fall back to public URL
-    return process.env.NEXT_PRIVATE_APP_URL || "http://localhost:3000";
+    return process.env.NEXT_PRIVATE_APP_URL || "http://192.168.0.159:3002";
   }
 
   async sendPasswordResetEmail(
