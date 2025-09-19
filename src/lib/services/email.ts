@@ -104,6 +104,41 @@ export class EmailService {
     }
   }
 
+  // async sendPasswordResetEmail(
+  //   email: string,
+  //   token: string,
+  //   userId: string
+  // ): Promise<boolean> {
+  //   try {
+  //     const baseUrl = this.getBaseUrl();
+  //     // Don't include token in URL anymore
+  //     const resetLink = `${baseUrl}/auth/reset-password`;
+
+  //     const emailOptions: EmailOptions = {
+  //       to: email,
+  //       subject: "Password Reset Request",
+  //       html: this.getPasswordResetTemplate(token, resetLink), // Pass token to template
+  //       text: `Please use the following token to reset your password: ${token}\n\nGo to: ${resetLink}`,
+  //     };
+
+  //     const result = await this.sendEmail(emailOptions);
+
+  //     if (result) {
+  //       logger.info("Password reset email sent", {
+  //         email,
+  //         userId,
+  //         messageId: result.messageId,
+  //       });
+  //       return true;
+  //     }
+
+  //     return false;
+  //   } catch (err) {
+  //     logger.error("Failed to send password reset email");
+  //     return false;
+  //   }
+  // }
+
   async sendPasswordChangedEmail(
     email: string,
     userName: string
@@ -355,6 +390,60 @@ export class EmailService {
       </html>
     `;
   }
+
+
+//   private getPasswordResetTemplate(token: string, resetLink: string): string {
+//   return `
+//     <!DOCTYPE html>
+//     <html>
+//     <head>
+//       <meta charset="utf-8">
+//       <style>
+//         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+//         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+//         .token-box { 
+//           background-color: #f8f9fa; 
+//           padding: 15px; 
+//           border: 2px dashed #007bff;
+//           border-radius: 5px;
+//           margin: 20px 0;
+//           font-family: monospace;
+//           font-size: 16px;
+//           text-align: center;
+//         }
+//         .button { 
+//           display: inline-block; 
+//           padding: 12px 24px; 
+//           background-color: #007bff; 
+//           color: white; 
+//           text-decoration: none; 
+//           border-radius: 4px; 
+//         }
+//       </style>
+//     </head>
+//     <body>
+//       <div class="container">
+//         <h2>Password Reset Request</h2>
+//         <p>You requested to reset your password. Here is your reset token:</p>
+        
+//         <div class="token-box">
+//           <strong>${token}</strong>
+//         </div>
+        
+//         <p>Click the button below to go to the password reset page:</p>
+//         <p><a href="${resetLink}" class="button">Reset Password</a></p>
+        
+//         <p><strong>Security Notice:</strong></p>
+//         <ul>
+//           <li>This token will expire in 1 hour</li>
+//           <li>Do not share this token with anyone</li>
+//           <li>You will need to enter this token on the reset page</li>
+//         </ul>
+//       </div>
+//     </body>
+//     </html>
+//   `;
+// }
 
   private getVerificationTemplate(
     userName: string,

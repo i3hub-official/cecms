@@ -1,3 +1,4 @@
+// src/app/api/v1/center-lookup/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { centers } from "@/lib/server/db/schema";
