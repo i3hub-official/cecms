@@ -3,7 +3,7 @@
 /**
  * Standard success response structure
  */
-export interface SuccessResponse<T = any> {
+export interface SuccessResponse<T = unknown> {
   success: true;
   data: T;
   message?: string;
@@ -18,7 +18,7 @@ export interface ErrorResponse {
   error: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
   timestamp: string;
 }
@@ -26,7 +26,7 @@ export interface ErrorResponse {
 /**
  * Creates a standardized success response
  */
-export function successResponse<T = any>(
+export function successResponse<T = unknown>(
   data: T,
   message?: string
 ): SuccessResponse<T> {
@@ -44,7 +44,7 @@ export function successResponse<T = any>(
 export function errorResponse(
   code: string,
   message: string,
-  details?: any
+  details?: unknown
 ): ErrorResponse {
   return {
     success: false,
@@ -102,7 +102,7 @@ export const CommonErrors = {
   notFound: (resource: string = "Resource") =>
     errorResponse(ErrorCodes.NOT_FOUND, `${resource} not found`),
 
-  validationError: (details: any, message: string = "Validation failed") =>
+  validationError: (details: string, message: string = "Validation failed") =>
     errorResponse(ErrorCodes.VALIDATION_ERROR, message, details),
 
   internalError: (message: string = "Internal server error") =>
@@ -144,7 +144,7 @@ export function unwrapResponse<T>(
 /**
  * Creates a response with pagination metadata
  */
-export function paginatedResponse<T = any>(
+export function paginatedResponse<T = unknown>(
   data: T[],
   pagination: {
     page: number;
