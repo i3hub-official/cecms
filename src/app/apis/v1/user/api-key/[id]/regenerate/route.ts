@@ -1,9 +1,14 @@
-export async function POST(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
+// src/app/apis/v1/user/api-key/[id]/regenerate/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/server/db/index";
+import { apiKeys, adminActivities } from "@/lib/server/db/schema";
+import { eq, and } from "drizzle-orm";
+import { validateSession } from "@/lib/auth";
+import { hashToken, generateSecureToken } from "@/lib/utils/tokens";
+
+export async function POST(request: NextRequest, context: any) {
   try {
-    const { id } = context.params;
+    const { id } = context.params as { id: string };
     const session = await validateSession(request);
 
     if (!session.isValid || !session.user) {
