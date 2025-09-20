@@ -74,7 +74,7 @@ export interface Notification {
   message: string;
 }
 
-export interface ConfirmationModal {
+export interface ConfirmationModalState {
   isOpen: boolean;
   title: string;
   message: string;
@@ -82,7 +82,7 @@ export interface ConfirmationModal {
   cancelText: string;
   onConfirm: () => void;
   onCancel: () => void;
-  type: "danger" | "warning" | "info";
+  type: "info" | "warning" | "danger";
 }
 
 export interface Stats {

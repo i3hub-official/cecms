@@ -138,20 +138,20 @@ export default function AdminLayout({
               fluid ? "w-full" : "max-w-7xl mx-auto w-full"
             } px-4 sm:px-6 lg:px-8 py-4`}
           >
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground text-center">
               <div className="flex items-center gap-4">
-                <span>&copy; 2024 CMS Admin. All rights reserved.</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <button className="hover:text-foreground transition-colors">
-                  Privacy Policy
-                </button>
-                <button className="hover:text-foreground transition-colors">
-                  Terms of Service
-                </button>
-                <button className="hover:text-foreground transition-colors">
-                  Support
-                </button>
+                <span>
+                  &copy; 2024{" "}
+                  <a
+                    href="https://i3hub.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    I3 Hub
+                  </a>
+                  . All rights reserved.
+                </span>
               </div>
             </div>
           </div>
