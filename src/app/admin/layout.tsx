@@ -90,12 +90,14 @@ export default function AdminLayoutWrapper({
     } else {
       validateSession();
     }
-  }, [validateSession]);
+  }, []); // Remove validateSession dependency
 
-  /** 🔹 Revalidate on route changes */
+  /** 🔹 Revalidate on route changes - but not during logout */
   useEffect(() => {
-    validateSession(true);
-  }, [pathname, validateSession]);
+    if (!loggingOut && user && pathname) {
+      validateSession(true);
+    }
+  }, [pathname]); // Remove validateSession dependency and add loggingOut check
 
   /** 🔹 Logout with loading state */
   const handleLogout = async () => {
