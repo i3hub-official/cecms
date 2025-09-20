@@ -1,5 +1,10 @@
 // src/app/components/centers/StatsGrid.tsx
-import { Building, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
+import {
+  Building,
+  CheckCircle,
+  AlertCircle,
+  AlertTriangle,
+} from "lucide-react";
 import { Stats } from "@/types/center";
 
 interface StatsGridProps {
