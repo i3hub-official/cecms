@@ -18,7 +18,7 @@ export default function ApiKeysTabs({
           className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
             activeTab === "create"
               ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+              : "border-transparent text-foreground/70 hover:text-foreground hover:border-border"
           }`}
         >
           Create New Key
@@ -28,7 +28,7 @@ export default function ApiKeysTabs({
           className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
             activeTab === "manage"
               ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+              : "border-transparent text-foreground/70 hover:text-foreground hover:border-border"
           }`}
         >
           Manage Keys ({keyCount})
