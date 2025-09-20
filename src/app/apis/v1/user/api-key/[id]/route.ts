@@ -5,12 +5,11 @@ import { apiKeys, adminActivities } from "@/lib/server/db/schema";
 import { eq, and } from "drizzle-orm";
 import { validateSession } from "@/lib/auth";
 
-interface RouteContext {
-  params: { id: string };
-}
-
 // GET - Get a specific API key
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await validateSession(request);
 
@@ -62,7 +61,10 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 }
 
 // PATCH - Update an API key
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await validateSession(request);
 
@@ -117,5 +119,63 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+// DELETE - Revoke an API key (if you want to add it here too)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await validateSession(request);
+    
+    if (!session.isValid || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const apiKeyId = params.id;
+
+    // Verify the API key belongs to the user
+    const [apiKey] = await db
+      .select()
+      .from(apiKeys)
+      .where(
+        and(
+          eq(apiKeys.id, apiKeyId),
+          eq(apiKeys.adminId, session.user.id)
+        )
+      );
+
+    if (!apiKey) {
+      return NextResponse.json({ error: "API key not found" }, { status: 404 });
+    }
+
+    // Soft delete by setting isActive to false
+    await db
+      .update(apiKeys)
+      .set({
+        isActive: false,
+        revokedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(apiKeys.id, apiKeyId));
+
+    // Log admin activity
+    await db.insert(adminActivities).values({
+      id: crypto.randomUUID(),
+      adminId: session.user.id,
+      activity: `API_KEY_REVOKED: ${apiKey.name}`,
+      timestamp: new Date(),
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "API key revoked successfully",
+    });
+
+  } catch (error) {
+    console.error("DELETE /apis/v1/user/api-key/[id] error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

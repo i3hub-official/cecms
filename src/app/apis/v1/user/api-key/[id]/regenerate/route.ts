@@ -6,11 +6,14 @@ import { eq, and } from "drizzle-orm";
 import { validateSession } from "@/lib/auth";
 import { hashToken, generateSecureToken } from "@/lib/utils/tokens";
 
-interface RouteContext {
-  params: { id: string };
+// Use Next.js Params type instead of custom interface
+interface Params {
+  params: {
+    id: string;
+  };
 }
 
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export async function POST(request: NextRequest, { params }: Params) {
   try {
     const session = await validateSession(request);
 
