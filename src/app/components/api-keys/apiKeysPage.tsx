@@ -126,10 +126,12 @@ export default function ApiKeyPage() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 bg-background">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <div className="ml-3 text-lg">Loading API keys...</div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="ml-3 text-lg text-foreground">
+            Loading API keys...
+          </div>
         </div>
       </div>
     );
@@ -137,15 +139,17 @@ export default function ApiKeyPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <h2 className="text-lg font-semibold text-red-800 mb-2">
+      <div className="max-w-7xl mx-auto p-6 bg-background">
+        <div className="bg-card border border-border rounded-lg p-6 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-2">
             Authentication Required
           </h2>
-          <p className="text-red-700">Please log in to manage your API keys.</p>
+          <p className="text-foreground/70">
+            Please log in to manage your API keys.
+          </p>
           <button
             onClick={() => router.push("/auth/signin")}
-            className="mt-4 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+            className="mt-4 bg-primary text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
           >
             Go to Sign In
           </button>
@@ -181,13 +185,13 @@ export default function ApiKeyPage() {
                 Your new API key has been generated. Make sure to copy it now –
                 you won&apos;t be able to see it again!
               </p>
-              <div className="bg-card border border-border p-3 rounded-md font-mono text-sm break-all text-foreground">
+              <div className="bg-card border border-border p-3 rounded-md font-mono text-sm break-all text-foreground shadow-sm">
                 {newKey.apiKey}
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => copyToClipboard(newKey.apiKey)}
-                  className="bg-primary text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-colors"
+                  className="bg-primary text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-opacity focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
                 >
                   Copy API Key
                 </button>
@@ -196,7 +200,7 @@ export default function ApiKeyPage() {
                     setShowNewKey(false);
                     setNewKey(null);
                   }}
-                  className="bg-foreground text-background px-3 py-1 rounded text-sm hover:opacity-90 transition-colors"
+                  className="bg-background border border-border text-foreground px-3 py-1 rounded text-sm hover:bg-card transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
                 >
                   Close
                 </button>
