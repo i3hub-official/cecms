@@ -17,7 +17,7 @@ export default function Loading({
   return (
     <div className="flex items-center justify-center">
       <div
-        className={`animate-spin rounded-full border-b-2 border-blue-600 ${sizeClasses[size]}`}
+        className={`animate-spin rounded-full border-b-2 border-green-600 ${sizeClasses[size]}`}
       ></div>
       {message && <div className="ml-3 text-gray-600">{message}</div>}
     </div>
