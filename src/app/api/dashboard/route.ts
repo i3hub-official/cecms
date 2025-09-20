@@ -25,9 +25,8 @@ export async function GET(request: NextRequest) {
 
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // Get all statistics in parallel for better performance
+    // Get all statistics in parallel
     const [
       // Center counts
       totalCentersResult,
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
       activeAdminsResult,
       inactiveAdminsResult,
 
-      // Session counts
+      // Session counts (scoped to current admin)
       activeSessionsResult,
       totalSessionsResult,
       expiredSessionsResult,
@@ -53,6 +52,8 @@ export async function GET(request: NextRequest) {
 
       // Recent centers
       recentCentersData,
+
+      // Active sessions with details (scoped to current admin)
       activeSessionsDetailedData,
     ] = await Promise.all([
       // Center counts
@@ -85,25 +86,31 @@ export async function GET(request: NextRequest) {
         .from(admins)
         .where(eq(admins.isActive, false)),
 
-      // Session counts
+      // Session counts (scoped)
       db
         .select({ count: sql<number>`count(*)` })
         .from(adminSessions)
         .where(
           and(
+            authResult.user?.id ? eq(adminSessions.adminId, authResult.user.id) : undefined,
             eq(adminSessions.isActive, true),
-            eq(adminSessions.id, admins.id),
             gt(adminSessions.expiresAt, now)
           )
         ),
-      db.select({ count: sql<number>`count(*)` }).from(adminSessions),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(adminSessions)
+        .where(authResult.user ? eq(adminSessions.adminId, authResult.user.id) : undefined),
       db
         .select({ count: sql<number>`count(*)` })
         .from(adminSessions)
         .where(
-          or(
-            eq(adminSessions.isActive, false),
-            lte(adminSessions.expiresAt, now)
+          and(
+            authResult.user ? eq(adminSessions.adminId, authResult.user.id) : undefined,
+            or(
+              eq(adminSessions.isActive, false),
+              lte(adminSessions.expiresAt, now)
+            )
           )
         ),
 
@@ -131,7 +138,7 @@ export async function GET(request: NextRequest) {
           )
         ),
 
-      // Recent centers with full details
+      // Recent centers
       db
         .select({
           id: centers.id,
@@ -146,7 +153,7 @@ export async function GET(request: NextRequest) {
         .orderBy(desc(centers.createdAt))
         .limit(5),
 
-      // Active sessions with admin details (using join)
+      // Active sessions with details (scoped to current admin)
       db
         .select({
           session: adminSessions,
@@ -161,6 +168,7 @@ export async function GET(request: NextRequest) {
         .innerJoin(admins, eq(adminSessions.adminId, admins.id))
         .where(
           and(
+            authResult.user ? eq(adminSessions.adminId, authResult.user.id) : undefined,
             eq(adminSessions.isActive, true),
             gt(adminSessions.expiresAt, now)
           )
@@ -169,7 +177,7 @@ export async function GET(request: NextRequest) {
         .limit(10),
     ]);
 
-    // Extract counts from results
+    // Extract counts
     const totalCenters = totalCentersResult[0]?.count || 0;
     const activeCenters = activeCentersResult[0]?.count || 0;
     const inactiveCenters = inactiveCentersResult[0]?.count || 0;
@@ -189,7 +197,7 @@ export async function GET(request: NextRequest) {
     const usedResets = usedResetsResult[0]?.count || 0;
     const expiredResets = expiredResetsResult[0]?.count || 0;
 
-    // Build response data
+    // Build response
     const dashboardData = {
       success: true,
       data: {
@@ -242,7 +250,7 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    // Set cache headers for reasonable caching (5 minutes)
+    // Private caching
     const response = NextResponse.json(dashboardData);
     response.headers.set(
       "Cache-Control",
