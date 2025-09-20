@@ -1,25 +1,21 @@
-// src/app/api/user/api-key/[id]/usage/route.ts
+// src/app/apis/v1/user/api-key/[id]/usage/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { apiKeys, apiUsageLogs } from "@/lib/server/db/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { validateSession } from "@/lib/auth";
 
-interface RouteContext {
-  params: { id: string };
-}
-
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(request: NextRequest, context: any) {
   try {
+    const { id: apiKeyId } = context.params as { id: string };
     const session = await validateSession(request);
-    
+
     if (!session.isValid || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const apiKeyId = params.id;
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get("period") || "7d"; // Default to 7 days
+    const period = searchParams.get("period") || "7d";
 
     // Calculate date range based on period
     const startDate = new Date();
@@ -45,10 +41,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       .select()
       .from(apiKeys)
       .where(
-        and(
-          eq(apiKeys.id, apiKeyId),
-          eq(apiKeys.adminId, session.user.id)
-        )
+        and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, session.user.id))
       );
 
     if (!apiKey) {
@@ -105,9 +98,11 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         endDate: new Date().toISOString(),
       },
     });
-
   } catch (error) {
     console.error("GET /api/user/api-key/[id]/usage error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
