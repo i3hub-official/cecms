@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { comparePassword } from "@/lib/auth";
 import { admins, adminActivities, adminSessions } from "@/lib/server/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { createJWT } from "@/lib/utils/jwt";
 import { generateSessionId } from "@/lib/session-manager";
 import { getClientIp } from "@/lib/utils/client-ip";
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Generate session ID
     const sessionId = generateSessionId();
 
-    // Create JWT token using jose library
+    // Create JWT token
     const token = await createJWT({
       userId: admin.id,
       email: admin.email,
@@ -75,9 +75,11 @@ export async function POST(request: NextRequest) {
     const ipAddress = getClientIp(request) || null;
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+    const newSessionUUID = crypto.randomUUID();
+
     // Store session in database
     await db.insert(adminSessions).values({
-      id: crypto.randomUUID(),
+      id: newSessionUUID,
       adminId: admin.id,
       sessionId,
       token,
@@ -90,6 +92,34 @@ export async function POST(request: NextRequest) {
       location: null,
       deviceType: null,
     });
+
+    // Enforce max 3 active sessions per user (mark extras inactive)
+    const activeSessions = await db
+      .select()
+      .from(adminSessions)
+      .where(
+        and(
+          eq(adminSessions.adminId, admin.id),
+          eq(adminSessions.isActive, true)
+        )
+      )
+      .orderBy(desc(adminSessions.createdAt));
+
+    if (activeSessions.length > 3) {
+      const sessionsToDeactivate = activeSessions.slice(3);
+      const idsToDeactivate = sessionsToDeactivate.map((s) => s.id);
+
+      await db
+        .update(adminSessions)
+        .set({ isActive: false })
+        .where(inArray(adminSessions.id, idsToDeactivate));
+
+      logger.info("Marked old sessions inactive", {
+        requestId,
+        userId: admin.id,
+        removed: idsToDeactivate.length,
+      });
+    }
 
     // Update last login time
     await db
@@ -145,7 +175,6 @@ export async function POST(request: NextRequest) {
 
     // Set cache control headers
     response.headers.set("Cache-Control", "no-store, max-age=0");
-    // response.headers.set("Authorization", `Bearer ${token}`);
 
     return response;
   } catch (error) {

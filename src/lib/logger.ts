@@ -39,6 +39,7 @@ export interface LogContext {
   to?: string;
   subject?: string;
   baseUrlUsed?: string;
+  removed?: number;
 }
 
 function format(
