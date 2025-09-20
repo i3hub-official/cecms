@@ -86,3 +86,20 @@ pre {
   animation: fadeIn 0.5s ease-out forwards;
   opacity: 0;
 }
+
+
+/* UI ALERT */
+@keyframes slideIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.alert-slide-in {
+  animation: slideIn 0.3s ease-out;
+}

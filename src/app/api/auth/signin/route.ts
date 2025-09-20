@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
 
     // Set cache control headers
     response.headers.set("Cache-Control", "no-store, max-age=0");
-    response.headers.set("Authorization", `Bearer ${token}`);
+    // response.headers.set("Authorization", `Bearer ${token}`);
 
     return response;
   } catch (error) {

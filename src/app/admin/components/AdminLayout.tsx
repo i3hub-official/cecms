@@ -15,6 +15,7 @@ import {
   Home,
   BarChart3,
   Shield,
+  Key,
 } from "lucide-react";
 
 interface User {
@@ -99,6 +100,7 @@ export default function AdminLayout({
     { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
     { name: "Sessions", href: "/admin/sessions", icon: Shield },
     { name: "Settings", href: "/admin/settings", icon: Settings },
+    { name: "API Keys", href: "/admin/getApi", icon: Key },
   ];
 
   const isActivePath = (href: string) =>

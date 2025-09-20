@@ -1,18 +1,19 @@
-// src/app/apis/v1/center-lookup/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { centers } from "@/lib/server/db/schema";
 import { eq, ilike, and } from "drizzle-orm";
-import { authenticateRequest } from "@/lib/middleware/withAuth";
+import { authenticateRequest } from "@/app/apis/v1/withAuth";
+import { successResponse, errorResponse } from "../../shared/lib/reponse";
 
 export async function GET(request: NextRequest) {
-  // Authenticate the request
   const authResult = await authenticateRequest(request);
 
   if (!authResult.success) {
-    return NextResponse.json(
-      { error: authResult.error },
-      { status: authResult.status || 401 }
+    return errorResponse(
+      authResult.error!,
+      authResult.status,
+      undefined,
+      authResult
     );
   }
 
@@ -21,9 +22,11 @@ export async function GET(request: NextRequest) {
     const number = searchParams.get("number");
 
     if (!number) {
-      return NextResponse.json(
-        { error: "Center number is required" },
-        { status: 400 }
+      return errorResponse(
+        "Center number is required",
+        400,
+        undefined,
+        authResult
       );
     }
 
@@ -42,15 +45,12 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (!center) {
-      return NextResponse.json({ error: "Center not found" }, { status: 404 });
+      return errorResponse("Center not found", 404, undefined, authResult);
     }
 
-    return NextResponse.json(center);
+    return successResponse(center, undefined, authResult);
   } catch (error) {
     console.error("Center lookup error:", error);
-    return NextResponse.json(
-      { error: "Failed to lookup center" },
-      { status: 500 }
-    );
+    return errorResponse("Failed to lookup center", 500, undefined, authResult);
   }
 }

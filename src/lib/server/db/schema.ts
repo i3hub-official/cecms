@@ -151,30 +151,6 @@ export const passwordResets = pgTable(
 );
 
 // ------------------------
-// ApiLog Model
-// ------------------------
-export const apiLogs = pgTable(
-  "api_logs",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    endpoint: text("endpoint").notNull(),
-    method: text("method").notNull(),
-    status: integer("status").notNull(),
-    request: text("request").notNull(),
-    response: text("response").notNull(),
-    timestamp: timestamp("timestamp").notNull().defaultNow(),
-  },
-  (table) => [
-    index("idx_api_log_endpoint").on(table.endpoint),
-    index("idx_api_log_method").on(table.method),
-    index("idx_api_log_status").on(table.status),
-    index("idx_api_log_timestamp").on(table.timestamp),
-  ]
-);
-
-// ------------------------
 // AdminActivity Model
 // ------------------------
 export const adminActivities = pgTable(
@@ -224,6 +200,30 @@ export const auditLogs = pgTable(
 // ===================================================================================
 
 // ------------------------
+// ApiLog Model
+// ------------------------
+export const apiLogs = pgTable(
+  "api_logs",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    endpoint: text("endpoint").notNull(),
+    method: text("method").notNull(),
+    status: integer("status").notNull(),
+    request: text("request").notNull(),
+    response: text("response").notNull(),
+    timestamp: timestamp("timestamp").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_api_log_endpoint").on(table.endpoint),
+    index("idx_api_log_method").on(table.method),
+    index("idx_api_log_status").on(table.status),
+    index("idx_api_log_timestamp").on(table.timestamp),
+  ]
+);
+
+// ------------------------
 // API Key Model
 // ------------------------
 export const apiKeys = pgTable(
@@ -258,6 +258,7 @@ export const apiKeys = pgTable(
     // Status
     isActive: boolean("is_active").default(true).notNull(),
     expiresAt: timestamp("expires_at"),
+    revokedAt: timestamp("revoked_at"), // When it was manually revoked
 
     // Metadata
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -272,6 +273,7 @@ export const apiKeys = pgTable(
     index("api_key_is_active_idx").on(table.isActive),
     index("api_key_created_at_idx").on(table.createdAt),
     index("api_key_expires_at_idx").on(table.expiresAt),
+    index("api_key_revoked_at_idx").on(table.revokedAt),
   ]
 );
 
@@ -339,9 +341,118 @@ export const apiRateLimits = pgTable(
   ]
 );
 
+// ------------------------
+// API Key Relations
+// ------------------------
+export const apiKeyRelations = relations(apiKeys, ({ one, many }) => ({
+  admin: one(admins, {
+    fields: [apiKeys.adminId],
+    references: [admins.id],
+  }),
+  usageLogs: many(apiUsageLogs),
+  rateLimits: many(apiRateLimits),
+}));
+
+export const apiUsageLogRelations = relations(apiUsageLogs, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [apiUsageLogs.apiKeyId],
+    references: [apiKeys.id],
+  }),
+}));
+
+export const apiRateLimitRelations = relations(apiRateLimits, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [apiRateLimits.apiKeyId],
+    references: [apiKeys.id],
+  }),
+}));
+
 // ===================================================================================
 // API KEY MANAGEMENT TABLES - END
 // ===================================================================================
+
+// ------------------------
+// Dispute Center Model (Drizzle)
+// ------------------------
+export const disputeCenters = pgTable(
+  "dispute_centers",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+
+    // Basic Information
+    number: text("number").notNull().unique(),
+    name: text("name").notNull(),
+    address: text("address").notNull(),
+    state: text("state").notNull(),
+    lga: text("lga").notNull(),
+
+    // Contact Info
+    email: text("email").notNull(),
+    phone: text("phone").notNull(),
+    alternativePhone: text("alternative_phone")
+      .notNull()
+      .default("00000000000"),
+
+    // Operational
+    isActive: boolean("is_active").notNull().default(true),
+    status: text("status").notNull().default("active"),
+
+    // Dispute flag
+    isDisputed: boolean("is_disputed").notNull().default(false),
+
+    // Capacity
+    maxCapacity: integer("max_capacity").notNull().default(50),
+    currentCases: integer("current_cases").notNull().default(0),
+
+    // Staff
+    totalStaff: integer("total_staff").notNull().default(0),
+    availableArbitrators: integer("available_arbitrators").notNull().default(0),
+
+    // Audit
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdBy: text("created_by").notNull(),
+    createdById: text("created_by_id")
+      .notNull()
+      .references(() => admins.id, { onDelete: "set default" })
+      .default("system"),
+
+    modifiedBy: text("modified_by"),
+    modifiedAt: timestamp("modified_at").$onUpdateFn(() => new Date()),
+    modifiedById: text("modified_by_id")
+      .notNull()
+      .references(() => admins.id, { onDelete: "set default" })
+      .default("system"),
+
+    // Soft delete
+    deletedAt: timestamp("deleted_at"),
+    deletedBy: text("deleted_by"),
+    deletedById: text("deleted_by_id").references(() => admins.id, {
+      onDelete: "set default",
+    }),
+  },
+  (table) => [
+    // Uniques
+    uniqueIndex("dispute_center_number_unique").on(table.number),
+    uniqueIndex("dispute_center_email_unique").on(table.email),
+    uniqueIndex("dispute_center_name_state_lga_unique").on(
+      table.name,
+      table.state,
+      table.lga
+    ),
+
+    // Indexes
+    index("idx_dispute_center_is_disputed").on(table.isDisputed),
+    index("idx_dispute_center_is_active").on(table.isActive),
+    index("idx_dispute_center_status").on(table.status),
+    index("idx_dispute_center_state").on(table.state),
+    index("idx_dispute_center_lga").on(table.lga),
+    index("idx_dispute_center_state_lga").on(table.state, table.lga),
+    index("idx_dispute_center_email").on(table.email),
+    index("idx_dispute_center_phone").on(table.phone),
+  ]
+);
 
 // ------------------------
 // Relations
@@ -396,33 +507,6 @@ export const auditLogRelations = relations(auditLogs, ({ one }) => ({
     references: [admins.id],
   }),
 }));
-
-// ------------------------
-// API Key Relations
-// ------------------------
-export const apiKeyRelations = relations(apiKeys, ({ one, many }) => ({
-  admin: one(admins, {
-    fields: [apiKeys.adminId],
-    references: [admins.id],
-  }),
-  usageLogs: many(apiUsageLogs),
-  rateLimits: many(apiRateLimits),
-}));
-
-export const apiUsageLogRelations = relations(apiUsageLogs, ({ one }) => ({
-  apiKey: one(apiKeys, {
-    fields: [apiUsageLogs.apiKeyId],
-    references: [apiKeys.id],
-  }),
-}));
-
-export const apiRateLimitRelations = relations(apiRateLimits, ({ one }) => ({
-  apiKey: one(apiKeys, {
-    fields: [apiRateLimits.apiKeyId],
-    references: [apiKeys.id],
-  }),
-}));
-
 // ------------------------
 // Inferred Types
 // ------------------------
@@ -448,6 +532,10 @@ export type ApiUsageLog = typeof apiUsageLogs.$inferSelect;
 export type NewApiUsageLog = typeof apiUsageLogs.$inferInsert;
 export type ApiRateLimit = typeof apiRateLimits.$inferSelect;
 export type NewApiRateLimit = typeof apiRateLimits.$inferInsert;
+
+// Types
+export type DisputeCenter = typeof disputeCenters.$inferSelect;
+export type NewDisputeCenter = typeof disputeCenters.$inferInsert;
 
 // ------------------------
 // Inferred Types with Relations
