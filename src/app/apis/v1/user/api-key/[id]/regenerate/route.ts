@@ -1,4 +1,4 @@
-// src/app/apis/v1/user/api-key/[id]/regenerate/route.ts
+// src/app/api/user/api-key/[id]/regenerate/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { apiKeys, adminActivities } from "@/lib/server/db/schema";
@@ -6,17 +6,14 @@ import { eq, and } from "drizzle-orm";
 import { validateSession } from "@/lib/auth";
 import { hashToken, generateSecureToken } from "@/lib/utils/tokens";
 
-// Use Next.js Params type instead of custom interface
-interface Params {
-  params: {
-    id: string;
-  };
+interface RouteContext {
+  params: { id: string };
 }
 
-export async function POST(request: NextRequest, { params }: Params) {
+export async function POST(request: NextRequest, { params }: RouteContext) {
   try {
     const session = await validateSession(request);
-
+    
     if (!session.isValid || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -28,7 +25,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       .select()
       .from(apiKeys)
       .where(
-        and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, session.user.id))
+        and(
+          eq(apiKeys.id, apiKeyId),
+          eq(apiKeys.adminId, session.user.id)
+        )
       );
 
     if (!apiKey) {
@@ -70,11 +70,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       },
       message: "API key regenerated successfully",
     });
+
   } catch (error) {
-    console.error("POST /apis/v1/user/api-key/[id]/regenerate error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("POST /api/user/api-key/[id]/regenerate error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
