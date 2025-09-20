@@ -1,33 +1,86 @@
-import { NextRequest } from "next/server";
-import { db } from "@/lib/server/db/index";
-import { centers } from "@/lib/server/db/schema";
-import { eq, ilike, and } from "drizzle-orm";
-import { authenticateRequest } from "@/app/apis/v1/withAuth";
-import { successResponse, errorResponse } from "../../shared/lib/reponse";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/server/db";
+import { centers, apiKeys } from "@/lib/server/db/schema";
+import { eq, and, ilike, sql } from "drizzle-orm";
+import { verifyToken } from "@/lib/utils/tokens";
+import {
+  successResponse,
+  errorResponse,
+  getStatusCodeForError,
+  ErrorCodes,
+} from "@/app/apis/shared/lib/response";
 
 export async function GET(request: NextRequest) {
-  const authResult = await authenticateRequest(request);
-
-  if (!authResult.success) {
-    return errorResponse(
-      authResult.error!,
-      authResult.status,
-      undefined,
-      authResult
-    );
-  }
-
   try {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      const err = errorResponse(
+        ErrorCodes.UNAUTHORIZED,
+        "Missing or invalid Authorization header"
+      );
+      return NextResponse.json(err, {
+        status: getStatusCodeForError(err.error.code),
+      });
+    }
+
+    const providedKey = authHeader.replace("Bearer ", "").trim();
+    const prefix = providedKey.slice(0, 8);
+
+    const [storedKey] = await db
+      .select()
+      .from(apiKeys)
+      .where(and(eq(apiKeys.prefix, prefix), eq(apiKeys.isActive, true)))
+      .limit(1);
+
+    if (!storedKey) {
+      const err = errorResponse(ErrorCodes.API_KEY_INVALID, "Invalid API key");
+      return NextResponse.json(err, {
+        status: getStatusCodeForError(err.error.code),
+      });
+    }
+
+    const isValid = await verifyToken(providedKey, storedKey.key);
+    if (!isValid) {
+      const err = errorResponse(ErrorCodes.API_KEY_INVALID, "Invalid API key");
+      return NextResponse.json(err, {
+        status: getStatusCodeForError(err.error.code),
+      });
+    }
+
+    if (storedKey.expiresAt && storedKey.expiresAt < new Date()) {
+      const err = errorResponse(ErrorCodes.API_KEY_EXPIRED, "API key expired");
+      return NextResponse.json(err, {
+        status: getStatusCodeForError(err.error.code),
+      });
+    }
+
+    if (!storedKey.canRead) {
+      const err = errorResponse(ErrorCodes.FORBIDDEN, "Read access denied");
+      return NextResponse.json(err, {
+        status: getStatusCodeForError(err.error.code),
+      });
+    }
+
+    if (
+      storedKey.allowedEndpoints !== "*" &&
+      !storedKey.allowedEndpoints.includes("/apis/v1/center-lookup")
+    ) {
+      const err = errorResponse(ErrorCodes.FORBIDDEN, "Endpoint access denied");
+      return NextResponse.json(err, {
+        status: getStatusCodeForError(err.error.code),
+      });
+    }
+
     const { searchParams } = new URL(request.url);
     const number = searchParams.get("number");
-
     if (!number) {
-      return errorResponse(
-        "Center number is required",
-        400,
-        undefined,
-        authResult
+      const err = errorResponse(
+        ErrorCodes.INVALID_INPUT,
+        "Center number is required"
       );
+      return NextResponse.json(err, {
+        status: getStatusCodeForError(err.error.code),
+      });
     }
 
     const [center] = await db
@@ -45,12 +98,30 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (!center) {
-      return errorResponse("Center not found", 404, undefined, authResult);
+      const err = errorResponse(ErrorCodes.NOT_FOUND, "Center not found");
+      return NextResponse.json(err, {
+        status: getStatusCodeForError(err.error.code),
+      });
     }
 
-    return successResponse(center, undefined, authResult);
+    await db
+      .update(apiKeys)
+      .set({
+        lastUsed: new Date(),
+        usageCount: sql`${apiKeys.usageCount} + 1`,
+      })
+      .where(eq(apiKeys.id, storedKey.id));
+
+    const res = successResponse(center, "Center found");
+    return NextResponse.json(res, { status: 200 });
   } catch (error) {
     console.error("Center lookup error:", error);
-    return errorResponse("Failed to lookup center", 500, undefined, authResult);
+    const err = errorResponse(
+      ErrorCodes.INTERNAL_ERROR,
+      "Failed to lookup center"
+    );
+    return NextResponse.json(err, {
+      status: getStatusCodeForError(err.error.code),
+    });
   }
 }

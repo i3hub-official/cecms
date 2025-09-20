@@ -3,7 +3,7 @@ import { db } from "@/lib/server/db/index";
 import { disputeCenters } from "@/lib/server/db/schema";
 import { eq } from "drizzle-orm";
 import { authenticateRequest } from "@/app/apis/shared/middleware/withAuth";
-import { successResponse, errorResponse } from "@/app/apis/shared/lib/reponse";
+import { successResponse, errorResponse } from "@/app/apis/shared/lib/response";
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const authResult = await authenticateRequest(request);
