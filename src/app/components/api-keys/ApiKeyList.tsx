@@ -2,7 +2,7 @@
 // src/app/components/api-keys/ApiKeyList.tsx
 
 import { ApiKey } from "@/types/api-keys";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ApiKeyListProps {
   apiKeys: ApiKey[];
@@ -102,8 +102,8 @@ const Pagination = ({
 }) => {
   const getVisiblePages = () => {
     const delta = 2;
-    const range = [];
-    const rangeWithDots = [];
+    const range: number[] = [];
+    const rangeWithDots: (number | string)[] = [];
 
     for (
       let i = Math.max(2, currentPage - delta);
@@ -321,7 +321,7 @@ const ConfirmationModal = ({
           <p className="text-sm text-foreground mb-4">
             Are you sure you want to revoke the API key{" "}
             <span className="font-semibold text-foreground">
-              "{apiKeyName}"
+              &quot;{apiKeyName}&quot;
             </span>
             ?
           </p>
@@ -742,7 +742,7 @@ export default function ApiKeyList({
   const endItem = Math.min(endIndex, totalItems);
 
   // Reset to first page when apiKeys change
-  useState(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [apiKeys.length]);
 
