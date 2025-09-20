@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useTheme } from "@/app/components/ThemeContext";
 import { AnimatePresence } from "framer-motion";
