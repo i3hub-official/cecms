@@ -128,8 +128,8 @@ export default function NewKeyModal({
                 API Key Generated Successfully!
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Your API key "<span className="font-medium">{newKey.name}</span>
-                " is ready to use
+                Your API key &qout;<span className="font-medium">{newKey.name}</span>
+                &qout; is ready to use
               </p>
             </div>
           </div>
@@ -158,7 +158,7 @@ export default function NewKeyModal({
                   Important Security Notice
                 </h3>
                 <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                  This is the only time you'll see the complete API key. Store
+                  This is the only time you&apos;ll see the complete API key. Store
                   it securely and never share it publicly.
                 </p>
               </div>
@@ -304,7 +304,7 @@ export default function NewKeyModal({
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
               <XCircle className="w-4 h-4" />
-              I'm Done
+              I&apos;m Done
             </button>
           </div>
         </div>
