@@ -1,35 +1,20 @@
-// src/app/api/user/api-key/[id]/regenerate/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/server/db/index";
-import { apiKeys, adminActivities } from "@/lib/server/db/schema";
-import { eq, and } from "drizzle-orm";
-import { validateSession } from "@/lib/auth";
-import { hashToken, generateSecureToken } from "@/lib/utils/tokens";
-
-interface RouteContext {
-  params: { id: string };
-}
-
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export async function POST(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
+    const { id } = context.params;
     const session = await validateSession(request);
-    
+
     if (!session.isValid || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const apiKeyId = params.id;
 
     // Verify the API key belongs to the user
     const [apiKey] = await db
       .select()
       .from(apiKeys)
-      .where(
-        and(
-          eq(apiKeys.id, apiKeyId),
-          eq(apiKeys.adminId, session.user.id)
-        )
-      );
+      .where(and(eq(apiKeys.id, id), eq(apiKeys.adminId, session.user.id)));
 
     if (!apiKey) {
       return NextResponse.json({ error: "API key not found" }, { status: 404 });
@@ -49,7 +34,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         usageCount: 0,
         updatedAt: new Date(),
       })
-      .where(eq(apiKeys.id, apiKeyId))
+      .where(eq(apiKeys.id, id))
       .returning();
 
     // Log admin activity
@@ -65,14 +50,16 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       data: {
         id: updatedKey.id,
         name: updatedKey.name,
-        apiKey: newToken, // The new token
+        apiKey: newToken,
         prefix: updatedKey.prefix,
       },
       message: "API key regenerated successfully",
     });
-
   } catch (error) {
     console.error("POST /api/user/api-key/[id]/regenerate error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
