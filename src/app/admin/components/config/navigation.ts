@@ -1,3 +1,4 @@
+// File: src/app/admin/components/config/navigation.ts
 import { Home, Building, BarChart3, Shield, Settings, Key } from "lucide-react";
 
 export interface NavItem {

@@ -807,7 +807,7 @@ export default function CenterManagementSystem() {
 
         try {
           await api.deleteCenter(center.id);
-          await Promise.all([loadCenters(), loadStats()]);
+          await Promise.all([loadCenters(), loadStats(), loadDuplicates()]);
 
           setError(null);
           addNotification({
