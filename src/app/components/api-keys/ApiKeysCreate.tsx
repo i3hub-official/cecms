@@ -131,25 +131,23 @@ export default function ApiKeysCreate({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8">
+    <div className="bg-card rounded-xl shadow-lg p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+        <h2 className="text-2xl font-semibold text-foreground mb-2">
           Create New API Key
         </h2>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Generate a new API key with specific permissions and access controls.
         </p>
       </div>
 
       <form onSubmit={createApiKey} className="space-y-6">
-        {/* Form fields remain the same as your original */}
-        {/* FORM BEGINS HERE */}
         {/* Basic Information */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-foreground mb-2"
             >
               API Key Name *
             </label>
@@ -161,7 +159,7 @@ export default function ApiKeysCreate({
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background text-foreground"
               placeholder="e.g., Production App, Mobile Client"
               maxLength={50}
             />
@@ -170,7 +168,7 @@ export default function ApiKeysCreate({
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-foreground mb-2"
             >
               Description
             </label>
@@ -181,7 +179,7 @@ export default function ApiKeysCreate({
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background text-foreground"
               placeholder="Optional description of this key's purpose"
               maxLength={100}
             />
@@ -190,11 +188,11 @@ export default function ApiKeysCreate({
 
         {/* Permissions */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+          <label className="block text-sm font-medium text-foreground mb-3">
             Permissions *
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex items-center p-3 border rounded-lg">
+            <div className="flex items-center p-3 border border-border rounded-lg bg-muted/30">
               <input
                 type="checkbox"
                 id="canRead"
@@ -202,17 +200,17 @@ export default function ApiKeysCreate({
                 onChange={(e) =>
                   setFormData({ ...formData, canRead: e.target.checked })
                 }
-                className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                className="h-4 w-4 text-primary rounded focus:ring-primary border-border"
               />
               <label htmlFor="canRead" className="ml-3">
-                <div className="text-sm font-medium text-gray-700">Read</div>
-                <div className="text-xs text-gray-500">
+                <div className="text-sm font-medium text-foreground">Read</div>
+                <div className="text-xs text-muted-foreground">
                   View and retrieve data
                 </div>
               </label>
             </div>
 
-            <div className="flex items-center p-3 border rounded-lg">
+            <div className="flex items-center p-3 border border-border rounded-lg bg-muted/30">
               <input
                 type="checkbox"
                 id="canWrite"
@@ -220,17 +218,17 @@ export default function ApiKeysCreate({
                 onChange={(e) =>
                   setFormData({ ...formData, canWrite: e.target.checked })
                 }
-                className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                className="h-4 w-4 text-primary rounded focus:ring-primary border-border"
               />
               <label htmlFor="canWrite" className="ml-3">
-                <div className="text-sm font-medium text-gray-700">Write</div>
-                <div className="text-xs text-gray-500">
+                <div className="text-sm font-medium text-foreground">Write</div>
+                <div className="text-xs text-muted-foreground">
                   Create and modify data
                 </div>
               </label>
             </div>
 
-            <div className="flex items-center p-3 border rounded-lg">
+            <div className="flex items-center p-3 border border-border rounded-lg bg-muted/30">
               <input
                 type="checkbox"
                 id="canDelete"
@@ -238,11 +236,13 @@ export default function ApiKeysCreate({
                 onChange={(e) =>
                   setFormData({ ...formData, canDelete: e.target.checked })
                 }
-                className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                className="h-4 w-4 text-primary rounded focus:ring-primary border-border"
               />
               <label htmlFor="canDelete" className="ml-3">
-                <div className="text-sm font-medium text-gray-700">Delete</div>
-                <div className="text-xs text-gray-500">
+                <div className="text-sm font-medium text-foreground">
+                  Delete
+                </div>
+                <div className="text-xs text-muted-foreground">
                   Remove data (use carefully)
                 </div>
               </label>
@@ -255,7 +255,7 @@ export default function ApiKeysCreate({
           <div>
             <label
               htmlFor="allowedEndpoints"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-foreground mb-2"
             >
               Allowed Endpoints
             </label>
@@ -268,7 +268,7 @@ export default function ApiKeysCreate({
                   allowedEndpoints: e.target.value,
                 })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background text-foreground"
             >
               {ENDPOINT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -276,7 +276,7 @@ export default function ApiKeysCreate({
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               {
                 ENDPOINT_OPTIONS.find(
                   (o) => o.value === formData.allowedEndpoints
@@ -288,7 +288,7 @@ export default function ApiKeysCreate({
           <div>
             <label
               htmlFor="rateLimit"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-foreground mb-2"
             >
               Rate Limit
             </label>
@@ -301,7 +301,7 @@ export default function ApiKeysCreate({
                   rateLimit: parseInt(e.target.value),
                 })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background text-foreground"
             >
               {RATE_LIMIT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -316,7 +316,7 @@ export default function ApiKeysCreate({
         <div>
           <label
             htmlFor="expiresInDays"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-foreground mb-2"
           >
             Expiration Period
           </label>
@@ -336,23 +336,24 @@ export default function ApiKeysCreate({
                   ),
                 })
               }
-              className="w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-32 px-3 py-2 border border-border rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background text-foreground"
             />
-            <span className="text-sm text-gray-700">days from now</span>
+            <span className="text-sm text-foreground">days from now</span>
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Expires on:{" "}
             {new Date(
               Date.now() + formData.expiresInDays * 24 * 60 * 60 * 1000
             ).toLocaleDateString()}
           </p>
         </div>
-        {/* FORM ENDS HERE */}
+
+        {/* Submit */}
         <div className="flex justify-end pt-6">
           <button
             type="submit"
             disabled={creating || !formData.name.trim()}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+            className="bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
           >
             {creating && (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

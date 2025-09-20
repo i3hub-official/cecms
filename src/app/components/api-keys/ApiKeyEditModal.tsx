@@ -111,13 +111,15 @@ export default function ApiKeyEditModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-background/70 flex items-center justify-center z-50">
+      <div className="bg-card rounded-xl shadow-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-border">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900">Edit API Key</h2>
+          <h2 className="text-2xl font-semibold text-foreground">
+            Edit API Key
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
+            className="text-foreground/50 hover:text-foreground text-2xl"
           >
             ×
           </button>
@@ -126,7 +128,7 @@ export default function ApiKeyEditModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 API Key Name *
               </label>
               <input
@@ -136,14 +138,14 @@ export default function ApiKeyEditModal({
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="e.g., Production App, Mobile Client"
                 maxLength={50}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Description
               </label>
               <input
@@ -152,7 +154,7 @@ export default function ApiKeyEditModal({
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="Optional description"
                 maxLength={100}
               />
@@ -160,58 +162,62 @@ export default function ApiKeyEditModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-foreground mb-3">
               Permissions *
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="flex items-center p-3 border rounded-lg">
+              <div className="flex items-center p-3 border border-border rounded-lg bg-background">
                 <input
                   type="checkbox"
                   checked={formData.canRead}
                   onChange={(e) =>
                     setFormData({ ...formData, canRead: e.target.checked })
                   }
-                  className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                  className="h-4 w-4 text-primary rounded focus:ring-primary border-border bg-card"
                 />
                 <label className="ml-3">
-                  <div className="text-sm font-medium text-gray-700">Read</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-sm font-medium text-foreground">
+                    Read
+                  </div>
+                  <div className="text-xs text-foreground/70">
                     View and retrieve data
                   </div>
                 </label>
               </div>
 
-              <div className="flex items-center p-3 border rounded-lg">
+              <div className="flex items-center p-3 border border-border rounded-lg bg-background">
                 <input
                   type="checkbox"
                   checked={formData.canWrite}
                   onChange={(e) =>
                     setFormData({ ...formData, canWrite: e.target.checked })
                   }
-                  className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                  className="h-4 w-4 text-primary rounded focus:ring-primary border-border bg-card"
                 />
                 <label className="ml-3">
-                  <div className="text-sm font-medium text-gray-700">Write</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-sm font-medium text-foreground">
+                    Write
+                  </div>
+                  <div className="text-xs text-foreground/70">
                     Create and modify data
                   </div>
                 </label>
               </div>
 
-              <div className="flex items-center p-3 border rounded-lg">
+              <div className="flex items-center p-3 border border-border rounded-lg bg-background">
                 <input
                   type="checkbox"
                   checked={formData.canDelete}
                   onChange={(e) =>
                     setFormData({ ...formData, canDelete: e.target.checked })
                   }
-                  className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                  className="h-4 w-4 text-primary rounded focus:ring-primary border-border bg-card"
                 />
                 <label className="ml-3">
-                  <div className="text-sm font-medium text-gray-700">
+                  <div className="text-sm font-medium text-foreground">
                     Delete
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-foreground/70">
                     Remove data (use carefully)
                   </div>
                 </label>
@@ -221,7 +227,7 @@ export default function ApiKeyEditModal({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Allowed Endpoints
               </label>
               <select
@@ -229,7 +235,7 @@ export default function ApiKeyEditModal({
                 onChange={(e) =>
                   setFormData({ ...formData, allowedEndpoints: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
               >
                 {ENDPOINT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -240,7 +246,7 @@ export default function ApiKeyEditModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Rate Limit
               </label>
               <select
@@ -251,7 +257,7 @@ export default function ApiKeyEditModal({
                     rateLimit: parseInt(e.target.value),
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
               >
                 {RATE_LIMIT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -270,11 +276,11 @@ export default function ApiKeyEditModal({
               onChange={(e) =>
                 setFormData({ ...formData, isActive: e.target.checked })
               }
-              className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+              className="h-4 w-4 text-primary rounded focus:ring-primary border-border bg-card"
             />
             <label
               htmlFor="isActive"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-medium text-foreground"
             >
               Active
             </label>
@@ -284,14 +290,14 @@ export default function ApiKeyEditModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-foreground bg-card border border-border rounded-md hover:bg-muted transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={updating}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+              className="bg-primary text-white px-6 py-2 rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
             >
               {updating && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

@@ -155,7 +155,7 @@ export default function ApiKeyPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-background text-foreground">
       <ApiKeysHeader />
 
       {/* Alert Messages */}
@@ -178,16 +178,16 @@ export default function ApiKeyPage() {
           message={
             <div className="space-y-3">
               <p>
-                Your new API key has been generated. Make sure to copy it now -
+                Your new API key has been generated. Make sure to copy it now –
                 you won&apos;t be able to see it again!
               </p>
-              <div className="bg-gray-100 p-3 rounded-md font-mono text-sm break-all">
+              <div className="bg-card border border-border p-3 rounded-md font-mono text-sm break-all text-foreground">
                 {newKey.apiKey}
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => copyToClipboard(newKey.apiKey)}
-                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+                  className="bg-primary text-white px-3 py-1 rounded text-sm hover:opacity-90 transition-colors"
                 >
                   Copy API Key
                 </button>
@@ -196,7 +196,7 @@ export default function ApiKeyPage() {
                     setShowNewKey(false);
                     setNewKey(null);
                   }}
-                  className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors"
+                  className="bg-foreground text-background px-3 py-1 rounded text-sm hover:opacity-90 transition-colors"
                 >
                   Close
                 </button>

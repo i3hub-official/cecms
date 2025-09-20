@@ -28,34 +28,35 @@ export default function ApiKeyStats({ apiKeys }: ApiKeyStatsProps) {
     {
       title: "Total Keys",
       value: stats.total,
-      color: "text-gray-900",
-      bgColor: "bg-white",
+      color: "text-foreground",
     },
     {
       title: "Active Keys",
       value: stats.active,
-      color: "text-green-600",
-      bgColor: "bg-white",
+      color: "text-green-600 dark:text-green-400",
     },
     {
       title: "Expired Keys",
       value: stats.expired,
-      color: "text-orange-600",
-      bgColor: "bg-white",
+      color: "text-orange-600 dark:text-orange-400",
     },
     {
       title: "Revoked Keys",
       value: stats.revoked,
-      color: "text-red-600",
-      bgColor: "bg-white",
+      color: "text-red-600 dark:text-red-400",
     },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
       {statCards.map((stat, index) => (
-        <div key={index} className={`${stat.bgColor} rounded-lg shadow p-6`}>
-          <div className="text-sm font-medium text-gray-500">{stat.title}</div>
+        <div
+          key={index}
+          className="bg-card rounded-xl shadow-sm p-6 border border-border"
+        >
+          <div className="text-sm font-medium text-muted-foreground">
+            {stat.title}
+          </div>
           <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
         </div>
       ))}

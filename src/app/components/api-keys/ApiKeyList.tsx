@@ -45,11 +45,11 @@ export default function ApiKeyList({
 
   if (apiKeys.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-lg">
+      <div className="bg-card rounded-xl shadow-lg">
         <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">🔑</div>
-          <p className="text-gray-500 text-lg">No API keys found.</p>
-          <p className="text-sm text-gray-400 mt-2">
+          <div className="text-muted-foreground text-6xl mb-4">🔑</div>
+          <p className="text-foreground text-lg">No API keys found.</p>
+          <p className="text-sm text-muted-foreground mt-2">
             Create your first API key to get started.
           </p>
         </div>
@@ -58,63 +58,63 @@ export default function ApiKeyList({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900">Your API Keys</h2>
+    <div className="bg-card rounded-xl shadow-lg">
+      <div className="px-6 py-4 border-b border-border">
+        <h2 className="text-xl font-semibold text-foreground">Your API Keys</h2>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Name & Details
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Key
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Permissions
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Usage
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-border">
             {apiKeys.map((key) => (
-              <tr key={key.id} className="hover:bg-gray-50">
+              <tr key={key.id} className="hover:bg-muted/50">
                 <td className="px-6 py-4">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-foreground">
                       {key.name}
                     </div>
                     {key.description && (
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         {key.description}
                       </div>
                     )}
-                    <div className="text-xs text-gray-400 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Created: {formatDate(key.createdAt)}
                     </div>
                     {key.lastUsed && (
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-muted-foreground">
                         Last used: {formatDate(key.lastUsed)}
                       </div>
                     )}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-mono text-gray-900">
+                  <div className="text-sm font-mono text-foreground">
                     {key.prefix}...
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     Expires: {formatDate(key.expiresAt)}
                   </div>
                 </td>
@@ -136,18 +136,18 @@ export default function ApiKeyList({
                       </span>
                     )}
                     {!key.canRead && !key.canWrite && !key.canDelete && (
-                      <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
+                      <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full">
                         No Permissions
                       </span>
                     )}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-foreground">
                     {key.usageCount || 0} requests
                   </div>
                   {key.lastUsed && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       Last used: {formatDate(key.lastUsed)}
                     </div>
                   )}
@@ -161,7 +161,7 @@ export default function ApiKeyList({
                         ? "bg-orange-100 text-orange-800"
                         : key.isActive
                         ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {getStatusText(key)}
@@ -171,14 +171,14 @@ export default function ApiKeyList({
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => onEdit(key)}
-                      className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                      className="text-primary hover:underline text-sm font-medium"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => onRevoke(key.id)}
                       disabled={revokingId === key.id}
-                      className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
+                      className="text-danger hover:underline text-sm font-medium disabled:opacity-50"
                     >
                       {revokingId === key.id ? "Revoking..." : "Revoke"}
                     </button>
