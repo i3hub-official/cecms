@@ -92,6 +92,7 @@ export async function GET(request: NextRequest) {
         .where(
           and(
             eq(adminSessions.isActive, true),
+            eq(adminSessions.id, admins.id),
             gt(adminSessions.expiresAt, now)
           )
         ),
@@ -221,7 +222,9 @@ export async function GET(request: NextRequest) {
           address: center.address,
           isActive: center.isActive,
           createdAt: center.createdAt.toISOString(),
-          modifiedAt: center.modifiedAt ? center.modifiedAt.toISOString() : null,
+          modifiedAt: center.modifiedAt
+            ? center.modifiedAt.toISOString()
+            : null,
         })),
         activeSessions: activeSessionsDetailedData.map(
           ({ session, admin }) => ({
