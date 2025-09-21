@@ -4,7 +4,7 @@ import { db } from "@/lib/server/db";
 import { admins } from "@/lib/server/db/schema";
 import { validateSession } from "@/lib/auth";
 import { eq } from "drizzle-orm";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {

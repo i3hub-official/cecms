@@ -6,7 +6,7 @@ import { apiKeys } from "@/lib/server/db/schema";
 import { validateSession } from "@/lib/auth";
 import { eq, and } from "drizzle-orm";
 import * as crypto from "crypto";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 
 // POST - Regenerate API key
 export async function POST(

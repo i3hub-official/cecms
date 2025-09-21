@@ -5,7 +5,7 @@ import { apiKeys, admins, apiUsageLogs } from "@/lib/server/db/schema";
 import { validateSession } from "@/lib/auth";
 import { eq, and, desc } from "drizzle-orm";
 import * as crypto from "crypto";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 
 // GET - List all API keys for the authenticated admin
 export async function GET(request: NextRequest) {
