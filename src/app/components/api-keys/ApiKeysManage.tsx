@@ -10,6 +10,8 @@ interface ApiKeysManageProps {
   onRefresh: () => void;
   onError: (error: string) => void;
   onSuccess: (message: string) => void;
+   onRegenerate?: (keyId: string) => void;
+  regenerateLoading?: string | null;
 }
 
 export default function ApiKeysManage({

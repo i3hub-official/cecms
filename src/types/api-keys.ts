@@ -21,10 +21,14 @@ export interface ApiKey {
 export interface NewApiKeyResponse {
   id: string;
   name: string;
+  keyId: string;
   apiKey: string; 
   prefix: string;
   expiresAt: string;
   createdAt: string;
+   onRegenerate?: (keyId: string) => void;
+   regenerateLoading?: string | null;
+  isRegenerated?: boolean;
 }
 
 export interface ApiKeyUsage {
@@ -42,4 +46,14 @@ export interface ApiKeyFormData {
   allowedEndpoints: string;
   rateLimit: number;
   expiresInDays: number;
+}
+
+
+export interface ApiKeysManageProps {
+  apiKeys: ApiKey[];
+   onRefresh: () => void;
+   onError: (error: string) => void;
+   onSuccess: (message: string) => void;
+    onRegenerate?: (keyId: string) => void;
+   regenerateLoading?: string | null;
 }
