@@ -30,7 +30,7 @@ const NavigationGroup = ({
   setSidebarOpen,
 }: {
   title?: string;
-  items: any[];
+  items: { name: string; href: string; icon: React.ComponentType; badge?: string }[];
   pathname: string;
   router: any;
   setSidebarOpen: (open: boolean) => void;

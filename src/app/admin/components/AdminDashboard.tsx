@@ -1,3 +1,4 @@
+// src/app/admin/components/AdminDashboard.tsx
 "use client";
 
 import { useEffect, useState } from "react";

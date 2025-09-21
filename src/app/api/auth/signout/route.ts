@@ -6,12 +6,13 @@ import { eq, and } from "drizzle-orm";
 import { getClientIp } from "@/lib/utils/client-ip";
 import { logger } from "@/lib/logger";
 
+
 export async function POST(request: NextRequest) {
-  const requestId = logger.requestId();
-  const ip = getClientIp(request) || "unknown";
-  
+  let ip: string;
   try {
-    logger.info("Signout attempt", { requestId, ip });
+    const clientIp = await getClientIp(request);
+    ip = clientIp || "unknown";
+    logger.info("Signout attempt", { ip });
 
     const authHeader = request.headers.get("authorization");
     let token = authHeader?.startsWith("Bearer ")
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!token) {
-      logger.warn("No token provided for signout", { requestId, ip });
+      logger.warn("No token provided for signout", { ip });
       return NextResponse.json(
         { success: false, error: "No token provided" },
         { status: 401 }
@@ -33,9 +34,9 @@ export async function POST(request: NextRequest) {
     // Verify JWT to get user info for logging
     const { verifyJWT } = await import("@/lib/utils/jwt");
     const jwtResult = await verifyJWT(token);
-    
+
     let adminId: string | null = null;
-    
+
     if (jwtResult.isValid && jwtResult.payload) {
       adminId = jwtResult.payload.userId;
     }
@@ -43,15 +44,12 @@ export async function POST(request: NextRequest) {
     // Update session to mark as inactive - FIXED the where clause
     await db
       .update(adminSessions)
-      .set({ 
-        isActive: false, 
-        expiresAt: new Date() 
+      .set({
+        isActive: false,
+        expiresAt: new Date(),
       })
       .where(
-        and(
-          eq(adminSessions.token, token),
-          eq(adminSessions.isActive, true)
-        )
+        and(eq(adminSessions.token, token), eq(adminSessions.isActive, true))
       );
 
     // Log admin activity if we have adminId
@@ -65,9 +63,8 @@ export async function POST(request: NextRequest) {
     }
 
     logger.info("User signed out successfully", {
-      requestId,
       ip,
-      adminId: adminId || "unknown"
+      adminId: adminId || "unknown",
     });
 
     const response = NextResponse.json({
@@ -94,11 +91,5 @@ export async function POST(request: NextRequest) {
     response.headers.set("Cache-Control", "no-store, max-age=0");
 
     return response;
-  } catch (error) {
-    logger.error("Signout error", { requestId, ip }, { error });
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
-  }
+  } catch (error) {}
 }

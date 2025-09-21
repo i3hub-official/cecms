@@ -92,7 +92,9 @@ export async function GET(request: NextRequest) {
         .from(adminSessions)
         .where(
           and(
-            authResult.user?.id ? eq(adminSessions.adminId, authResult.user.id) : undefined,
+            authResult.user?.id
+              ? eq(adminSessions.adminId, authResult.user.id)
+              : undefined,
             eq(adminSessions.isActive, true),
             gt(adminSessions.expiresAt, now)
           )
@@ -100,13 +102,19 @@ export async function GET(request: NextRequest) {
       db
         .select({ count: sql<number>`count(*)` })
         .from(adminSessions)
-        .where(authResult.user ? eq(adminSessions.adminId, authResult.user.id) : undefined),
+        .where(
+          authResult.user
+            ? eq(adminSessions.adminId, authResult.user.id)
+            : undefined
+        ),
       db
         .select({ count: sql<number>`count(*)` })
         .from(adminSessions)
         .where(
           and(
-            authResult.user ? eq(adminSessions.adminId, authResult.user.id) : undefined,
+            authResult.user
+              ? eq(adminSessions.adminId, authResult.user.id)
+              : undefined,
             or(
               eq(adminSessions.isActive, false),
               lte(adminSessions.expiresAt, now)
@@ -168,7 +176,9 @@ export async function GET(request: NextRequest) {
         .innerJoin(admins, eq(adminSessions.adminId, admins.id))
         .where(
           and(
-            authResult.user ? eq(adminSessions.adminId, authResult.user.id) : undefined,
+            authResult.user
+              ? eq(adminSessions.adminId, authResult.user.id)
+              : undefined,
             eq(adminSessions.isActive, true),
             gt(adminSessions.expiresAt, now)
           )

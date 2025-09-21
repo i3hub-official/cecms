@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import AdminLayout from "./components/AdminLayout";
 import { ThemeProvider } from "@/app/components/ThemeContext";
+// import { SWRProvider } from "@/lib/providers/SWRProvider";
 
 interface User {
   id: string;
@@ -105,7 +106,7 @@ export default function AdminLayoutWrapper({
 
     try {
       const response = await fetch("/api/auth/signout", {
-        method: "DELETE",
+        method: "POST",
         credentials: "include",
       });
 
@@ -214,10 +215,12 @@ export default function AdminLayoutWrapper({
   }
 
   return (
-    <ThemeProvider>
-      <AdminLayout user={user} onLogout={handleLogout}>
-        {children}
-      </AdminLayout>
-    </ThemeProvider>
+    // <SWRProvider>
+      <ThemeProvider>
+        <AdminLayout user={user} onLogout={handleLogout}>
+          {children}
+        </AdminLayout>
+      </ThemeProvider>
+    // </SWRProvider>
   );
 }

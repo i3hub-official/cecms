@@ -14,6 +14,7 @@ export const cspConfig = {
     "http://127.0.0.1",
     "https://192.168.0.159",
     "http://192.168.0.159",
+    "https://va.vercel-scripts.com/v1/script.debug.js",
   ],
 
   // JavaScript sources
@@ -34,6 +35,7 @@ export const cspConfig = {
     "'unsafe-eval'", // Needed for Next.js in dev
     "https://apis.google.com",
     "https://www.googletagmanager.com",
+    "https://va.vercel-scripts.com/v1/script.debug.js",
   ],
 
   // Stylesheets
@@ -51,6 +53,7 @@ export const cspConfig = {
     "http://127.0.0.1",
     "https://192.168.0.159",
     "http://192.168.0.159",
+    "https://va.vercel-scripts.com/v1/script.debug.js",
   ],
 
   // Images
