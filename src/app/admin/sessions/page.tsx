@@ -47,44 +47,52 @@ const ConfirmModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-background border border-border rounded-xl max-w-md w-full mx-4 shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h3 className="text-lg font-semibold">{title}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-background border border-border rounded-2xl max-w-md w-full mx-4 shadow-2xl transform transition-all duration-200 scale-100">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <div className="flex items-center">
+            {isDestructive && (
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+            )}
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+          </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-success rounded-lg transition-colors"
+            className="p-2 hover:bg-accent rounded-full transition-colors duration-200"
             disabled={loading}
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
-        <div className="p-4">
-          <p className="text-muted-foreground mb-6">{message}</p>
+        <div className="p-5">
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            {message}
+          </p>
           <div className="flex flex-col-reverse sm:flex-row gap-3">
             <button
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-success transition-colors disabled:opacity-50"
+              className="flex-1 px-5 py-2.5 text-sm font-medium rounded-lg border border-border bg-background hover:bg-accent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               onClick={onConfirm}
               disabled={loading}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
-                isDestructive
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90"
-              }`}
+              className="flex-1 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-4 focus:ring-red-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   Processing...
                 </div>
               ) : (
-                confirmText
+                <div className="flex items-center justify-center">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {confirmText}
+                </div>
               )}
             </button>
           </div>
@@ -253,7 +261,7 @@ export default function SessionsPage() {
             <button
               onClick={loadSessions}
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg border border-border bg-background hover:bg-success transition-colors disabled:opacity-50"
+              className="flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg border border-border bg-background hover:bg-accent transition-colors disabled:opacity-50"
             >
               <RefreshCw
                 className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
@@ -263,7 +271,7 @@ export default function SessionsPage() {
             <button
               onClick={() => openModal("revokeAll")}
               disabled={revoking || sessions.length <= 1}
-              className="flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg bg-danger text-destructive-foreground hover:bg-danger/90 transition-colors disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Revoke All Sessions
@@ -345,7 +353,7 @@ export default function SessionsPage() {
                 {otherSessions.map((session, index) => (
                   <div
                     key={session.id}
-                    className="border border-border rounded-lg p-4 bg-background hover:bg-success/50 transition-colors"
+                    className="border border-border rounded-lg p-4 bg-background hover:bg-accent/50 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-start">
@@ -417,7 +425,7 @@ export default function SessionsPage() {
               {/* Desktop Table */}
               <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-success/50">
+                  <thead className="bg-accent/50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Device & Location
@@ -440,7 +448,7 @@ export default function SessionsPage() {
                     {otherSessions.map((session, index) => (
                       <tr
                         key={session.id}
-                        className="hover:bg-success/50 transition-colors"
+                        className="hover:bg-accent/50 transition-colors"
                       >
                         <td className="px-4 py-4">
                           <div className="flex items-center">
