@@ -7,9 +7,12 @@ import { eq, and } from "drizzle-orm";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await the params first
+    const { id: sessionId } = await params;
+    
     // Validate admin session
     const authResult = await validateSession(request);
     if (!authResult.isValid) {
@@ -25,8 +28,6 @@ export async function DELETE(
         { status: 400 }
       );
     }
-
-    const sessionId = params.id;
 
     // Verify the session belongs to the current admin
     const session = await db

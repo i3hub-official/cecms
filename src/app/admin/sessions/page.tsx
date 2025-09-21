@@ -266,7 +266,7 @@ export default function SessionsPage() {
               className="flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Revoke All Others
+              Revoke All Sessions
             </button>
           </div>
         </div>
