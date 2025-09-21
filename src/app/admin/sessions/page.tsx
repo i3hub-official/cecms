@@ -53,7 +53,7 @@ const ConfirmModal = ({
           <h3 className="text-lg font-semibold">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-accent rounded-lg transition-colors"
+            className="p-1 hover:bg-success rounded-lg transition-colors"
             disabled={loading}
           >
             <X className="h-5 w-5" />
@@ -65,7 +65,7 @@ const ConfirmModal = ({
             <button
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-accent transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-success transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
@@ -253,7 +253,7 @@ export default function SessionsPage() {
             <button
               onClick={loadSessions}
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg border border-border bg-background hover:bg-accent transition-colors disabled:opacity-50"
+              className="flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg border border-border bg-background hover:bg-success transition-colors disabled:opacity-50"
             >
               <RefreshCw
                 className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
@@ -345,7 +345,7 @@ export default function SessionsPage() {
                 {otherSessions.map((session, index) => (
                   <div
                     key={session.id}
-                    className="border border-border rounded-lg p-4 bg-background hover:bg-accent/50 transition-colors"
+                    className="border border-border rounded-lg p-4 bg-background hover:bg-success/50 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-start">
@@ -417,7 +417,7 @@ export default function SessionsPage() {
               {/* Desktop Table */}
               <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-accent/50">
+                  <thead className="bg-success/50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Device & Location
@@ -440,7 +440,7 @@ export default function SessionsPage() {
                     {otherSessions.map((session, index) => (
                       <tr
                         key={session.id}
-                        className="hover:bg-accent/50 transition-colors"
+                        className="hover:bg-success/50 transition-colors"
                       >
                         <td className="px-4 py-4">
                           <div className="flex items-center">
