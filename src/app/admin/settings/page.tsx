@@ -20,6 +20,7 @@ import {
   Activity,
   Clock,
 } from "lucide-react";
+import { notifySuccess, notifyError } from "@/app/components/ui/notifications";
 
 interface ApiKey {
   id: string;
@@ -201,7 +202,7 @@ export default function SettingsPage() {
 
   const handlePasswordChange = async () => {
     if (profileData.newPassword !== profileData.confirmPassword) {
-      alert("New passwords do not match");
+      notifyError("New passwords do not match");
       return;
     }
 
@@ -226,12 +227,12 @@ export default function SettingsPage() {
           newPassword: "",
           confirmPassword: "",
         }));
-        alert("Password changed successfully!");
+        notifySuccess("Password changed successfully!");
       } else {
-        alert(data.error || "Failed to change password");
+        notifyError(data.error || "Failed to change password");
       }
     } catch (error) {
-      alert("Failed to change password");
+      notifyError("Failed to change password");
     } finally {
       setLoading(false);
     }
@@ -250,12 +251,12 @@ export default function SettingsPage() {
       const data = await response.json();
       if (data.success) {
         setUser((prev) => ({ ...prev, phone: data.data.phone }));
-        alert("Profile updated successfully!");
+        notifySuccess("Profile updated successfully!");
       } else {
-        alert(data.error || "Failed to update profile");
+        notifyError(data.error || "Failed to update profile");
       }
     } catch (error) {
-      alert("Failed to update profile");
+      notifyError("Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -273,12 +274,12 @@ export default function SettingsPage() {
 
       const data = await response.json();
       if (data.success) {
-        alert("System settings saved successfully!");
+        notifySuccess("System settings saved successfully!");
       } else {
-        alert(data.error || "Failed to save settings");
+        notifyError(data.error || "Failed to save settings");
       }
     } catch (error) {
-      alert("Failed to save settings");
+      notifyError("Failed to save settings");
     } finally {
       setLoading(false);
     }
@@ -312,10 +313,10 @@ export default function SettingsPage() {
         });
         loadApiKeys();
       } else {
-        alert(data.error || "Failed to create API key");
+        notifyError(data.error || "Failed to create API key");
       }
     } catch (error) {
-      alert("Failed to create API key");
+      notifyError("Failed to create API key");
     } finally {
       setLoading(false);
     }
@@ -341,10 +342,10 @@ export default function SettingsPage() {
         setCreatedApiKey(data.data.key);
         loadApiKeys();
       } else {
-        alert(data.error || "Failed to regenerate API key");
+        notifyError(data.error || "Failed to regenerate API key");
       }
     } catch (error) {
-      alert("Failed to regenerate API key");
+      notifyError("Failed to regenerate API key");
     }
   };
 
@@ -366,12 +367,12 @@ export default function SettingsPage() {
       const data = await response.json();
       if (data.success) {
         loadApiKeys();
-        alert("API key revoked successfully");
+        notifySuccess("API key revoked successfully");
       } else {
-        alert(data.error || "Failed to revoke API key");
+        notifyError(data.error || "Failed to revoke API key");
       }
     } catch (error) {
-      alert("Failed to revoke API key");
+      notifyError("Failed to revoke API key");
     }
   };
 
@@ -385,9 +386,9 @@ export default function SettingsPage() {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert("Copied to clipboard!");
+      notifySuccess("Copied to clipboard!");
     } catch (error) {
-      alert("Failed to copy to clipboard");
+      notifyError("Failed to copy to clipboard");
     }
   };
 
