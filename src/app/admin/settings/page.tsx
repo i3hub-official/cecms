@@ -15,6 +15,7 @@ import {
   Info,
   Plus,
   Trash2,
+  XCircle,
   RefreshCw,
   Activity,
   Clock,
@@ -158,7 +159,7 @@ export default function SettingsPage() {
 
   const loadApiKeys = async () => {
     try {
-      const response = await fetch("/api/admin/keys", {
+      const response = await fetch("/api/admin/api/keys", {
         credentials: "include",
       });
       const data = await response.json();
@@ -286,7 +287,7 @@ export default function SettingsPage() {
   const handleCreateApiKey = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/admin/keys", {
+      const response = await fetch("/api/admin/api/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -330,7 +331,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const response = await fetch(`/api/keys/${keyId}/regenerate`, {
+      const response = await fetch(`/api/admin/api/keys/${keyId}/regenerate`, {
         method: "POST",
         credentials: "include",
       });
@@ -357,7 +358,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const response = await fetch(`/api/keys/${keyId}`, {
+      const response = await fetch(`/api/admin/api/keys/${keyId}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -859,8 +860,8 @@ export default function SettingsPage() {
                           API Key Created Successfully!
                         </h3>
                         <p className="text-sm text-muted-foreground mb-4">
-                          Copy this API key now. You won't be able to see it
-                          again for security reasons.
+                          Copy this API key now. You won&apos;t be able to see
+                          it again for security reasons.
                         </p>
                         <div className="bg-muted/30 p-3 rounded-lg mb-4">
                           <code className="text-sm break-all">
@@ -900,7 +901,7 @@ export default function SettingsPage() {
                             onClick={() => setShowCreateApiKey(false)}
                             className="p-2 hover:bg-accent rounded-full transition-colors"
                           >
-                            <X className="h-5 w-5" />
+                            <XCircle className="h-5 w-5" />
                           </button>
                         </div>
 
