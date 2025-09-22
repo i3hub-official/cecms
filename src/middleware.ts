@@ -16,9 +16,13 @@ const publicPaths = [
   "/auth/signup",
   "/auth/forgot-password",
   "/auth/reset-password",
+  "/api/auth/verify-email",
+  "/api/auth/resend-verification",
+  "/api/auth/validate-reset-token",
   "/api/auth/*",
   "/api/health",
   "/api/centers-lookup",
+  
 ];
 
 // ========= Matcher Config =========
