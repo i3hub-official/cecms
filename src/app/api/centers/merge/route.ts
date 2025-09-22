@@ -1,23 +1,29 @@
+// src/app/api/centers/merge/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { centers } from "@/lib/server/db/schema";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq, inArray } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromCookies(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const {
       primaryId,
       secondaryIds,
     }: { primaryId: string; secondaryIds: string[] } = await request.json();
 
-    if (!primaryId || !secondaryIds || !Array.isArray(secondaryIds)) {
+    if (!primaryId || !secondaryIds?.length) {
       return NextResponse.json(
-        { message: "Invalid merge request" },
+        { message: "Primary center and secondary centers are required" },
         { status: 400 }
       );
     }
 
-    // Get all centers
     const allCenterIds = [primaryId, ...secondaryIds];
     const centersData = await db
       .select()
@@ -43,25 +49,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use transaction for atomic operations
-    const result = await db.transaction(async (tx) => {
+    const mergedCenter = await db.transaction(async (tx) => {
+      // Use the most recently modified data from secondary centers
       const mostRecentSecondary = secondaryCenters.sort(
-        (a, b) => (b.modifiedAt ? b.modifiedAt.getTime() : 0) - (a.modifiedAt ? a.modifiedAt.getTime() : 0)
+        (a, b) =>
+          (b.modifiedAt?.getTime() ?? 0) - (a.modifiedAt?.getTime() ?? 0)
       )[0];
 
-      // Update primary center with the most recent data
       const [updatedPrimary] = await tx
         .update(centers)
         .set({
           name:
-            (mostRecentSecondary.modifiedAt ?? 0) > (primaryCenter.modifiedAt ?? 0)
+            (mostRecentSecondary.modifiedAt?.getTime() ?? 0) >
+            (primaryCenter.modifiedAt?.getTime() ?? 0)
               ? mostRecentSecondary.name
               : primaryCenter.name,
           address:
-            (mostRecentSecondary.modifiedAt ?? 0) > (primaryCenter.modifiedAt ?? 0)
+            (mostRecentSecondary.modifiedAt?.getTime() ?? 0) >
+            (primaryCenter.modifiedAt?.getTime() ?? 0)
               ? mostRecentSecondary.address
               : primaryCenter.address,
-          modifiedBy: "system_merge",
+          modifiedBy: user.email,
           modifiedAt: new Date(),
         })
         .where(eq(centers.id, primaryId))
@@ -73,7 +81,11 @@ export async function POST(request: NextRequest) {
       return updatedPrimary;
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      success: true,
+      message: "Centers merged successfully",
+      data: mergedCenter,
+    });
   } catch (error) {
     console.error("Error merging centers:", error);
     return NextResponse.json(

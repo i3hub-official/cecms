@@ -2,29 +2,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db";
 import { admins } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
 // GET - Get current admin profile
 export async function GET(request: NextRequest) {
   try {
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    const authUser = await getUserFromCookies(request);
+    if (!authUser) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
-      );
-    }
-
-    // Get user profile data
     const user = await db
       .select({
         id: admins.id,
@@ -37,7 +28,7 @@ export async function GET(request: NextRequest) {
         lastLogin: admins.lastLogin,
       })
       .from(admins)
-      .where(eq(admins.id, authResult.user.id))
+      .where(eq(admins.id, authUser.id))
       .limit(1);
 
     if (user.length === 0) {
@@ -67,31 +58,22 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PUT - Update admin profile (if you decide to allow some fields to be editable)
+// PUT - Update admin profile
 export async function PUT(request: NextRequest) {
   try {
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    const authUser = await getUserFromCookies(request);
+    if (!authUser) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
-      );
-    }
-
     const body = await request.json();
-    const { phone } = body; // Only allow phone number updates for now
+    const { phone } = body;
 
-    // Validate phone if provided
     if (phone !== undefined) {
-      if (!phone || phone.trim().length === 0) {
+      if (!phone.trim()) {
         return NextResponse.json(
           { success: false, error: "Phone number cannot be empty" },
           { status: 400 }
@@ -106,17 +88,13 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      // Check if phone number is already used by another admin
       const existingPhone = await db
         .select()
         .from(admins)
         .where(eq(admins.phone, phone.trim()))
         .limit(1);
 
-      if (
-        existingPhone.length > 0 &&
-        existingPhone[0].id !== authResult.user.id
-      ) {
+      if (existingPhone.length > 0 && existingPhone[0].id !== authUser.id) {
         return NextResponse.json(
           { success: false, error: "This phone number is already in use" },
           { status: 409 }
@@ -124,11 +102,9 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Build update object
-    const updateData: any = {};
+    const updateData: Partial<{ phone: string }> = {};
     if (phone !== undefined) updateData.phone = phone.trim();
 
-    // Only update if there's something to update
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { success: false, error: "No valid fields provided for update" },
@@ -136,11 +112,10 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Update profile
     const updatedUser = await db
       .update(admins)
       .set(updateData)
-      .where(eq(admins.id, authResult.user.id))
+      .where(eq(admins.id, authUser.id))
       .returning({
         id: admins.id,
         name: admins.name,

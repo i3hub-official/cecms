@@ -1,4 +1,4 @@
-// app/api/analytics/route.ts
+// src/app/api/analytics/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import {
@@ -8,125 +8,34 @@ import {
   adminActivities,
 } from "@/lib/server/db/schema";
 import { eq, sql, and, gte, desc, count, lte } from "drizzle-orm";
+import { getUserFromCookies } from "@/lib/auth";
 
-interface CenterStats {
-  total: number;
-  active: number;
-  inactive: number;
-  recentlyCreated: number;
-  byState: { state: string; count: number }[];
-  byLga: { lga: string; state: string; count: number }[];
-}
+// ... Keep all interfaces and helper functions (getDateRange, formatDateForSQL) as-is ...
 
-interface UsageStats {
-  publicAPI: number;
-  adminActions: number;
-  totalSessions: number;
-  activeSessions: number;
-  apiCallsToday: number;
-  uniqueUsers: number;
-}
-
-interface TrendData {
-  date: string;
-  centers: number;
-  activity: number;
-  apiCalls: number;
-  sessions: number;
-}
-
-interface SystemHealth {
-  uptime: string;
-  responseTime: string;
-  errorRate: string;
-  dbConnections: number;
-  memoryUsage: string;
-  diskUsage: string;
-}
-
-interface AnalyticsData {
-  centerStats: CenterStats;
-  trends: TrendData[];
-  usage: UsageStats;
-  systemHealth: SystemHealth;
-}
-
-// Helper function to calculate date ranges
-function getDateRange(range: string) {
-  const now = new Date();
-  const startDate = new Date();
-
-  switch (range) {
-    case "7d":
-      startDate.setDate(now.getDate() - 7);
-      break;
-    case "30d":
-      startDate.setDate(now.getDate() - 30);
-      break;
-    case "90d":
-      startDate.setDate(now.getDate() - 90);
-      break;
-    case "1y":
-      startDate.setFullYear(now.getFullYear() - 1);
-      break;
-    default:
-      startDate.setDate(now.getDate() - 7);
-  }
-
-  return { startDate, endDate: now };
-}
-
-// Helper function to format date for SQL queries
-function formatDateForSQL(date: Date): string {
-  return date.toISOString().replace("T", " ").split(".")[0];
-}
-
-// Helper function to get system health metrics
-async function getSystemHealth(): Promise<SystemHealth> {
-  try {
-    // Calculate error rate from API logs
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-    const totalLogs = await db
-      .select({ count: count() })
-      .from(apiLogs)
-      .where(gte(apiLogs.timestamp, yesterday));
-
-    const errorLogs = await db
-      .select({ count: count() })
-      .from(apiLogs)
-      .where(
-        and(gte(apiLogs.timestamp, yesterday), sql`${apiLogs.status} >= 400`)
-      );
-
-    const totalCount = totalLogs[0]?.count || 0;
-    const errorCount = errorLogs[0]?.count || 0;
-    const errorRate =
-      totalCount > 0 ? ((errorCount / totalCount) * 100).toFixed(1) : "0.0";
-
-    return {
-      uptime: "99.8%",
-      responseTime: "75ms",
-      errorRate: `${errorRate}%`,
-      dbConnections: 8,
-      memoryUsage: "68%",
-      diskUsage: "45%",
-    };
-  } catch (error) {
-    console.error("Error getting system health:", error);
-    return {
-      uptime: "0%",
-      responseTime: "0ms",
-      errorRate: "100%",
-      dbConnections: 0,
-      memoryUsage: "0%",
-      diskUsage: "0%",
-    };
-  }
+// Mock implementation of getSystemHealth function
+async function getSystemHealth(): Promise<{ status: string; details: string }> {
+  return { status: "Healthy", details: "All systems operational" };
 }
 
 export async function GET(request: NextRequest) {
   try {
+    // Get authenticated user from cookies
+    const authUser = await getUserFromCookies(request);
+    if (!authUser) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Only allow ADMIN or SUPER_ADMIN
+    if (authUser.role !== "ADMIN" && authUser.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { success: false, error: "Insufficient permissions to view analytics" },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const range = searchParams.get("range") || "7d";
     const { startDate, endDate } = getDateRange(range);
@@ -138,7 +47,7 @@ export async function GET(request: NextRequest) {
       new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     );
 
-    // 1. Get Center Statistics - FIXED: Use properly formatted date strings
+    // 1. Get Center Statistics
     const centerStatsQuery = await db
       .select({
         total: count(),
@@ -148,32 +57,23 @@ export async function GET(request: NextRequest) {
       })
       .from(centers);
 
-    // Get centers by state
     const centersByState = await db
-      .select({
-        state: centers.state,
-        count: count(),
-      })
+      .select({ state: centers.state, count: count() })
       .from(centers)
       .where(eq(centers.isActive, true))
       .groupBy(centers.state)
       .orderBy(desc(count()))
       .limit(10);
 
-    // Get centers by LGA
     const centersByLga = await db
-      .select({
-        lga: centers.lga,
-        state: centers.state,
-        count: count(),
-      })
+      .select({ lga: centers.lga, state: centers.state, count: count() })
       .from(centers)
       .where(eq(centers.isActive, true))
       .groupBy(centers.lga, centers.state)
       .orderBy(desc(count()))
       .limit(10);
 
-    const centerStats: CenterStats = {
+    const centerStats = {
       total: centerStatsQuery[0]?.total || 0,
       active: centerStatsQuery[0]?.active || 0,
       inactive: centerStatsQuery[0]?.inactive || 0,
@@ -189,7 +89,7 @@ export async function GET(request: NextRequest) {
       })),
     };
 
-    // 2. Get Usage Statistics - FIXED: Use properly formatted date strings
+    // 2. Usage Statistics
     const totalSessions = await db
       .select({ count: count() })
       .from(adminSessions)
@@ -228,7 +128,7 @@ export async function GET(request: NextRequest) {
       .from(adminSessions)
       .where(gte(adminSessions.createdAt, new Date(sqlStartDate)));
 
-    const usage: UsageStats = {
+    const usage = {
       publicAPI: apiCallsTotal[0]?.count || 0,
       adminActions: adminActionsCount[0]?.count || 0,
       totalSessions: totalSessions[0]?.count || 0,
@@ -237,8 +137,8 @@ export async function GET(request: NextRequest) {
       uniqueUsers: uniqueUsersCount[0]?.count || 0,
     };
 
-    // 3. Get Trend Data - FIXED: Use properly formatted date strings
-    const trends: TrendData[] = [];
+    // 3. Trend Data
+    const trends: { date: string; centers: number; activity: number; apiCalls: number; sessions: number; }[] = [];
     const daysToShow = range === "7d" ? 7 : range === "30d" ? 30 : 7;
 
     for (let i = daysToShow - 1; i >= 0; i--) {
@@ -248,11 +148,9 @@ export async function GET(request: NextRequest) {
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(date);
       dayEnd.setHours(23, 59, 59, 999);
-
       const sqlDayStart = formatDateForSQL(dayStart);
       const sqlDayEnd = formatDateForSQL(dayEnd);
 
-      // Get centers created on this day
       const centersCreated = await db
         .select({ count: count() })
         .from(centers)
@@ -263,7 +161,6 @@ export async function GET(request: NextRequest) {
           )
         );
 
-      // Get activities on this day
       const activitiesCount = await db
         .select({ count: count() })
         .from(adminActivities)
@@ -274,7 +171,6 @@ export async function GET(request: NextRequest) {
           )
         );
 
-      // Get API calls on this day
       const apiCallsCount = await db
         .select({ count: count() })
         .from(apiLogs)
@@ -285,7 +181,6 @@ export async function GET(request: NextRequest) {
           )
         );
 
-      // Get sessions on this day
       const sessionsCount = await db
         .select({ count: count() })
         .from(adminSessions)
@@ -305,17 +200,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 4. Get System Health
+    // 4. System Health
     const systemHealth = await getSystemHealth();
 
-    const analyticsData: AnalyticsData = {
+    return NextResponse.json({
       centerStats,
       trends,
       usage,
       systemHealth,
-    };
-
-    return NextResponse.json(analyticsData);
+    });
   } catch (error) {
     console.error("Analytics API Error:", error);
     return NextResponse.json(
@@ -327,3 +220,34 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+function formatDateForSQL(date: Date): string {
+  return date.toISOString().slice(0, 19).replace("T", " ");
+}
+function getDateRange(range: string): { startDate: Date; endDate: Date } {
+  const endDate = new Date();
+  let startDate: Date;
+
+  switch (range) {
+    case "7d":
+      startDate = new Date();
+      startDate.setDate(endDate.getDate() - 7);
+      break;
+    case "30d":
+      startDate = new Date();
+      startDate.setDate(endDate.getDate() - 30);
+      break;
+    case "90d":
+      startDate = new Date();
+      startDate.setDate(endDate.getDate() - 90);
+      break;
+    case "1y":
+      startDate = new Date();
+      startDate.setFullYear(endDate.getFullYear() - 1);
+      break;
+    default:
+      throw new Error(`Unsupported range: ${range}`);
+  }
+
+  return { startDate, endDate };
+}
+

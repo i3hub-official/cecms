@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { passwordService } from "@/lib/services/password";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    // Validate session first
-    const session = await validateSession(request);
-    
-    if (!session.isValid || !session.user) {
+    const user = await getUserFromCookies(request);
+
+    if (!user) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
@@ -24,16 +23,13 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await passwordService.changePassword(
-      session.user.id,
+      user.id,
       currentPassword,
       newPassword
     );
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.message }, { status: 400 });
     }
 
     return NextResponse.json({

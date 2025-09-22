@@ -1,7 +1,8 @@
-// app/api/centers/duplicates/route.ts
-import { NextResponse } from "next/server";
+// src/app/api/centers/duplicates/route.ts
+import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { centers } from "@/lib/server/db/schema";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
 // Common words to ignore when comparing names
@@ -22,19 +23,16 @@ const COMMON_WORDS = [
 function cleanName(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "") // remove punctuation
+    .replace(/[^a-z0-9\s]/g, "")
     .split(/\s+/)
     .filter((word) => word && !COMMON_WORDS.includes(word))
     .join(" ");
 }
 
-// Simple Levenshtein similarity
 function calculateSimilarity(str1: string, str2: string): number {
   const longer = str1.length > str2.length ? str1 : str2;
   const shorter = str1.length > str2.length ? str2 : str1;
-
   if (longer.length === 0) return 100;
-
   const editDistance = levenshteinDistance(longer, shorter);
   return ((longer.length - editDistance) / longer.length) * 100;
 }
@@ -43,7 +41,6 @@ function levenshteinDistance(str1: string, str2: string): number {
   const matrix: number[][] = [];
   for (let i = 0; i <= str2.length; i++) matrix[i] = [i];
   for (let j = 0; j <= str1.length; j++) matrix[0][j] = j;
-
   for (let i = 1; i <= str2.length; i++) {
     for (let j = 1; j <= str1.length; j++) {
       if (str2[i - 1] === str1[j - 1]) {
@@ -60,16 +57,19 @@ function levenshteinDistance(str1: string, str2: string): number {
   return matrix[str2.length][str1.length];
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Fetch all active centers ordered by creation date
+    const user = await getUserFromCookies(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const centersData = await db
       .select()
       .from(centers)
       .where(eq(centers.isActive, true))
       .orderBy(centers.createdAt);
 
-    // Group centers by location (state + lga)
     const groups = new Map<string, typeof centersData>();
     for (const c of centersData) {
       const key = `${c.state}|${c.lga}`;
@@ -83,9 +83,7 @@ export async function GET() {
       type: "name" | "address";
     }[] = [];
 
-    // Process each group independently
     for (const [, groupCenters] of groups) {
-      // Further bucket by first 2 words of cleaned name
       const buckets = new Map<string, typeof groupCenters>();
       for (const c of groupCenters) {
         const prefix = cleanName(c.name).split(/\s+/).slice(0, 2).join(" ");
@@ -93,10 +91,8 @@ export async function GET() {
         buckets.get(prefix)!.push(c);
       }
 
-      // Now compare only inside buckets
       for (const [, bucket] of buckets) {
         if (bucket.length < 2) continue;
-
         const processed = new Set<string>();
 
         for (let i = 0; i < bucket.length; i++) {
@@ -111,15 +107,8 @@ export async function GET() {
             if (processed.has(compare.id)) continue;
 
             const cleanCompareName = cleanName(compare.name);
-
-            const nameSimilarity = calculateSimilarity(
-              cleanCurrentName,
-              cleanCompareName
-            );
-            const addressSimilarity = calculateSimilarity(
-              current.address,
-              compare.address
-            );
+            const nameSimilarity = calculateSimilarity(cleanCurrentName, cleanCompareName);
+            const addressSimilarity = calculateSimilarity(current.address, compare.address);
 
             if (nameSimilarity >= 90 || addressSimilarity >= 85) {
               similarCenters.push(compare);
@@ -129,28 +118,16 @@ export async function GET() {
 
           if (similarCenters.length > 1) {
             const maxSimilarity = Math.max(
-              calculateSimilarity(
-                cleanName(similarCenters[0].name),
-                cleanName(similarCenters[1].name)
-              ),
-              calculateSimilarity(
-                similarCenters[0].address,
-                similarCenters[1].address
-              )
+              calculateSimilarity(cleanName(similarCenters[0].name), cleanName(similarCenters[1].name)),
+              calculateSimilarity(similarCenters[0].address, similarCenters[1].address)
             );
 
             duplicates.push({
               centers: similarCenters,
               similarity: Math.round(maxSimilarity),
               type:
-                calculateSimilarity(
-                  cleanName(similarCenters[0].name),
-                  cleanName(similarCenters[1].name)
-                ) >
-                calculateSimilarity(
-                  similarCenters[0].address,
-                  similarCenters[1].address
-                )
+                calculateSimilarity(cleanName(similarCenters[0].name), cleanName(similarCenters[1].name)) >
+                calculateSimilarity(similarCenters[0].address, similarCenters[1].address)
                   ? "name"
                   : "address",
             });

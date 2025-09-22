@@ -2,14 +2,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { centers } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
-import { eq, and, ilike } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { getUserFromCookies } from "@/lib/auth";
+import { eq, and, ilike, sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-       // Count centers with the specified state, LGA, and active status
+    // Count centers with the specified state, LGA, and active status
     const [result] = await db
       .select({ count: sql<number>`count(*)` })
       .from(centers)

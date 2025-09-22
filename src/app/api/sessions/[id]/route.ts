@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db";
 import { adminSessions } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq, and } from "drizzle-orm";
 
 export async function DELETE(
@@ -10,49 +10,42 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Await the params first
+    // Extract session ID from params
     const { id: sessionId } = await params;
-    
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+
+    // Get the current admin user from cookie
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
-      );
-    }
-
-    // Verify the session belongs to the current admin
-    const session = await db
+    // Check if the session exists and belongs to this user
+    const [session] = await db
       .select()
       .from(adminSessions)
       .where(
         and(
           eq(adminSessions.id, sessionId),
-          eq(adminSessions.adminId, authResult.user.id)
+          eq(adminSessions.adminId, user.id)
         )
       )
       .limit(1);
 
-    if (session.length === 0) {
+    if (!session) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: "Session not found",
-          details: "The specified session does not exist or you don't have permission to access it"
+          details: "The specified session does not exist or you don't have permission to access it",
         },
         { status: 404 }
       );
     }
 
-    // Revoke the specific session
+    // Revoke the session
     await db
       .update(adminSessions)
       .set({ isActive: false })
@@ -65,12 +58,13 @@ export async function DELETE(
   } catch (error) {
     console.error("Session DELETE API error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to revoke session",
-        details: process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
+        details:
+          process.env.NODE_ENV === "development" && error instanceof Error
+            ? error.message
+            : undefined,
       },
       { status: 500 }
     );

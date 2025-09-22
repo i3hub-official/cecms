@@ -1,8 +1,7 @@
-// src/app/api/centers/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { centers } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq, and, not } from "drizzle-orm";
 
 interface UpdateData {
@@ -18,7 +17,6 @@ interface UpdateData {
 
 /**
  * GET /api/centers/[id]
- * Fetch a single center by ID
  */
 export async function GET(
   request: NextRequest,
@@ -26,8 +24,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    const user = await getUserFromCookies(request);
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -53,7 +52,6 @@ export async function GET(
 
 /**
  * PUT /api/centers/[id]
- * Update a center
  */
 export async function PUT(
   request: NextRequest,
@@ -61,8 +59,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    const user = await getUserFromCookies(request);
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -85,9 +84,8 @@ export async function PUT(
       }
     }
 
-    // Build update data dynamically
     const updateData: UpdateData = {
-      modifiedBy: authResult.user?.email || "system",
+      modifiedBy: user.email,
       modifiedAt: new Date(),
     };
 
@@ -120,7 +118,6 @@ export async function PUT(
 
 /**
  * DELETE /api/centers/[id]
- * Soft-delete (deactivate) a center
  */
 export async function DELETE(
   request: NextRequest,
@@ -128,8 +125,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    const user = await getUserFromCookies(request);
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -137,7 +135,7 @@ export async function DELETE(
       .update(centers)
       .set({
         isActive: false,
-        modifiedBy: authResult.user?.email || "system",
+        modifiedBy: user.email,
         modifiedAt: new Date(),
       })
       .where(eq(centers.id, id))

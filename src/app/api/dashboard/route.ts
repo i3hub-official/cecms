@@ -7,18 +7,18 @@ import {
   adminSessions,
   passwordResets,
 } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
 import { eq, and, or, gte, lte, gt, desc } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import { getUserFromCookies } from "@/lib/auth";
 
 // GET /api/dashboard - Get dashboard statistics
 export async function GET(request: NextRequest) {
   try {
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get current admin from auth cookie
+    const authUser = await getUserFromCookies(request);
+    if (!authUser) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -28,32 +28,21 @@ export async function GET(request: NextRequest) {
 
     // Get all statistics in parallel
     const [
-      // Center counts
       totalCentersResult,
       activeCentersResult,
       inactiveCentersResult,
       recentlyCreatedCentersResult,
       recentlyModifiedCentersResult,
-
-      // Admin counts
       totalAdminsResult,
       activeAdminsResult,
       inactiveAdminsResult,
-
-      // Session counts (scoped to current admin)
       activeSessionsResult,
       totalSessionsResult,
       expiredSessionsResult,
-
-      // Password reset counts
       pendingResetsResult,
       usedResetsResult,
       expiredResetsResult,
-
-      // Recent centers
       recentCentersData,
-
-      // Active sessions with details (scoped to current admin)
       activeSessionsDetailedData,
     ] = await Promise.all([
       // Center counts
@@ -86,15 +75,13 @@ export async function GET(request: NextRequest) {
         .from(admins)
         .where(eq(admins.isActive, false)),
 
-      // Session counts (scoped)
+      // Session counts scoped to current admin
       db
         .select({ count: sql<number>`count(*)` })
         .from(adminSessions)
         .where(
           and(
-            authResult.user?.id
-              ? eq(adminSessions.adminId, authResult.user.id)
-              : undefined,
+            eq(adminSessions.adminId, authUser.id),
             eq(adminSessions.isActive, true),
             gt(adminSessions.expiresAt, now)
           )
@@ -102,19 +89,13 @@ export async function GET(request: NextRequest) {
       db
         .select({ count: sql<number>`count(*)` })
         .from(adminSessions)
-        .where(
-          authResult.user
-            ? eq(adminSessions.adminId, authResult.user.id)
-            : undefined
-        ),
+        .where(eq(adminSessions.adminId, authUser.id)),
       db
         .select({ count: sql<number>`count(*)` })
         .from(adminSessions)
         .where(
           and(
-            authResult.user
-              ? eq(adminSessions.adminId, authResult.user.id)
-              : undefined,
+            eq(adminSessions.adminId, authUser.id),
             or(
               eq(adminSessions.isActive, false),
               lte(adminSessions.expiresAt, now)
@@ -176,9 +157,7 @@ export async function GET(request: NextRequest) {
         .innerJoin(admins, eq(adminSessions.adminId, admins.id))
         .where(
           and(
-            authResult.user
-              ? eq(adminSessions.adminId, authResult.user.id)
-              : undefined,
+            eq(adminSessions.adminId, authUser.id),
             eq(adminSessions.isActive, true),
             gt(adminSessions.expiresAt, now)
           )
@@ -187,51 +166,31 @@ export async function GET(request: NextRequest) {
         .limit(10),
     ]);
 
-    // Extract counts
-    const totalCenters = totalCentersResult[0]?.count || 0;
-    const activeCenters = activeCentersResult[0]?.count || 0;
-    const inactiveCenters = inactiveCentersResult[0]?.count || 0;
-    const recentlyCreatedCenters = recentlyCreatedCentersResult[0]?.count || 0;
-    const recentlyModifiedCenters =
-      recentlyModifiedCentersResult[0]?.count || 0;
-
-    const totalAdmins = totalAdminsResult[0]?.count || 0;
-    const activeAdmins = activeAdminsResult[0]?.count || 0;
-    const inactiveAdmins = inactiveAdminsResult[0]?.count || 0;
-
-    const activeSessions = activeSessionsResult[0]?.count || 0;
-    const totalSessions = totalSessionsResult[0]?.count || 0;
-    const expiredSessions = expiredSessionsResult[0]?.count || 0;
-
-    const pendingResets = pendingResetsResult[0]?.count || 0;
-    const usedResets = usedResetsResult[0]?.count || 0;
-    const expiredResets = expiredResetsResult[0]?.count || 0;
-
     // Build response
     const dashboardData = {
       success: true,
       data: {
         centers: {
-          total: totalCenters,
-          active: activeCenters,
-          inactive: inactiveCenters,
-          recentlyCreated: recentlyCreatedCenters,
-          recentlyModified: recentlyModifiedCenters,
+          total: totalCentersResult[0]?.count || 0,
+          active: activeCentersResult[0]?.count || 0,
+          inactive: inactiveCentersResult[0]?.count || 0,
+          recentlyCreated: recentlyCreatedCentersResult[0]?.count || 0,
+          recentlyModified: recentlyModifiedCentersResult[0]?.count || 0,
         },
         admins: {
-          total: totalAdmins,
-          active: activeAdmins,
-          inactive: inactiveAdmins,
+          total: totalAdminsResult[0]?.count || 0,
+          active: activeAdminsResult[0]?.count || 0,
+          inactive: inactiveAdminsResult[0]?.count || 0,
         },
         sessions: {
-          active: activeSessions,
-          total: totalSessions,
-          expired: expiredSessions,
+          active: activeSessionsResult[0]?.count || 0,
+          total: totalSessionsResult[0]?.count || 0,
+          expired: expiredSessionsResult[0]?.count || 0,
         },
         passwordResets: {
-          pending: pendingResets,
-          used: usedResets,
-          expired: expiredResets,
+          pending: pendingResetsResult[0]?.count || 0,
+          used: usedResetsResult[0]?.count || 0,
+          expired: expiredResetsResult[0]?.count || 0,
         },
         recentCenters: recentCentersData.map((center) => ({
           id: center.id,
@@ -283,3 +242,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+  

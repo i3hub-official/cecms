@@ -1,7 +1,11 @@
 // src/app/api/centers/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/server/db/index";
+import { centers } from "@/lib/server/db/schema";
+import { getUserFromCookies } from "@/lib/auth";
+import { eq, or, ilike, and, sql, desc, SQL } from "drizzle-orm";
 
-// Define the CenterWithAdminNames type
+// Center type including admin names
 interface CenterWithAdminNames {
   id: string;
   number: string;
@@ -19,96 +23,74 @@ interface CenterWithAdminNames {
   modifiedByName: string;
   createdByName: string;
 }
-import { db } from "@/lib/server/db/index";
-import { centers } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
-import { eq, or, ilike, and, sql, desc, SQL } from "drizzle-orm";
 
-// GET /api/centers - fetch centers with optional search and pagination
+// GET /api/centers
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "10")));
+    const limit = Math.min(
+      50,
+      Math.max(1, parseInt(searchParams.get("limit") || "10"))
+    );
     const search = searchParams.get("search") || "";
     const includeInactive = searchParams.get("includeInactive") === "true";
     const skip = (page - 1) * limit;
 
-    // Build where conditions
     const whereConditions: SQL[] = [];
-
-    if (!includeInactive) {
-      whereConditions.push(eq(centers.isActive, true));
-    }
-
+    if (!includeInactive) whereConditions.push(eq(centers.isActive, true));
     if (search) {
-      const searchCondition = or(
-        ilike(centers.name, `%${search}%`),
-        ilike(centers.number, `%${search}%`),
-        ilike(centers.address, `%${search}%`),
-        ilike(centers.state, `%${search}%`),
-        ilike(centers.lga, `%${search}%`)
+      whereConditions.push(
+        or(
+          ilike(centers.name, `%${search}%`),
+          ilike(centers.number, `%${search}%`),
+          ilike(centers.address, `%${search}%`),
+          ilike(centers.state, `%${search}%`),
+          ilike(centers.lga, `%${search}%`)
+        ) || sql`false`
       );
-      if (searchCondition) {
-        whereConditions.push(searchCondition);
-      }
     }
+    const finalWhere = whereConditions.length ? and(...whereConditions) : sql`true`;
 
-    // Combine all conditions with AND
-    const finalWhere = whereConditions.length > 0 ? and(...whereConditions) : undefined;
-
-    // Use Drizzle's relational query with with()
-    const centersData = await db.query.centers.findMany({
-      where: finalWhere,
-      orderBy: desc(centers.modifiedAt),
-      limit: limit,
-      offset: skip,
-      with: {
-        modifiedByAdmin: {
-          columns: {
-            id: true,
-            name: true,
-          },
+    const [centersData, totalResult] = await Promise.all([
+      db.query.centers.findMany({
+        where: finalWhere || sql`true`,
+        orderBy: desc(centers.modifiedAt),
+        limit,
+        offset: skip,
+        with: {
+          modifiedByAdmin: { columns: { id: true, name: true } },
+          createdByAdmin: { columns: { id: true, name: true } },
         },
-        createdByAdmin: {
-          columns: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    // Get total count
-    const totalResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(centers)
-      .where(finalWhere);
+      }),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(centers)
+        .where(finalWhere || sql`true`),
+    ]);
 
     const total = totalResult[0]?.count || 0;
     const pages = Math.ceil(total / limit);
 
-    // Transform the data to include admin names
-    const transformedCenters = centersData.map(center => ({
-      ...center,
-      modifiedByName: center.modifiedByAdmin?.name || "Unknown",
-      createdByName: center.createdByAdmin?.name || "Unknown",
-      // Remove the relation objects if you don't want them in the response
-      modifiedByAdmin: undefined,
-      createdByAdmin: undefined,
-    }));
+    const transformedCenters: CenterWithAdminNames[] = centersData.map(
+      (center) => ({
+        ...center,
+        modifiedByName: center.modifiedByAdmin?.name || "Unknown",
+        createdByName: center.createdByAdmin?.name || "Unknown",
+        modifiedByAdmin: undefined,
+        createdByAdmin: undefined,
+      })
+    );
 
-    // Use type assertion if needed, but TypeScript should infer this correctly
     return NextResponse.json({
       centers: transformedCenters,
       pagination: { page, limit, total, pages },
     });
-
   } catch (error) {
     console.error("Centers GET API error:", error);
     return NextResponse.json(
@@ -118,11 +100,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/centers - create a new center
+// POST /api/centers
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -134,18 +116,15 @@ export async function POST(request: NextRequest) {
       lga: string;
       isActive?: boolean;
     } = await request.json();
-
     const { number, name, address, state, lga, isActive = true } = body;
 
-    // Validate required fields
     if (!number || !name || !address || !state || !lga) {
       return NextResponse.json(
-        { error: "All fields are required: number, name, address, state, lga" },
+        { error: "All fields are required" },
         { status: 400 }
       );
     }
 
-    // Check if the center number already exists
     const [existingCenter] = await db
       .select()
       .from(centers)
@@ -159,7 +138,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create center
     const [center] = await db
       .insert(centers)
       .values({
@@ -169,33 +147,23 @@ export async function POST(request: NextRequest) {
         state,
         lga,
         isActive,
-        createdBy: authResult.user?.name || "system",
-        modifiedBy: authResult.user?.name || "system",
-        createdById: authResult.user?.id || "system",
-        modifiedById: authResult.user?.id || "system",
+        createdBy: user.name || "system",
+        modifiedBy: user.name || "system",
+        createdById: user.id,
+        modifiedById: user.id,
         createdAt: new Date(),
         modifiedAt: new Date(),
       })
       .returning();
 
-    // Use relational query to get the center with admin info
     const centerWithRelations = await db.query.centers.findFirst({
       where: eq(centers.id, center.id),
       with: {
-        modifiedByAdmin: {
-          columns: {
-            name: true,
-          },
-        },
-        createdByAdmin: {
-          columns: {
-            name: true,
-          },
-        },
+        modifiedByAdmin: { columns: { name: true } },
+        createdByAdmin: { columns: { name: true } },
       },
     });
 
-    // Return center with admin names
     const centerWithAdminNames: CenterWithAdminNames = {
       ...center,
       modifiedByName: centerWithRelations?.modifiedByAdmin?.name || "system",
@@ -203,7 +171,6 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json(centerWithAdminNames, { status: 201 });
-
   } catch (error) {
     console.error("Centers POST API error:", error);
     return NextResponse.json(

@@ -245,7 +245,11 @@ export async function createAuthSession(
       user: { id: adminId, email, name, role },
     };
   } catch (error) {
-    logger.error("Error creating auth session", { requestId, adminId, error: String(error) });
+    logger.error("Error creating auth session", {
+      requestId,
+      adminId,
+      error: String(error),
+    });
     throw new Error("Failed to create authentication session");
   }
 }
@@ -282,7 +286,10 @@ export async function revokeAuthSession(token: string): Promise<boolean> {
 
     return !!result;
   } catch (error) {
-    logger.error("Error revoking auth session", { requestId, error: String(error) });
+    logger.error("Error revoking auth session", {
+      requestId,
+      error: String(error),
+    });
     return false;
   }
 }
@@ -345,4 +352,29 @@ export async function hasRequiredRole(
     ? requiredRole
     : [requiredRole];
   return requiredRoles.includes(session.user.role);
+}
+
+/**
+ * Get user info directly from JWT in cookies (no DB hit)
+ */
+export async function getUserFromCookies(request: NextRequest) {
+  // Extract token from cookie
+  const token = extractAuthToken(request);
+  if (!token) return null;
+
+  try {
+    const jwtResult = await verifyJWT(token);
+    if (!jwtResult.isValid || !jwtResult.payload) return null;
+
+    return {
+      id: jwtResult.payload.userId,
+      email: jwtResult.payload.email,
+      role: jwtResult.payload.role,
+      name: jwtResult.payload.name || "",
+      sessionId: jwtResult.payload.sessionId,
+    };
+  } catch (error) {
+    console.error("Failed to get user from cookie:", error);
+    return null;
+  }
 }

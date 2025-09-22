@@ -2,25 +2,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db";
 import { admins } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import * as bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get current admin from auth cookie
+    const authUser = await getUserFromCookies(request);
+    if (!authUser) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
-      );
-    }
-
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
       );
     }
 
@@ -70,11 +63,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get current user data
+    // Get current user data from DB
     const user = await db
       .select()
       .from(admins)
-      .where(eq(admins.id, authResult.user.id))
+      .where(eq(admins.id, authUser.id))
       .limit(1);
 
     if (user.length === 0) {
@@ -99,14 +92,10 @@ export async function POST(request: NextRequest) {
     // Update password in database
     await db
       .update(admins)
-      .set({ 
-        password: hashedNewPassword,
-        // You might want to add a passwordChangedAt field to track this
-      })
-      .where(eq(admins.id, authResult.user.id));
+      .set({ password: hashedNewPassword })
+      .where(eq(admins.id, authUser.id));
 
-    // Log the password change activity
-    // You can add this to your audit log or admin activities table
+    // Optionally: log this activity in your admin activities table
 
     return NextResponse.json({
       success: true,
