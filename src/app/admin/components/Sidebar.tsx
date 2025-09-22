@@ -234,11 +234,17 @@ export default function Sidebar({
       ["Settings", "API Keys"].includes(item.name)
     );
 
+    // API Playground
+    const playgroundItems = navigation.filter(
+      (item) => item.name === "Playground"
+    );
+
     // Build organized structure
     if (dashboardItems.length) organized.main = dashboardItems;
     if (managementItems.length) organized.management = managementItems;
     if (analyticsItems.length) organized.analytics = analyticsItems;
     if (systemItems.length) organized.system = systemItems;
+    if (playgroundItems.length) organized.playground = playgroundItems;
 
     return organized;
   };

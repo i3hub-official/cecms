@@ -14,5 +14,5 @@ export const navigation: NavItem[] = [
   { name: "Sessions", href: "/admin/sessions", icon: Shield },
   { name: "Settings", href: "/admin/settings", icon: Settings },
   { name: "API Keys", href: "/admin/getApi", icon: Key },
-  {name: "API Playground", href: "/dashboard/api-playground", icon: Key}
+  { name: "Playground", href: "/admin/api-pg", icon: Shield },
 ];
