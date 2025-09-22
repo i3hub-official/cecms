@@ -27,9 +27,26 @@ CREATE TABLE "dispute_centers" (
 	CONSTRAINT "dispute_centers_number_unique" UNIQUE("number")
 );
 --> statement-breakpoint
+CREATE TABLE "email_verifications" (
+	"id" text PRIMARY KEY NOT NULL,
+	"admin_id" text NOT NULL,
+	"email" text NOT NULL,
+	"token" text NOT NULL,
+	"expires" timestamp NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"verified_at" timestamp,
+	CONSTRAINT "email_verifications_token_unique" UNIQUE("token")
+);
+--> statement-breakpoint
+ALTER TABLE "admins" ADD COLUMN "isEmailVerified" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "admins" ADD COLUMN "twoFactorEnabled" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "admins" ADD COLUMN "twoFactorSecret" text;--> statement-breakpoint
+ALTER TABLE "admins" ADD COLUMN "updatedAt" timestamp;--> statement-breakpoint
+ALTER TABLE "api_keys" ADD COLUMN "revoked_at" timestamp;--> statement-breakpoint
 ALTER TABLE "dispute_centers" ADD CONSTRAINT "dispute_centers_created_by_id_admins_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."admins"("id") ON DELETE set default ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dispute_centers" ADD CONSTRAINT "dispute_centers_modified_by_id_admins_id_fk" FOREIGN KEY ("modified_by_id") REFERENCES "public"."admins"("id") ON DELETE set default ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dispute_centers" ADD CONSTRAINT "dispute_centers_deleted_by_id_admins_id_fk" FOREIGN KEY ("deleted_by_id") REFERENCES "public"."admins"("id") ON DELETE set default ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "email_verifications" ADD CONSTRAINT "email_verifications_admin_id_admins_id_fk" FOREIGN KEY ("admin_id") REFERENCES "public"."admins"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "dispute_center_number_unique" ON "dispute_centers" USING btree ("number");--> statement-breakpoint
 CREATE UNIQUE INDEX "dispute_center_email_unique" ON "dispute_centers" USING btree ("email");--> statement-breakpoint
 CREATE UNIQUE INDEX "dispute_center_name_state_lga_unique" ON "dispute_centers" USING btree ("name","state","lga");--> statement-breakpoint
@@ -40,4 +57,5 @@ CREATE INDEX "idx_dispute_center_state" ON "dispute_centers" USING btree ("state
 CREATE INDEX "idx_dispute_center_lga" ON "dispute_centers" USING btree ("lga");--> statement-breakpoint
 CREATE INDEX "idx_dispute_center_state_lga" ON "dispute_centers" USING btree ("state","lga");--> statement-breakpoint
 CREATE INDEX "idx_dispute_center_email" ON "dispute_centers" USING btree ("email");--> statement-breakpoint
-CREATE INDEX "idx_dispute_center_phone" ON "dispute_centers" USING btree ("phone");
+CREATE INDEX "idx_dispute_center_phone" ON "dispute_centers" USING btree ("phone");--> statement-breakpoint
+CREATE INDEX "api_key_revoked_at_idx" ON "api_keys" USING btree ("revoked_at");

@@ -234,7 +234,7 @@ export class EmailService {
     }
   }
 
- /**
+  /**
    * Send email verification email
    */
   async sendVerificationEmail(

@@ -2,11 +2,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { hashPassword } from "@/lib/auth";
-import { admins, adminActivities } from "@/lib/server/db/schema";
-import { eq, or } from "drizzle-orm";
+import { admins, adminActivities, emailVerifications } from "@/lib/server/db/schema";
+import { eq, or, and, gt } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 import { getClientIp } from "@/lib/utils/client-ip";
 import { rateLimitByIp } from "@/lib/middleware/rateLimit";
+import { EmailService } from "@/lib/services/email";
+import crypto from "crypto";
+
+// Initialize email service
+const emailService = EmailService.getInstance();
 
 export async function POST(request: NextRequest) {
   const requestId = logger.requestId();
@@ -161,7 +166,7 @@ export async function POST(request: NextRequest) {
             requestId,
             ip,
             email: emailTrimmed,
-                      });
+          });
           return NextResponse.json(
             {
               error:
@@ -227,6 +232,10 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(passwordTrimmed);
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     // Create admin in transaction
     const [admin] = await db.transaction(async (tx) => {
       const [newAdmin] = await tx
@@ -239,10 +248,21 @@ export async function POST(request: NextRequest) {
           password: hashedPassword,
           role: "ADMIN",
           isActive: true,
+          isEmailVerified: false, // Start as unverified
           createdAt: new Date(),
           lastLogin: new Date(),
         })
         .returning();
+
+      // Create email verification record
+      await tx.insert(emailVerifications).values({
+        id: crypto.randomUUID(),
+        adminId: newAdmin.id,
+        email: newAdmin.email,
+        token: verificationToken,
+        expires: tokenExpires,
+        createdAt: new Date(),
+      });
 
       // Log admin activity
       await tx.insert(adminActivities).values({
@@ -255,6 +275,41 @@ export async function POST(request: NextRequest) {
       return [newAdmin];
     });
 
+    // Send verification email
+    try {
+      const emailSent = await emailService.sendVerificationEmail(
+        admin.email,
+        verificationToken,
+        admin.id
+      );
+
+      if (!emailSent) {
+        logger.error("Failed to send verification email", {
+          requestId,
+          ip,
+          userId: admin.id,
+          email: admin.email,
+        });
+        // Don't fail the signup if email fails, just log it
+      } else {
+        logger.info("Verification email sent successfully", {
+          requestId,
+          ip,
+          userId: admin.id,
+          email: admin.email,
+        });
+      }
+    } catch (emailError) {
+      logger.error("Error sending verification email", {
+        requestId,
+        ip,
+        userId: admin.id,
+        email: admin.email,
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+      });
+      // Continue with signup even if email fails
+    }
+
     logger.info("Account created successfully", {
       requestId,
       ip,
@@ -265,13 +320,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: "Account created successfully",
+        message: "Account created successfully. Please check your email to verify your account.",
         user: {
           id: admin.id,
           email: admin.email,
           name: admin.name,
           role: admin.role,
+          isEmailVerified: false,
         },
+        requiresVerification: true,
       },
       { status: 201 }
     );

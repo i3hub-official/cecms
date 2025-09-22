@@ -82,7 +82,14 @@ export const admins = pgTable(
     name: text("name").notNull(),
     role: text("role").notNull().default("ADMIN"),
     isActive: boolean("isActive").notNull().default(true),
+    isEmailVerified: boolean("isEmailVerified").notNull().default(false),
+    // For future use
+    twoFactorEnabled: boolean("twoFactorEnabled").notNull().default(false),
+    twoFactorSecret: text("twoFactorSecret"),
+    // Audit fields
     createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").$onUpdateFn(() => new Date()),
+    // Track last login time
     lastLogin: timestamp("lastLogin").notNull().defaultNow(),
   },
   (table) => [
@@ -170,6 +177,23 @@ export const adminActivities = pgTable(
     index("idx_admin_activity_timestamp").on(table.timestamp),
   ]
 );
+
+// ------------------------
+// Email Verification Model
+// ------------------------
+export const emailVerifications = pgTable("email_verifications", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  adminId: text("admin_id")
+    .notNull()
+    .references(() => admins.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  expires: timestamp("expires").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  verifiedAt: timestamp("verified_at"),
+});
 
 // ------------------------
 // AuditLog Model
