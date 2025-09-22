@@ -1,16 +1,13 @@
 // src/app/components/api-keys/ApiKeysManage.tsx
 import { useState } from "react";
-import { ApiKey } from "@/types/api-keys";
+import { ApiKey, ApiKeysManageProps } from "@/types/api-keys";
 import ApiKeyStats from "./ApiKeyStats";
 import ApiKeyList from "./ApiKeyList";
 import ApiKeyEditModal from "./ApiKeyEditModal";
 
-interface ApiKeysManageProps {
-  apiKeys: ApiKey[];
-  onRefresh: () => void;
-  onError: (error: string) => void;
-  onSuccess: (message: string) => void;
-   onRegenerate?: (keyId: string) => void;
+// Extended props interface to include regenerate functionality
+interface ExtendedApiKeysManageProps extends ApiKeysManageProps {
+  onRegenerate?: (keyId: string) => void;
   regenerateLoading?: string | null;
 }
 
@@ -19,7 +16,9 @@ export default function ApiKeysManage({
   onRefresh,
   onError,
   onSuccess,
-}: ApiKeysManageProps) {
+  onRegenerate,
+  regenerateLoading,
+}: ExtendedApiKeysManageProps) {
   const [revoking, setRevoking] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<ApiKey | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -56,6 +55,12 @@ export default function ApiKeysManage({
     }
   };
 
+  const handleRegenerate = (apiKeyId: string) => {
+    if (onRegenerate) {
+      onRegenerate(apiKeyId);
+    }
+  };
+
   const handleEdit = (apiKey: ApiKey) => {
     setSelectedKey(apiKey);
     setShowEditModal(true);
@@ -68,7 +73,9 @@ export default function ApiKeysManage({
         apiKeys={apiKeys}
         onEdit={handleEdit}
         onRevoke={revokeApiKey}
+        onRegenerate={handleRegenerate}
         revokingId={revoking}
+        regeneratingId={regenerateLoading || null}
       />
 
       {showEditModal && selectedKey && (

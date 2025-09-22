@@ -57,3 +57,35 @@ export interface ApiKeysManageProps {
     onRegenerate?: (keyId: string) => void;
    regenerateLoading?: string | null;
 }
+
+export interface ApiKeyListProps {
+   apiKeys: ApiKey[];
+   onEdit: (apiKey: ApiKey) => void;
+   onRevoke: (apiKeyId: string) => void;
+   revokingId: string | null;
+   itemsPerPage?: number;
+}
+
+
+// Confirmation Modal Component
+export interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText: string;
+  isDestructive?: boolean;
+  loading?: boolean;
+}
+
+
+// API Key Display Modal Component
+export interface ApiKeyDisplayModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  apiKey: string;
+  isRegenerated?: boolean;
+  onCopy: (text: string) => void;
+  timeLeft: number;
+}

@@ -103,8 +103,9 @@ export default function NewKeyModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-card border rounded-xl shadow-xl max-w-lg w-full mx-4 animate-in fade-in-0 zoom-in-95 duration-200">
+   <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto">
+  <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="bg-card border rounded-xl shadow-xl w-full max-w-lg sm:max-w-xl mx-auto p-4 sm:p-6 animate-in fade-in-0 zoom-in-95 duration-200">
         {/* Header */}
         <div className="px-6 py-5 border-b border-border">
           <div className="flex items-center gap-3">
@@ -128,7 +129,8 @@ export default function NewKeyModal({
                 API Key Generated Successfully!
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Your API key &qout;<span className="font-medium">{newKey.name}</span>
+                Your API key &qout;
+                <span className="font-medium">{newKey.name}</span>
                 &qout; is ready to use
               </p>
             </div>
@@ -158,8 +160,8 @@ export default function NewKeyModal({
                   Important Security Notice
                 </h3>
                 <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                  This is the only time you&apos;ll see the complete API key. Store
-                  it securely and never share it publicly.
+                  This is the only time you&apos;ll see the complete API key.
+                  Store it securely and never share it publicly.
                 </p>
               </div>
             </div>
@@ -319,5 +321,6 @@ export default function NewKeyModal({
         )}
       </div>
     </div>
+  </div>
   );
 }

@@ -3,14 +3,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import {
-  X,
-  Copy,
-  RefreshCw,
-  AlertTriangle,
-  CheckCircle,
+import { 
+  X, 
+  Copy, 
+  RefreshCw, 
+  AlertTriangle, 
+  CheckCircle, 
   Key,
-  Clock,
+  Clock 
 } from "lucide-react";
 import ApiKeysHeader from "./ApiKeysHeader";
 import ApiKeysTabs from "./ApiKeysTabs";
@@ -18,11 +18,7 @@ import ApiKeysCreate from "./ApiKeysCreate";
 import ApiKeysManage from "./ApiKeysManage";
 import Alert from "../ui/Alert";
 import { notifySuccess, notifyError } from "@/app/components/ui/notifications";
-import {
-  ApiKey,
-  NewApiKeyResponse,
-  ApiKeysManageProps,
-} from "@/types/api-keys";
+import { ApiKey, NewApiKeyResponse } from "@/types/api-keys";
 
 // Enhanced Modal Component
 interface ModalProps {
@@ -33,20 +29,12 @@ interface ModalProps {
   maxWidth?: string;
 }
 
-const Modal = ({
-  isOpen,
-  onClose,
-  title,
-  children,
-  maxWidth = "max-w-md",
-}: ModalProps) => {
+const Modal = ({ isOpen, onClose, title, children, maxWidth = "max-w-md" }: ModalProps) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div
-        className={`bg-background border border-border rounded-2xl ${maxWidth} w-full mx-4 shadow-2xl transform transition-all duration-200 scale-100`}
-      >
+      <div className={`bg-background border border-border rounded-2xl ${maxWidth} w-full mx-4 shadow-2xl transform transition-all duration-200 scale-100`}>
         <div className="flex items-center justify-between p-5 border-b border-border">
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           <button
@@ -121,11 +109,7 @@ const ConfirmModal = ({
               </div>
             ) : (
               <div className="flex items-center justify-center">
-                {isDestructive ? (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                )}
+                {isDestructive ? <RefreshCw className="h-4 w-4 mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                 {confirmText}
               </div>
             )}
@@ -146,29 +130,24 @@ interface ApiKeyDisplayModalProps {
   timeLeft: number;
 }
 
-const ApiKeyDisplayModal = ({
-  isOpen,
-  onClose,
-  apiKey,
-  isRegenerated = false,
+const ApiKeyDisplayModal = ({ 
+  isOpen, 
+  onClose, 
+  apiKey, 
+  isRegenerated = false, 
   onCopy,
-  timeLeft,
+  timeLeft 
 }: ApiKeyDisplayModalProps) => {
   if (!isOpen) return null;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={isRegenerated ? "API Key Regenerated!" : "New API Key Created!"}
-      maxWidth="max-w-lg"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title={isRegenerated ? "API Key Regenerated!" : "New API Key Created!"} maxWidth="max-w-lg">
       <div className="space-y-4">
         <div className="flex items-start">
           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
@@ -176,17 +155,15 @@ const ApiKeyDisplayModal = ({
           </div>
           <div className="flex-1">
             <p className="text-muted-foreground leading-relaxed mb-4">
-              {isRegenerated
+              {isRegenerated 
                 ? "Your API key has been regenerated successfully. The old key is now invalid."
-                : "Your new API key has been generated successfully."}{" "}
-              Make sure to copy it now – you won&apos;t be able to see it again!
+                : "Your new API key has been generated successfully."
+              } Make sure to copy it now – you won&apos;t be able to see it again!
             </p>
-
+            
             <div className="bg-muted/30 p-4 rounded-lg mb-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                  API Key
-                </span>
+                <span className="text-xs font-medium text-muted-foreground">API Key</span>
                 <div className="flex items-center text-xs text-muted-foreground">
                   <Clock className="h-3 w-3 mr-1" />
                   Auto-close in {formatTime(timeLeft)}
@@ -198,7 +175,7 @@ const ApiKeyDisplayModal = ({
             </div>
           </div>
         </div>
-
+        
         <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
           <button
             onClick={onClose}
@@ -225,9 +202,7 @@ export default function ApiKeyPage() {
   // State management
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
-  const [regenerateLoading, setRegenerateLoading] = useState<string | null>(
-    null
-  );
+  const [regenerateLoading, setRegenerateLoading] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<NewApiKeyResponse | null>(null);
   const [showNewKey, setShowNewKey] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -235,7 +210,7 @@ export default function ApiKeyPage() {
   const [activeTab, setActiveTab] = useState<"create" | "manage">("create");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
-
+  
   // Modal states
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -324,26 +299,19 @@ export default function ApiKeyPage() {
   const handleRegenerateApiKey = async (keyId: string) => {
     setRegenerateLoading(keyId);
     try {
-      const response = await fetch(
-        `/apis/v1/user/api-key/${keyId}/regenerate`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`/apis/v1/user/api-key/${keyId}/regenerate`, {
+        method: "POST",
+        credentials: "include",
+      });
 
       const data = await response.json();
+      console.log("Regenerate response:", data);
       if (data.success) {
-        setNewKey({
-          apiKey: data.data.key,
+        setNewKey({ 
+          apiKey: data.data.apiKey, 
           keyId: keyId,
-          isRegenerated: true,
-          id: data.data.id,
-          name: data.data.name,
-          prefix: data.data.prefix,
-          expiresAt: data.data.expiresAt,
-          createdAt: data.data.createdAt,
-        });
+          isRegenerated: true 
+        } as NewApiKeyResponse);
         setShowNewKey(true);
         setTimeLeft(30); // Reset timer
         startAutoCloseTimer();
@@ -430,13 +398,7 @@ export default function ApiKeyPage() {
     }
   };
 
-  const openConfirmModal = (
-    title: string,
-    message: string,
-    confirmText: string,
-    isDestructive: boolean,
-    action: () => void
-  ) => {
+  const openConfirmModal = (title: string, message: string, confirmText: string, isDestructive: boolean, action: () => void) => {
     setConfirmModal({
       isOpen: true,
       title,
@@ -448,7 +410,7 @@ export default function ApiKeyPage() {
   };
 
   const closeConfirmModal = () => {
-    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
   };
 
   const handleConfirmAction = () => {
@@ -489,8 +451,6 @@ export default function ApiKeyPage() {
       {activeTab === "create" && (
         <ApiKeysCreate
           onCreateSuccess={(newKeyData: NewApiKeyResponse) => {
-            const { id, apiKey, keyId, name, prefix, expiresAt, createdAt } =
-              newKeyData;
             setNewKey(newKeyData);
             setShowNewKey(true);
             setTimeLeft(30);
@@ -556,6 +516,20 @@ export default function ApiKeyPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // // src/app/components/api-keys/ApiKeyPage.tsx
 // "use client";
