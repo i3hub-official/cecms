@@ -17,8 +17,11 @@ export default function SignInPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [requiresVerification, setRequiresVerification] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -31,12 +34,50 @@ export default function SignInPage() {
       [name]: value,
     }));
     if (error) setError(""); // clear error when user starts typing
+    if (requiresVerification) setRequiresVerification(false); // reset verification state when user types
+  };
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setError(""); // Clear any existing errors
+        // Show success message
+        setError(""); // Clear errors
+        // notifySuccess(
+        //   "Verification email sent successfully! Please check your inbox."
+        // );
+        setSuccess(
+          data.success ||
+            "Verification email sent successfully! Please check your inbox."
+        );
+      } else {
+        setError(data.error || "Failed to resend verification email");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
+    setRequiresVerification(false);
 
     // Client-side validation
     if (!formData.email || !formData.password) {
@@ -67,7 +108,14 @@ export default function SignInPage() {
           window.location.href = "/admin";
         }, 1200);
       } else {
-        setError(data.error || "Sign in failed");
+        if (data.requiresVerification) {
+          // Handle unverified email case
+          setError(data.error);
+          setRequiresVerification(true);
+          setUnverifiedEmail(data.email);
+        } else {
+          setError(data.error || "Sign in failed");
+        }
       }
     } catch (err) {
       setError("Network error. Please try again.");
@@ -78,7 +126,7 @@ export default function SignInPage() {
     }
   };
 
-  const isDisabled = loading || success;
+  const isDisabled = loading || success || resendLoading;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
@@ -116,10 +164,49 @@ export default function SignInPage() {
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            {error && (
+            {error && !requiresVerification && (
               <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-center space-x-3 animate-in slide-in-from-top-2 duration-300">
                 <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
                 <span className="text-sm text-destructive">{error}</span>
+              </div>
+            )}
+
+            {requiresVerification && (
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4 animate-in slide-in-from-top-2 duration-300">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-amber-800 dark:text-amber-300 font-medium mb-1">
+                      Email verification required
+                    </p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">
+                      Please verify your email address before signing in.
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={resendLoading}
+                        className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-3 py-1 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {resendLoading ? (
+                          <span className="flex items-center space-x-1">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-600 dark:border-amber-400"></div>
+                            <span>Sending...</span>
+                          </span>
+                        ) : (
+                          "Resend verification email"
+                        )}
+                      </button>
+                      <Link
+                        href="/auth/signup"
+                        className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+                      >
+                        Need help?
+                      </Link>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 

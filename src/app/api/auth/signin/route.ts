@@ -60,6 +60,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if email is verified
+    if (!admin.isEmailVerified) {
+      logger.warn("Login attempt with unverified email", {
+        requestId,
+        ip,
+        email,
+        userId: admin.id,
+      });
+
+      // Log failed login attempt due to unverified email
+      await db.insert(adminActivities).values({
+        id: crypto.randomUUID(),
+        adminId: admin.id,
+        activity: "USER_LOGIN_BLOCKED_UNVERIFIED_EMAIL",
+        timestamp: new Date(),
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Please verify your email address before signing in.",
+          requiresVerification: true,
+          email: admin.email,
+        },
+        { status: 403 }
+      );
+    }
+
     // Generate session ID
     const sessionId = generateSessionId();
 
@@ -152,6 +180,7 @@ export async function POST(request: NextRequest) {
         email: admin.email,
         name: admin.name,
         role: admin.role,
+        isEmailVerified: admin.isEmailVerified,
       },
       sessionId,
     });
