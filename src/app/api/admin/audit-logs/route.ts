@@ -7,35 +7,35 @@ import { eq, desc } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
-        { status: 401 }
-      );
-    }
+    // // Validate admin session
+    // const authResult = await validateSession(request);
+    // if (!authResult.isValid) {
+    //   return NextResponse.json(
+    //     { success: false, error: "Unauthorized", details: authResult.error },
+    //     { status: 401 }
+    //   );
+    // }
 
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
-      );
-    }
+    // if (!authResult.user) {
+    //   return NextResponse.json(
+    //     { success: false, error: "Invalid user session" },
+    //     { status: 400 }
+    //   );
+    // }
 
-    // Check permissions for audit log access
-    if (
-      authResult.user.role !== "ADMIN" &&
-      authResult.user.role !== "SUPER_ADMIN"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Insufficient permissions to view audit logs",
-        },
-        { status: 403 }
-      );
-    }
+    // // Check permissions for audit log access
+    // if (
+    //   authResult.user.role !== "ADMIN" &&
+    //   authResult.user.role !== "SUPER_ADMIN"
+    // ) {
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error: "Insufficient permissions to view audit logs",
+    //     },
+    //     { status: 403 }
+    //   );
+    // }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
