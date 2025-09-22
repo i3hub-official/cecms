@@ -1,3 +1,4 @@
+// File: src/lib/middleware/withAuth.ts
 import { NextRequest } from "next/server";
 import { verifyJWT, extractTokenFromHeader } from "@/lib/utils/jwt";
 

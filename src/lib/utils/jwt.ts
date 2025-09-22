@@ -1,3 +1,4 @@
+// File: src/lib/utils/jwt.ts
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
 const JWT_SECRET = new TextEncoder().encode(
