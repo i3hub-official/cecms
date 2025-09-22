@@ -104,3 +104,41 @@ pre {
 .alert-slide-in {
   animation: slideIn 0.3s ease-out;
 }
+
+
+
+/* playground */
+/* API Playground specific styles */
+.api-playground {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.json-viewer {
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  overflow: auto;
+  max-height: 400px;
+}
+
+.json-viewer pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.http-method {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.http-get { background-color: #d1fae5; color: #065f46; }
+.http-post { background-color: #dbeafe; color: #1e40af; }
+.http-put { background-color: #fef3c7; color: #92400e; }
+.http-delete { background-color: #fee2e2; color: #b91c1c; }
+.http-patch { background-color: #ede9fe; color: #5b21b6; }
+
+/* playground ends */
+
