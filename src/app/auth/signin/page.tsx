@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Eye,
   EyeOff,
@@ -9,6 +9,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+import { notifySuccess, notifyError } from "@/app/components/ui/notifications";
 
 export default function SignInPage() {
   const [formData, setFormData] = useState({
@@ -22,6 +24,28 @@ export default function SignInPage() {
   const [success, setSuccess] = useState(false);
   const [requiresVerification, setRequiresVerification] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Handle URL parameters on component mount
+  useEffect(() => {
+    const message = searchParams.get("message");
+    const error = searchParams.get("error");
+
+    if (message) {
+      notifySuccess(message);
+      // Clear the message from URL
+      router.replace("/auth/signin");
+    }
+
+    if (error) {
+      notifyError(error);
+      setError(error);
+      // Clear the error from URL
+      router.replace("/auth/signin");
+    }
+  }, [searchParams, router]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -38,40 +62,41 @@ export default function SignInPage() {
   };
 
   const handleResendVerification = async () => {
-    setResendLoading(true);
-    setError("");
+  setResendLoading(true);
+  setError("");
 
-    try {
-      const response = await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: unverifiedEmail }),
-      });
+  try {
+    const response = await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: unverifiedEmail }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        setError(""); // Clear any existing errors
-        // Show success message
-        setError(""); // Clear errors
-        // notifySuccess(
-        //   "Verification email sent successfully! Please check your inbox."
-        // );
-        setSuccess(
-          data.success ||
-            "Verification email sent successfully! Please check your inbox."
-        );
+    if (response.ok) {
+      setError(""); // Clear any existing errors
+      setSuccess(data.message || "Verification email sent successfully!");
+    } else {
+      if (data.alreadyVerified) {
+        // User's email is already verified, they can sign in now
+        setError(data.error);
+        setRequiresVerification(false); // Remove the verification block
+        setSuccess(data.success || "Your email is verified! You can now sign in.");
+      } else if (data.retryAfter) {
+        setError(data.error);
       } else {
         setError(data.error || "Failed to resend verification email");
       }
-    } catch (err) {
-      setError("Network error. Please try again.");
-    } finally {
-      setResendLoading(false);
     }
-  };
+  } catch (err) {
+    setError("Network error. Please try again.");
+  } finally {
+    setResendLoading(false);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

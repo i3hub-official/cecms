@@ -1,20 +1,25 @@
-
-// Create email verification endpoint: src/app/api/auth/verify-email/route.ts
+// src/app/api/auth/verify-email/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
-import { emailVerifications, admins, adminActivities } from "@/lib/server/db/schema";
+import {
+  emailVerifications,
+  admins,
+  adminActivities,
+} from "@/lib/server/db/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { logger } from "@/lib/logger";
+import crypto from "crypto";
 
 export async function GET(request: NextRequest) {
   const requestId = logger.requestId();
   const { searchParams } = new URL(request.url);
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
+  const email = searchParams.get("email");
 
   if (!token) {
-    return NextResponse.json(
-      { error: "Verification token is required" },
-      { status: 400 }
+    // Redirect to login page with error
+    return NextResponse.redirect(
+      new URL("/auth/signin?error=Verification token is required", request.url)
     );
   }
 
@@ -32,10 +37,15 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (!verification) {
-      logger.warn("Invalid or expired verification token", { requestId, token });
-      return NextResponse.json(
-        { error: "Invalid or expired verification token" },
-        { status: 400 }
+      logger.warn("Invalid or expired verification token", {
+        requestId,
+        token,
+      });
+      return NextResponse.redirect(
+        new URL(
+          "/auth/signin?error=Invalid or expired verification token",
+          request.url
+        )
       );
     }
 
@@ -44,9 +54,9 @@ export async function GET(request: NextRequest) {
       // Update admin's email verification status
       await tx
         .update(admins)
-        .set({ 
+        .set({
           isEmailVerified: true,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(admins.id, verification.adminId));
 
@@ -71,17 +81,17 @@ export async function GET(request: NextRequest) {
       email: verification.email,
     });
 
-    // Redirect to success page or return success response
-    return NextResponse.json({
-      success: true,
-      message: "Email verified successfully. You can now log in to your account.",
-    });
-
+    // Redirect to login page with success message
+    return NextResponse.redirect(
+      new URL(
+        "/auth/signin?message=Email verified successfully! You can now sign in.",
+        request.url
+      )
+    );
   } catch (error) {
     logger.error("Email verification error", { requestId, token }, { error });
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+    return NextResponse.redirect(
+      new URL("/auth/signin?error=Internal server error", request.url)
     );
   }
 }

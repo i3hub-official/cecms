@@ -1,8 +1,11 @@
-
 // src/app/api/auth/resend-verification/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
-import { emailVerifications, admins, adminActivities } from "@/lib/server/db/schema";
+import {
+  emailVerifications,
+  admins,
+  adminActivities,
+} from "@/lib/server/db/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 import { EmailService } from "@/lib/services/email";
@@ -33,10 +36,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if email is already verified
     if (admin.isEmailVerified) {
+      logger.info("Resend verification attempted for already verified email", {
+        requestId,
+        email,
+        userId: admin.id,
+      });
+
       return NextResponse.json(
-        { error: "Email is already verified" },
+        {
+          error: "Your email address is already verified. You can sign in now.",
+          alreadyVerified: true,
+        },
         { status: 400 }
+      );
+    }
+
+    // Check for recent verification attempts (optional rate limiting)
+    const recentAttempts = await db
+      .select()
+      .from(emailVerifications)
+      .where(
+        and(
+          eq(emailVerifications.adminId, admin.id),
+          gt(emailVerifications.createdAt, new Date(Date.now() - 5 * 60 * 1000)) // Last 5 minutes
+        )
+      )
+      .limit(1);
+
+    if (recentAttempts.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Please wait a few minutes before requesting another verification email.",
+          retryAfter: true,
+        },
+        { status: 429 }
       );
     }
 
@@ -65,14 +101,28 @@ export async function POST(request: NextRequest) {
       throw new Error("Failed to send verification email");
     }
 
+    // Log the activity
+    await db.insert(adminActivities).values({
+      id: crypto.randomUUID(),
+      adminId: admin.id,
+      activity: "VERIFICATION_EMAIL_RESENT",
+      timestamp: new Date(),
+    });
+
+    logger.info("Verification email resent successfully", {
+      requestId,
+      userId: admin.id,
+      email: admin.email,
+    });
+
     return NextResponse.json({
       success: true,
-      message: "Verification email sent successfully",
+      message: "Verification email sent successfully. Please check your inbox.",
     });
   } catch (error) {
     logger.error("Resend verification error", { requestId, email }, { error });
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error. Please try again later." },
       { status: 500 }
     );
   }

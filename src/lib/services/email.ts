@@ -244,7 +244,7 @@ export class EmailService {
   ): Promise<boolean> {
     try {
       const baseUrl = this.getBaseUrl();
-      const verificationLink = `${baseUrl}/auth/verify-email?token=${token}&email=${encodeURIComponent(
+      const verificationLink = `${baseUrl}/api/auth/verify-email?token=${token}&email=${encodeURIComponent(
         email
       )}`;
 

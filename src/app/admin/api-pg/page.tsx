@@ -21,6 +21,7 @@ import {
   ExternalLink,
   Smartphone,
 } from "lucide-react";
+import { notifySuccess } from "@/app/components/ui/notifications";
 
 interface ApiResponse {
   success: boolean;
@@ -120,7 +121,7 @@ export default function ApiPlaygroundPage() {
     setSavedKeys(updatedKeys);
     setShowSaveKeyModal(false);
     setKeyName("");
-    alert("API key saved securely!");
+    notifySuccess("API key saved securely!");
   };
 
   const removeSavedKey = (keyToRemove: string) => {

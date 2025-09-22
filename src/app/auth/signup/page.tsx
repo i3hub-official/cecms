@@ -11,6 +11,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
+import { notifySuccess, notifyError } from "@/app/components/ui/notifications";
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -167,7 +168,7 @@ export default function SignUpPage() {
       if (response.ok) {
         setError(""); // Clear any existing errors
         // You could show a success message here
-        alert("Verification email sent successfully! Please check your inbox.");
+        setSuccess(data.success || "Verification email sent successfully! Please check your inbox.");
       } else {
         setError(data.error || "Failed to resend verification email");
       }
