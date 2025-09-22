@@ -1,41 +1,31 @@
-// src/app/api/admin/audit-logs/route.ts (bonus - for viewing audit logs)
+// src/app/api/admin/audit-logs/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db";
 import { auditLogs, admins } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq, desc } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
-    // // Validate admin session
-    // const authResult = await validateSession(request);
-    // if (!authResult.isValid) {
-    //   return NextResponse.json(
-    //     { success: false, error: "Unauthorized", details: authResult.error },
-    //     { status: 401 }
-    //   );
-    // }
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-    // if (!authResult.user) {
-    //   return NextResponse.json(
-    //     { success: false, error: "Invalid user session" },
-    //     { status: 400 }
-    //   );
-    // }
-
-    // // Check permissions for audit log access
-    // if (
-    //   authResult.user.role !== "ADMIN" &&
-    //   authResult.user.role !== "SUPER_ADMIN"
-    // ) {
-    //   return NextResponse.json(
-    //     {
-    //       success: false,
-    //       error: "Insufficient permissions to view audit logs",
-    //     },
-    //     { status: 403 }
-    //   );
-    // }
+    // Check permissions for audit log access
+    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Insufficient permissions to view audit logs",
+        },
+        { status: 403 }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");

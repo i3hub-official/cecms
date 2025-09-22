@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { apiKeys, adminActivities } from "@/lib/server/db/schema";
 import { eq, and } from "drizzle-orm";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 
 // GET - Get a specific API key
 export async function GET(
@@ -12,9 +12,10 @@ export async function GET(
 ) {
   try {
     const params = await context.params;
-    const session = await validateSession(request);
 
-    if (!session.isValid || !session.user) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -40,9 +41,7 @@ export async function GET(
         usageCount: apiKeys.usageCount,
       })
       .from(apiKeys)
-      .where(
-        and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, session.user.id))
-      );
+      .where(and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, user.id)));
 
     if (!apiKey) {
       return NextResponse.json({ error: "API key not found" }, { status: 404 });
@@ -68,9 +67,10 @@ export async function PATCH(
 ) {
   try {
     const params = await context.params;
-    const session = await validateSession(request);
 
-    if (!session.isValid || !session.user) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -81,9 +81,7 @@ export async function PATCH(
     const [existingKey] = await db
       .select()
       .from(apiKeys)
-      .where(
-        and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, session.user.id))
-      );
+      .where(and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, user.id)));
 
     if (!existingKey) {
       return NextResponse.json({ error: "API key not found" }, { status: 404 });
@@ -102,7 +100,7 @@ export async function PATCH(
     // Log admin activity
     await db.insert(adminActivities).values({
       id: crypto.randomUUID(),
-      adminId: session.user.id,
+      adminId: user.id,
       activity: `API_KEY_UPDATED: ${existingKey.name}`,
       timestamp: new Date(),
     });
@@ -131,9 +129,10 @@ export async function DELETE(
 ) {
   try {
     const params = await context.params;
-    const session = await validateSession(request);
 
-    if (!session.isValid || !session.user) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -143,9 +142,7 @@ export async function DELETE(
     const [apiKey] = await db
       .select()
       .from(apiKeys)
-      .where(
-        and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, session.user.id))
-      );
+      .where(and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, user.id)));
 
     if (!apiKey) {
       return NextResponse.json({ error: "API key not found" }, { status: 404 });
@@ -164,7 +161,7 @@ export async function DELETE(
     // Log admin activity
     await db.insert(adminActivities).values({
       id: crypto.randomUUID(),
-      adminId: session.user.id,
+      adminId: user.id,
       activity: `API_KEY_REVOKED: ${apiKey.name}`,
       timestamp: new Date(),
     });

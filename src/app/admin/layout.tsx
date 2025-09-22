@@ -1,4 +1,3 @@
-// src/app/admin/layout.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -26,44 +25,34 @@ export default function AdminLayoutWrapper({
 
   /** 🔹 Redirect helper */
   const redirectToLogin = useCallback(() => {
-    sessionStorage.removeItem("user");
     setUser(null);
     router.push("/auth/signin");
   }, [router]);
 
-  /** 🔹 Validate session against backend */
+  /** 🔹 Validate session using your existing getUserFromCookies */
   const validateSession = useCallback(
     async (background = false) => {
       try {
         if (!background) setLoading(true);
 
-        const response = await fetch("/api/auth/validate", {
+        // Call your API endpoint that uses getUserFromCookies
+        const response = await fetch("/api/auth/me", {
           method: "GET",
           credentials: "include",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-          },
         });
 
-        if (response.status === 401) {
-          redirectToLogin();
-          return;
-        }
-
         if (!response.ok) {
-          console.error("Server error during validation:", response.status);
+          redirectToLogin();
           return;
         }
 
-        const data = await response.json();
-
-        if (data.success && data.user) {
-          setUser(data.user);
-          sessionStorage.setItem("user", JSON.stringify(data.user));
-        } else {
+        const currentUser = await response.json();
+        if (!currentUser) {
           redirectToLogin();
+          return;
         }
+
+        setUser(currentUser);
       } catch (error) {
         console.error("Session validation error:", error);
         redirectToLogin();
@@ -74,58 +63,38 @@ export default function AdminLayoutWrapper({
     [redirectToLogin]
   );
 
-  /** 🔹 On first mount: try cached user instantly, then validate */
+  /** 🔹 On mount: validate session */
   useEffect(() => {
-    const cached = sessionStorage.getItem("user");
-    if (cached) {
-      try {
-        const parsedUser: User = JSON.parse(cached);
-        setUser(parsedUser);
-        setLoading(false);
-        validateSession(true);
-      } catch {
-        sessionStorage.removeItem("user");
-        validateSession();
-      }
-    } else {
-      validateSession();
-    }
-  }, []); // Remove validateSession dependency
+    validateSession();
+  }, []); // run once on mount
 
-  /** 🔹 Revalidate on route changes - but not during logout */
+  /** 🔹 Revalidate on route changes */
   useEffect(() => {
-    if (!loggingOut && user && pathname) {
+    if (user && !loggingOut && pathname) {
       validateSession(true);
     }
-  }, [pathname]); // Remove validateSession dependency and add loggingOut check
+  }, [pathname]); // only revalidate on route changes
 
   /** 🔹 Logout with loading state */
   const handleLogout = async () => {
     setLoggingOut(true);
 
     try {
-      const response = await fetch("/api/auth/signout", {
+      await fetch("/api/auth/signout", {
         method: "POST",
         credentials: "include",
       });
-
-      // Optional: handle response status
-      if (!response.ok) {
-        console.warn("Logout API returned non-OK status:", response.status);
-      }
-
-      // Add a small delay for better UX feedback
+      // optional small delay for UX
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Always redirect regardless of API success/failure
       setLoggingOut(false);
       redirectToLogin();
     }
   };
 
-  // Show initial loading screen
+  /** 🔹 Loading UI */
   if (loading && !user) {
     return (
       <ThemeProvider>
@@ -141,18 +110,15 @@ export default function AdminLayoutWrapper({
     );
   }
 
-  // Show logout loading screen
+  /** 🔹 Logout animation */
   if (loggingOut) {
     return (
       <ThemeProvider>
         <div className="min-h-screen flex items-center justify-center bg-background text-foreground transition-colors duration-300">
           <div className="flex flex-col items-center gap-6 text-center">
-            {/* Logout Animation */}
             <div className="relative">
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-muted"></div>
               <div className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-red-500"></div>
-
-              {/* Logout Icon */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg
                   className="w-6 h-6 text-red-500"
@@ -170,7 +136,6 @@ export default function AdminLayoutWrapper({
               </div>
             </div>
 
-            {/* Logout Message */}
             <div className="space-y-2">
               <div className="text-lg font-semibold text-foreground">
                 Signing Out...
@@ -180,7 +145,6 @@ export default function AdminLayoutWrapper({
               </div>
             </div>
 
-            {/* User Info */}
             {user && (
               <div className="flex items-center gap-3 px-4 py-2 bg-card border border-border rounded-lg">
                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -199,7 +163,6 @@ export default function AdminLayoutWrapper({
               </div>
             )}
 
-            {/* Security Note */}
             <div className="text-xs text-muted-foreground">
               Your session will be securely terminated
             </div>
@@ -209,16 +172,13 @@ export default function AdminLayoutWrapper({
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
-          <ThemeProvider>
-        <AdminLayout user={user} onLogout={handleLogout}>
-          {children}
-        </AdminLayout>
-      </ThemeProvider>
-    
+    <ThemeProvider>
+      <AdminLayout user={user} onLogout={handleLogout}>
+        {children}
+      </AdminLayout>
+    </ThemeProvider>
   );
 }

@@ -3,15 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { apiKeys, adminActivities } from "@/lib/server/db/schema";
 import { eq, and } from "drizzle-orm";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 import { hashToken, generateSecureToken } from "@/lib/utils/tokens";
 
 export async function POST(request: NextRequest, context: any) {
   try {
     const { id } = context.params as { id: string };
-    const session = await validateSession(request);
-
-    if (!session.isValid || !session.user) {
+    
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest, context: any) {
     const [apiKey] = await db
       .select()
       .from(apiKeys)
-      .where(and(eq(apiKeys.id, id), eq(apiKeys.adminId, session.user.id)));
+      .where(and(eq(apiKeys.id, id), eq(apiKeys.adminId, user.id)));
 
     if (!apiKey) {
       return NextResponse.json({ error: "API key not found" }, { status: 404 });
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest, context: any) {
     // Log admin activity
     await db.insert(adminActivities).values({
       id: crypto.randomUUID(),
-      adminId: session.user.id,
+      adminId: user.id,
       activity: `API_KEY_REGENERATED: ${apiKey.name}`,
       timestamp: new Date(),
     });

@@ -3,14 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { apiKeys, apiUsageLogs } from "@/lib/server/db/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 
 export async function GET(request: NextRequest, context: any) {
   try {
     const { id: apiKeyId } = context.params as { id: string };
-    const session = await validateSession(request);
 
-    if (!session.isValid || !session.user) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -40,9 +41,7 @@ export async function GET(request: NextRequest, context: any) {
     const [apiKey] = await db
       .select()
       .from(apiKeys)
-      .where(
-        and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, session.user.id))
-      );
+      .where(and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, user.id)));
 
     if (!apiKey) {
       return NextResponse.json({ error: "API key not found" }, { status: 404 });

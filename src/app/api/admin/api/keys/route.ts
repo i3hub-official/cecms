@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db";
 import { apiKeys, admins, apiUsageLogs } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq, and, desc } from "drizzle-orm";
 import * as crypto from "crypto";
 import * as bcrypt from "bcryptjs";
@@ -10,19 +10,12 @@ import * as bcrypt from "bcryptjs";
 // GET - List all API keys for the authenticated admin
 export async function GET(request: NextRequest) {
   try {
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
-      );
-    }
-
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
       );
     }
 
@@ -48,12 +41,7 @@ export async function GET(request: NextRequest) {
         usageCount: apiKeys.usageCount,
       })
       .from(apiKeys)
-      .where(
-        and(
-          eq(apiKeys.adminId, authResult.user.id),
-          eq(apiKeys.isActive, true)
-        )
-      )
+      .where(and(eq(apiKeys.adminId, user.id), eq(apiKeys.isActive, true)))
       .orderBy(desc(apiKeys.createdAt));
 
     return NextResponse.json({
@@ -63,12 +51,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("API Keys GET error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to fetch API keys",
-        details: process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
+        details:
+          process.env.NODE_ENV === "development" && error instanceof Error
+            ? error.message
+            : undefined,
       },
       { status: 500 }
     );
@@ -78,19 +67,12 @@ export async function GET(request: NextRequest) {
 // POST - Create a new API key
 export async function POST(request: NextRequest) {
   try {
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
-      );
-    }
-
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
       );
     }
 
@@ -118,7 +100,10 @@ export async function POST(request: NextRequest) {
 
     if (name.length > 100) {
       return NextResponse.json(
-        { success: false, error: "API key name must be less than 100 characters" },
+        {
+          success: false,
+          error: "API key name must be less than 100 characters",
+        },
         { status: 400 }
       );
     }
@@ -129,7 +114,7 @@ export async function POST(request: NextRequest) {
       .from(apiKeys)
       .where(
         and(
-          eq(apiKeys.adminId, authResult.user.id),
+          eq(apiKeys.adminId, user.id),
           eq(apiKeys.name, name.trim()),
           eq(apiKeys.isActive, true)
         )
@@ -144,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate API key
-    const rawKey = `ak_${crypto.randomBytes(32).toString('hex')}`;
+    const rawKey = `ak_${crypto.randomBytes(32).toString("hex")}`;
     const hashedKey = await bcrypt.hash(rawKey, 12);
     const prefix = rawKey.substring(0, 8);
 
@@ -168,7 +153,7 @@ export async function POST(request: NextRequest) {
         prefix,
         name: name.trim(),
         description: description?.trim() || null,
-        adminId: authResult.user.id,
+        adminId: user.id,
         canRead,
         canWrite,
         canDelete,
@@ -200,17 +185,19 @@ export async function POST(request: NextRequest) {
         expiresAt: newApiKey[0].expiresAt,
         createdAt: newApiKey[0].createdAt,
       },
-      message: "API key created successfully. Make sure to copy it now as you won't be able to see it again.",
+      message:
+        "API key created successfully. Make sure to copy it now as you won't be able to see it again.",
     });
   } catch (error) {
     console.error("API Keys POST error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to create API key",
-        details: process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
+        details:
+          process.env.NODE_ENV === "development" && error instanceof Error
+            ? error.message
+            : undefined,
       },
       { status: 500 }
     );

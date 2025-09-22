@@ -357,21 +357,52 @@ export async function hasRequiredRole(
 /**
  * Get user info directly from JWT in cookies (no DB hit)
  */
+// export async function getUserFromCookies(request: NextRequest) {
+//   // Extract token from cookie
+//   const token = extractAuthToken(request);
+//   if (!token) return null;
+
+//   try {
+//     const jwtResult = await verifyJWT(token);
+//     if (!jwtResult.isValid || !jwtResult.payload) return null;
+
+//     return {
+//       id: jwtResult.payload.userId,
+//       email: jwtResult.payload.email,
+//       role: jwtResult.payload.role,
+//       name: jwtResult.payload.name || "",
+//       sessionId: jwtResult.payload.sessionId,
+//     };
+//   } catch (error) {
+//     console.error("Failed to get user from cookie:", error);
+//     return null;
+//   }
+// }
+
+/**
+ * Get the currently logged-in user from cookies.
+ * @param request NextRequest object
+ * @returns User object or null if not authenticated
+ */
 export async function getUserFromCookies(request: NextRequest) {
-  // Extract token from cookie
+  // Extract token from cookies
   const token = extractAuthToken(request);
   if (!token) return null;
 
   try {
+    // Verify the JWT
     const jwtResult = await verifyJWT(token);
+
     if (!jwtResult.isValid || !jwtResult.payload) return null;
 
+    // Return user info
     return {
       id: jwtResult.payload.userId,
       email: jwtResult.payload.email,
       role: jwtResult.payload.role,
       name: jwtResult.payload.name || "",
       sessionId: jwtResult.payload.sessionId,
+      
     };
   } catch (error) {
     console.error("Failed to get user from cookie:", error);

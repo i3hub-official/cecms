@@ -1,16 +1,17 @@
 // src/app/api/auth/validate/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const validationResult = await validateSession(request);
-
-    if (!validationResult.isValid || !validationResult.user) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
-          error: validationResult.error || "Invalid session",
+          error: "Invalid session",
         },
         { status: 401 }
       );
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.json({
       success: true,
-      user: validationResult.user,
+      user: user,
     });
 
     response.headers.set("Cache-Control", "no-store, max-age=0");

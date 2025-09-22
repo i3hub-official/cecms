@@ -2,17 +2,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db";
 import { adminSessions } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
-import { eq, and, gt } from "drizzle-orm";
+import { getUserFromCookies } from "@/lib/auth";
+import { eq, and, gt, ne } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       .from(adminSessions)
       .where(
         and(
-          authResult.user ? eq(adminSessions.adminId, authResult.user.id) : undefined,
+          eq(adminSessions.adminId, user.id),
           eq(adminSessions.isActive, true),
           gt(adminSessions.expiresAt, new Date())
         )
@@ -64,16 +64,16 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    if (!authResult.user || !authResult.sessionId) {
+    if (!user.sessionId) {
       return NextResponse.json(
         { success: false, error: "Invalid session data" },
         { status: 400 }
@@ -86,9 +86,9 @@ export async function DELETE(request: NextRequest) {
       .set({ isActive: false })
       .where(
         and(
-          eq(adminSessions.adminId, authResult.user.id),
+          eq(adminSessions.adminId, user.id),
           eq(adminSessions.isActive, true),
-          eq(adminSessions.sessionId, authResult.sessionId)
+          ne(adminSessions.sessionId, user.sessionId)
         )
       );
 

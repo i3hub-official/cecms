@@ -3,15 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
 import { apiKeys, adminActivities } from "@/lib/server/db/schema";
 import { eq, and } from "drizzle-orm";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 import { hashToken, generateSecureToken } from "@/lib/utils/tokens";
 
 // GET - Fetch all API keys for the authenticated user
 export async function GET(request: NextRequest) {
   try {
-    const session = await validateSession(request);
-
-    if (!session.isValid || !session.user) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -35,9 +35,7 @@ export async function GET(request: NextRequest) {
         usageCount: apiKeys.usageCount,
       })
       .from(apiKeys)
-      .where(
-        and(eq(apiKeys.adminId, session.user.id), eq(apiKeys.isActive, true))
-      )
+      .where(and(eq(apiKeys.adminId, user.id), eq(apiKeys.isActive, true)))
       .orderBy(apiKeys.createdAt);
 
     return NextResponse.json({
@@ -56,9 +54,9 @@ export async function GET(request: NextRequest) {
 // POST - Create a new API key
 export async function POST(request: NextRequest) {
   try {
-    const session = await validateSession(request);
-
-    if (!session.isValid || !session.user) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -103,7 +101,7 @@ export async function POST(request: NextRequest) {
         prefix,
         name: name.trim(),
         description: description?.trim() || null,
-        adminId: session.user.id,
+        adminId: user.id,
         canRead,
         canWrite,
         canDelete,
@@ -120,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Log admin activity
     await db.insert(adminActivities).values({
       id: crypto.randomUUID(),
-      adminId: session.user.id,
+      adminId: user.id,
       activity: `API_KEY_CREATED: ${name}`,
       timestamp: new Date(),
     });
@@ -149,9 +147,9 @@ export async function POST(request: NextRequest) {
 // DELETE - Revoke an API key
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await validateSession(request);
-
-    if (!session.isValid || !session.user) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -168,9 +166,7 @@ export async function DELETE(request: NextRequest) {
     const [apiKey] = await db
       .select()
       .from(apiKeys)
-      .where(
-        and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, session.user.id))
-      );
+      .where(and(eq(apiKeys.id, apiKeyId), eq(apiKeys.adminId, user.id)));
 
     if (!apiKey) {
       return NextResponse.json({ error: "API key not found" }, { status: 404 });
@@ -189,7 +185,7 @@ export async function DELETE(request: NextRequest) {
     // Log admin activity
     await db.insert(adminActivities).values({
       id: crypto.randomUUID(),
-      adminId: session.user.id,
+      adminId: user.id,
       activity: `API_KEY_REVOKED: ${apiKey.name}`,
       timestamp: new Date(),
     });

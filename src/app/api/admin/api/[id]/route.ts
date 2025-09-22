@@ -1,9 +1,8 @@
-
 // src/app/api/keys/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db";
 import { apiKeys, apiUsageLogs } from "@/lib/server/db/schema";
-import { validateSession } from "@/lib/auth";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq, and, desc } from "drizzle-orm";
 
 // GET - Get specific API key details
@@ -14,19 +13,12 @@ export async function GET(
   try {
     const { id: keyId } = await params;
 
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
-      );
-    }
-
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
       );
     }
 
@@ -52,20 +44,16 @@ export async function GET(
         usageCount: apiKeys.usageCount,
       })
       .from(apiKeys)
-      .where(
-        and(
-          eq(apiKeys.id, keyId),
-          eq(apiKeys.adminId, authResult.user.id)
-        )
-      )
+      .where(and(eq(apiKeys.id, keyId), eq(apiKeys.adminId, user.id)))
       .limit(1);
 
     if (apiKey.length === 0) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: "API key not found",
-          details: "The specified API key does not exist or you don't have permission to access it"
+          details:
+            "The specified API key does not exist or you don't have permission to access it",
         },
         { status: 404 }
       );
@@ -95,12 +83,13 @@ export async function GET(
   } catch (error) {
     console.error("API Key GET error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to fetch API key details",
-        details: process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
+        details:
+          process.env.NODE_ENV === "development" && error instanceof Error
+            ? error.message
+            : undefined,
       },
       { status: 500 }
     );
@@ -115,19 +104,12 @@ export async function PUT(
   try {
     const { id: keyId } = await params;
 
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
-      );
-    }
-
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
       );
     }
 
@@ -135,20 +117,16 @@ export async function PUT(
     const existingKey = await db
       .select()
       .from(apiKeys)
-      .where(
-        and(
-          eq(apiKeys.id, keyId),
-          eq(apiKeys.adminId, authResult.user.id)
-        )
-      )
+      .where(and(eq(apiKeys.id, keyId), eq(apiKeys.adminId, user.id)))
       .limit(1);
 
     if (existingKey.length === 0) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: "API key not found",
-          details: "The specified API key does not exist or you don't have permission to access it"
+          details:
+            "The specified API key does not exist or you don't have permission to access it",
         },
         { status: 404 }
       );
@@ -179,7 +157,10 @@ export async function PUT(
 
       if (name.length > 100) {
         return NextResponse.json(
-          { success: false, error: "API key name must be less than 100 characters" },
+          {
+            success: false,
+            error: "API key name must be less than 100 characters",
+          },
           { status: 400 }
         );
       }
@@ -191,7 +172,7 @@ export async function PUT(
           .from(apiKeys)
           .where(
             and(
-              eq(apiKeys.adminId, authResult.user.id),
+              eq(apiKeys.adminId, user.id),
               eq(apiKeys.name, name.trim()),
               eq(apiKeys.isActive, true)
             )
@@ -200,7 +181,10 @@ export async function PUT(
 
         if (duplicateName.length > 0) {
           return NextResponse.json(
-            { success: false, error: "An API key with this name already exists" },
+            {
+              success: false,
+              error: "An API key with this name already exists",
+            },
             { status: 409 }
           );
         }
@@ -239,16 +223,20 @@ export async function PUT(
     }
 
     const updateData: UpdateData = { updatedAt: new Date() };
-    
+
     if (name !== undefined) updateData.name = name.trim();
-    if (description !== undefined) updateData.description = description?.trim() || null;
+    if (description !== undefined)
+      updateData.description = description?.trim() || null;
     if (canRead !== undefined) updateData.canRead = canRead;
     if (canWrite !== undefined) updateData.canWrite = canWrite;
     if (canDelete !== undefined) updateData.canDelete = canDelete;
     if (canManageKeys !== undefined) updateData.canManageKeys = canManageKeys;
-    if (allowedEndpoints !== undefined) updateData.allowedEndpoints = allowedEndpoints;
-    if (rateLimit !== undefined) updateData.rateLimit = Math.max(1, Math.min(10000, rateLimit));
-    if (rateLimitPeriod !== undefined) updateData.rateLimitPeriod = Math.max(1, Math.min(3600, rateLimitPeriod));
+    if (allowedEndpoints !== undefined)
+      updateData.allowedEndpoints = allowedEndpoints;
+    if (rateLimit !== undefined)
+      updateData.rateLimit = Math.max(1, Math.min(10000, rateLimit));
+    if (rateLimitPeriod !== undefined)
+      updateData.rateLimitPeriod = Math.max(1, Math.min(3600, rateLimitPeriod));
     if (expirationDate !== undefined) updateData.expiresAt = expirationDate;
 
     // Update API key
@@ -256,7 +244,9 @@ export async function PUT(
       .update(apiKeys)
       .set({
         ...updateData,
-        allowedEndpoints: updateData.allowedEndpoints ? JSON.stringify(updateData.allowedEndpoints) : undefined,
+        allowedEndpoints: updateData.allowedEndpoints
+          ? JSON.stringify(updateData.allowedEndpoints)
+          : undefined,
       })
       .where(eq(apiKeys.id, keyId))
       .returning();
@@ -285,12 +275,13 @@ export async function PUT(
   } catch (error) {
     console.error("API Key PUT error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to update API key",
-        details: process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
+        details:
+          process.env.NODE_ENV === "development" && error instanceof Error
+            ? error.message
+            : undefined,
       },
       { status: 500 }
     );
@@ -305,19 +296,12 @@ export async function DELETE(
   try {
     const { id: keyId } = await params;
 
-    // Validate admin session
-    const authResult = await validateSession(request);
-    if (!authResult.isValid) {
+    // Get user from cookies
+    const user = await getUserFromCookies(request);
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", details: authResult.error },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
-      );
-    }
-
-    if (!authResult.user) {
-      return NextResponse.json(
-        { success: false, error: "Invalid user session" },
-        { status: 400 }
       );
     }
 
@@ -325,20 +309,16 @@ export async function DELETE(
     const apiKey = await db
       .select()
       .from(apiKeys)
-      .where(
-        and(
-          eq(apiKeys.id, keyId),
-          eq(apiKeys.adminId, authResult.user.id)
-        )
-      )
+      .where(and(eq(apiKeys.id, keyId), eq(apiKeys.adminId, user.id)))
       .limit(1);
 
     if (apiKey.length === 0) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: "API key not found",
-          details: "The specified API key does not exist or you don't have permission to access it"
+          details:
+            "The specified API key does not exist or you don't have permission to access it",
         },
         { status: 404 }
       );
@@ -347,7 +327,7 @@ export async function DELETE(
     // Revoke the API key (soft delete)
     await db
       .update(apiKeys)
-      .set({ 
+      .set({
         isActive: false,
         revokedAt: new Date(),
         updatedAt: new Date(),
@@ -361,12 +341,13 @@ export async function DELETE(
   } catch (error) {
     console.error("API Key DELETE error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to revoke API key",
-        details: process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
+        details:
+          process.env.NODE_ENV === "development" && error instanceof Error
+            ? error.message
+            : undefined,
       },
       { status: 500 }
     );
