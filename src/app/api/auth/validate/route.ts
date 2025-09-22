@@ -1,28 +1,21 @@
-// src/app/api/auth/validate/route.ts
+// src/app/api/auth/validate/route.ts - For full DB validation
 import { NextRequest, NextResponse } from "next/server";
-import { validateSession } from "@/lib/auth";
+import { validateSession } from "@/lib/auth"; // This can use DB (Node.js runtime)
 
 export async function GET(request: NextRequest) {
   try {
-    const validationResult = await validateSession(request);
-
-    if (!validationResult.isValid) {
-      return NextResponse.json(
-        { success: false, error: validationResult.error },
-        { status: 401 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      user: validationResult.user,
-      sessionId: validationResult.sessionId,
-    });
+    const session = await validateSession(request);
+    return NextResponse.json(session);
   } catch (error) {
-    console.error("Validation error:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Validation failed" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await validateSession(request);
+    return NextResponse.json(session);
+  } catch (error) {
+    return NextResponse.json({ error: "Validation failed" }, { status: 500 });
   }
 }

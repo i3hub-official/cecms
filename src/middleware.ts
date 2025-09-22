@@ -1,32 +1,45 @@
-// File: src/middleware.ts
+// src/middleware.ts - FIXED VERSION (Edge compatible)
 import { NextRequest, NextResponse } from "next/server";
-import { chainMiddlewares } from "@/lib/middleware/middlewareChain";
+import {
+  chainMiddlewares,
+  withPathsEdge,
+} from "@/lib/middleware/middlewareChain-edge";
 import { withSecurityHeaders } from "@/lib/middleware/securityHeaders";
 import { withRequestLogging } from "@/lib/middleware/requestLogging";
 import { withRateLimiter } from "@/lib/middleware/rateLimiting";
 import { withCors } from "@/lib/middleware/withCors";
 
+// ========= Public Path Configuration =========
+const publicPaths = [
+  "/",
+  "/auth/signin",
+  "/auth/signup",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/api/auth/*",
+  "/api/health",
+  "/api/centers-lookup",
+];
+
 // ========= Matcher Config =========
 export const config = {
   matcher: [
-    "/api/:path*", 
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|robots.txt|health).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
   ],
 };
 
-// ========= Middleware =========
+// ========= Main Middleware =========
 export async function middleware(request: NextRequest): Promise<Response> {
   try {
-    // Special handling for centers-lookup API (CORS only)
+    // Special handling for centers-lookup API (public CORS)
     if (request.nextUrl.pathname.startsWith("/api/centers-lookup")) {
       const response = NextResponse.next();
       response.headers.set("Access-Control-Allow-Origin", "*");
-      response.headers.set("Access-Control-Allow-Methods", "GET");
+      response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
       response.headers.set("Access-Control-Allow-Headers", "Content-Type");
       return response;
     }
 
-    // Otherwise, run the full middleware chain
     return await chainMiddlewares(request, [
       withCors,
       withSecurityHeaders,
@@ -34,13 +47,14 @@ export async function middleware(request: NextRequest): Promise<Response> {
         await withRequestLogging(req);
         return NextResponse.next();
       },
-      withRateLimiter,
+      async (req) => await withRateLimiter(req),
+      withPathsEdge(publicPaths), // ✅ Edge-compatible auth
     ]);
   } catch (error) {
     console.error("Middleware chain error:", error);
     return new Response("Internal Server Error", {
       status: 500,
-      headers: { "Access-Control-Allow-Origin": "*" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 }

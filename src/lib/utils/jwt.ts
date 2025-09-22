@@ -11,6 +11,7 @@ export interface JWTClaims {
   email: string;
   role: string;
   sessionId: string;
+  name?: string;
 }
 
 export interface JWTVerificationResult {
