@@ -14,11 +14,15 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   private constructor() {
-    // Initialize nodemailer transporter
+    const port = parseInt(process.env.SMTP_PORT || "587");
+    const secure = process.env.SMTP_SECURE
+      ? process.env.SMTP_SECURE === "true"
+      : port === 465; // default to SSL for 465, TLS otherwise
+
     this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || "587"),
-      secure: process.env.SMTP_SECURE === "false",
+      port,
+      secure, // true for SSL, false for TLS
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD,
@@ -47,21 +51,39 @@ export class EmailService {
     }
   }
 
+  async sendMail(options: EmailOptions): Promise<void> {
+    try {
+      await this.transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: options.to,
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+      });
+
+      logger.info(`Email sent to ${options.to} successfully`);
+    } catch (error) {
+      logger.error("Failed to send email", {
+        error: error instanceof Error ? error.message : String(error),
+        to: options.to,
+        subject: options.subject,
+      });
+      throw error;
+    }
+  }
+
   /**
    * Get the appropriate base URL for links
    * Uses private LAN URL for development, public URL for production
    */
-  private getBaseUrl(): string {
-    // Use private LAN URL for development if available
+  getBaseUrl(): string {
     if (
       process.env.NODE_ENV !== "development" &&
       process.env.NEXT_PUBLIC_APP_URL
     ) {
       return process.env.NEXT_PUBLIC_APP_URL;
     }
-
-    // Fall back to public URL
-    return process.env.NEXT_PRIVATE_APP_URL || "http://192.168.0.159:3002";
+    return process.env.NEXT_PRIVATE_APP_URL || "https://192.168.0.159:3002";
   }
 
   async sendPasswordResetEmail(
@@ -103,41 +125,6 @@ export class EmailService {
       return false;
     }
   }
-
-  // async sendPasswordResetEmail(
-  //   email: string,
-  //   token: string,
-  //   userId: string
-  // ): Promise<boolean> {
-  //   try {
-  //     const baseUrl = this.getBaseUrl();
-  //     // Don't include token in URL anymore
-  //     const resetLink = `${baseUrl}/auth/reset-password`;
-
-  //     const emailOptions: EmailOptions = {
-  //       to: email,
-  //       subject: "Password Reset Request",
-  //       html: this.getPasswordResetTemplate(token, resetLink), // Pass token to template
-  //       text: `Please use the following token to reset your password: ${token}\n\nGo to: ${resetLink}`,
-  //     };
-
-  //     const result = await this.sendEmail(emailOptions);
-
-  //     if (result) {
-  //       logger.info("Password reset email sent", {
-  //         email,
-  //         userId,
-  //         messageId: result.messageId,
-  //       });
-  //       return true;
-  //     }
-
-  //     return false;
-  //   } catch (err) {
-  //     logger.error("Failed to send password reset email");
-  //     return false;
-  //   }
-  // }
 
   async sendPasswordChangedEmail(
     email: string,
@@ -247,7 +234,7 @@ export class EmailService {
     }
   }
 
-  /**
+ /**
    * Send email verification email
    */
   async sendVerificationEmail(
@@ -390,60 +377,6 @@ export class EmailService {
       </html>
     `;
   }
-
-
-//   private getPasswordResetTemplate(token: string, resetLink: string): string {
-//   return `
-//     <!DOCTYPE html>
-//     <html>
-//     <head>
-//       <meta charset="utf-8">
-//       <style>
-//         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-//         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-//         .token-box { 
-//           background-color: #f8f9fa; 
-//           padding: 15px; 
-//           border: 2px dashed #007bff;
-//           border-radius: 5px;
-//           margin: 20px 0;
-//           font-family: monospace;
-//           font-size: 16px;
-//           text-align: center;
-//         }
-//         .button { 
-//           display: inline-block; 
-//           padding: 12px 24px; 
-//           background-color: #007bff; 
-//           color: white; 
-//           text-decoration: none; 
-//           border-radius: 4px; 
-//         }
-//       </style>
-//     </head>
-//     <body>
-//       <div class="container">
-//         <h2>Password Reset Request</h2>
-//         <p>You requested to reset your password. Here is your reset token:</p>
-        
-//         <div class="token-box">
-//           <strong>${token}</strong>
-//         </div>
-        
-//         <p>Click the button below to go to the password reset page:</p>
-//         <p><a href="${resetLink}" class="button">Reset Password</a></p>
-        
-//         <p><strong>Security Notice:</strong></p>
-//         <ul>
-//           <li>This token will expire in 1 hour</li>
-//           <li>Do not share this token with anyone</li>
-//           <li>You will need to enter this token on the reset page</li>
-//         </ul>
-//       </div>
-//     </body>
-//     </html>
-//   `;
-// }
 
   private getVerificationTemplate(
     userName: string,
