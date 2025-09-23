@@ -102,12 +102,6 @@ export class EmailService {
     if (process.env.NODE_ENV === "development") {
       return process.env.NEXT_PRIVATE_APP_URL || "https://192.168.0.159:3002";
     }
-
-    logger.info("🔧 EmailService.getBaseUrl() debug:");
-    logger.info("NODE_ENV:", process.env.NODE_ENV);
-    logger.info("NEXT_PRIVATE_APP_URL:", process.env.NEXT_PRIVATE_APP_URL);
-    logger.info("NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL);
-
     // In production, use the public URL
     return process.env.NEXT_PUBLIC_APP_URL || "https://cecms.vercel.app";
   }
