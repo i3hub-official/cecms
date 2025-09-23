@@ -90,11 +90,12 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
     });
 
-    // Send verification email
+    // Send verification email - pass userId as the fourth parameter
     const emailSent = await emailService.sendVerificationEmail(
       admin.email,
       verificationToken,
-      admin.id
+      admin.name,
+      admin.id // Add userId parameter
     );
 
     if (!emailSent) {

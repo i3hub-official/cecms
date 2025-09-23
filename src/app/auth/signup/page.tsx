@@ -168,7 +168,7 @@ export default function SignUpPage() {
       if (response.ok) {
         setError(""); // Clear any existing errors
         // You could show a success message here
-        setSuccess(data.success || "Verification email sent successfully! Please check your inbox.");
+        notifySuccess(data.success || "Verification email sent successfully! Please check your inbox.");
       } else {
         setError(data.error || "Failed to resend verification email");
       }

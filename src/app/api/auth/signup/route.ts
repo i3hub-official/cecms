@@ -278,9 +278,10 @@ export async function POST(request: NextRequest) {
     // Send verification email
     try {
       const emailSent = await emailService.sendVerificationEmail(
-        admin.email,
+        admin.id,
         verificationToken,
-        admin.id
+        admin.name,
+        admin.email
       );
 
       if (!emailSent) {
