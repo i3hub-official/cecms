@@ -21,7 +21,9 @@ const publicPaths = [
   "/api/auth/validate-reset-token",
   "/api/auth/*",
   "/api/health",
-  "/api/centers-lookup",  
+  "/api/centers-lookup",
+  "/favicon.ico",
+  "/apis/*",
 ];
 
 // ========= Matcher Config =========
