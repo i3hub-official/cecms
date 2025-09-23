@@ -22,6 +22,8 @@ export default function SignInPage() {
   const [resendLoading, setResendLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [autoSending, setAutoSending] = useState(false);
   const [requiresVerification, setRequiresVerification] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
 
@@ -59,50 +61,94 @@ export default function SignInPage() {
     }));
     if (error) setError(""); // clear error when user starts typing
     if (requiresVerification) setRequiresVerification(false); // reset verification state when user types
+    if (resendSuccess) setResendSuccess(false); // clear resend success when user types
+    if (autoSending) setAutoSending(false); // clear auto-sending state when user types
+  };
+
+  const autoSendVerificationEmail = async (email: string) => {
+    setAutoSending(true);
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setResendSuccess(true);
+      } else {
+        if (data.alreadyVerified) {
+          // User's email is already verified, they can sign in now
+          setRequiresVerification(false);
+          notifySuccess("Your email is already verified! You can now sign in.");
+        } else {
+          // Don't show error for auto-send, just silently fail
+          // User can still manually resend if needed
+        }
+      }
+    } catch (err) {
+      // Silently handle auto-send errors
+      // User can still manually resend if needed
+    } finally {
+      setAutoSending(false);
+    }
   };
 
   const handleResendVerification = async () => {
-  setResendLoading(true);
-  setError("");
+    setResendLoading(true);
+    setError("");
+    setResendSuccess(false);
 
-  try {
-    const response = await fetch("/api/auth/resend-verification", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email: unverifiedEmail }),
-    });
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      setError(""); // Clear any existing errors
-      setSuccess(data.message || "Verification email sent successfully!");
-    } else {
-      if (data.alreadyVerified) {
-        // User's email is already verified, they can sign in now
-        setError(data.error);
-        setRequiresVerification(false); // Remove the verification block
-        setSuccess(data.success || "Your email is verified! You can now sign in.");
-      } else if (data.retryAfter) {
-        setError(data.error);
+      if (response.ok) {
+        setError(""); // Clear any existing errors
+        setResendSuccess(true);
+        // Don't show "verification email sent successfully" as an error-style message
       } else {
-        setError(data.error || "Failed to resend verification email");
+        if (data.alreadyVerified) {
+          // User's email is already verified, they can sign in now
+          setError("");
+          setRequiresVerification(false); // Remove the verification block
+          notifySuccess("Your email is already verified! You can now sign in.");
+        } else if (data.retryAfter) {
+          setError(
+            `Please wait ${Math.ceil(
+              data.retryAfter / 60
+            )} minutes before requesting another verification email.`
+          );
+        } else {
+          setError(data.error || "Failed to resend verification email");
+        }
       }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setResendLoading(false);
     }
-  } catch (err) {
-    setError("Network error. Please try again.");
-  } finally {
-    setResendLoading(false);
-  }
-};
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
     setRequiresVerification(false);
+    setResendSuccess(false);
+    setAutoSending(false);
 
     // Client-side validation
     if (!formData.email || !formData.password) {
@@ -135,9 +181,11 @@ export default function SignInPage() {
       } else {
         if (data.requiresVerification) {
           // Handle unverified email case
-          setError(data.error);
+          setError(""); // Don't show the error in the error section
           setRequiresVerification(true);
-          setUnverifiedEmail(data.email);
+          setUnverifiedEmail(data.email || formData.email);
+          // Auto-send verification email
+          autoSendVerificationEmail(data.email || formData.email);
         } else {
           setError(data.error || "Sign in failed");
         }
@@ -151,7 +199,7 @@ export default function SignInPage() {
     }
   };
 
-  const isDisabled = loading || success || resendLoading;
+  const isDisabled = loading || success || resendLoading || autoSending;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
@@ -189,7 +237,7 @@ export default function SignInPage() {
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            {error && !requiresVerification && (
+            {error && (
               <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-center space-x-3 animate-in slide-in-from-top-2 duration-300">
                 <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
                 <span className="text-sm text-destructive">{error}</span>
@@ -204,14 +252,37 @@ export default function SignInPage() {
                     <p className="text-sm text-amber-800 dark:text-amber-300 font-medium mb-1">
                       Email verification required
                     </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">
-                      Please verify your email address before signing in.
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">
+                      Please check your email and click the verification link
+                      before signing in.
                     </p>
+
+                    {autoSending && (
+                      <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 rounded-lg p-2 mb-2">
+                        <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center space-x-1">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                          <span>Sending verification email...</span>
+                        </p>
+                      </div>
+                    )}
+
+                    {resendSuccess && !autoSending && (
+                      <div className="bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800/50 rounded-lg p-2 mb-2">
+                        <p className="text-xs text-green-700 dark:text-green-300 flex items-center space-x-1">
+                          <CheckCircle className="h-3 w-3" />
+                          <span>
+                            Verification email sent successfully! Please check
+                            your inbox.
+                          </span>
+                        </p>
+                      </div>
+                    )}
+
                     <div className="flex items-center space-x-2">
                       <button
                         type="button"
                         onClick={handleResendVerification}
-                        disabled={resendLoading}
+                        disabled={resendLoading || resendSuccess || autoSending}
                         className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-3 py-1 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {resendLoading ? (
@@ -219,6 +290,8 @@ export default function SignInPage() {
                             <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-600 dark:border-amber-400"></div>
                             <span>Sending...</span>
                           </span>
+                        ) : resendSuccess ? (
+                          "Email sent!"
                         ) : (
                           "Resend verification email"
                         )}
@@ -363,15 +436,15 @@ export default function SignInPage() {
                     : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                 }`}
               >
-                {success ? (
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4" />
-                    <span>Success! Redirecting...</span>
-                  </div>
-                ) : loading ? (
+                {loading ? (
                   <div className="flex items-center space-x-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
                     <span>Signing in...</span>
+                  </div>
+                ) : success ? (
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Success! Redirecting...</span>
                   </div>
                 ) : (
                   <span className="group-hover:scale-105 transition-transform duration-200">
