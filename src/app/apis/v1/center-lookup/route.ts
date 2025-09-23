@@ -12,7 +12,7 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization");
+    const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       const err = errorResponse(
         ErrorCodes.UNAUTHORIZED,
