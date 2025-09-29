@@ -60,7 +60,9 @@ export async function GET(request: NextRequest) {
         ) || sql`false`
       );
     }
-    const finalWhere = whereConditions.length ? and(...whereConditions) : sql`true`;
+    const finalWhere = whereConditions.length
+      ? and(...whereConditions)
+      : sql`true`;
 
     const [centersData, totalResult] = await Promise.all([
       db.query.centers.findMany({
@@ -114,24 +116,53 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Helper function to generate center number
-async function generateCenterNumber(state: string, lga: string): Promise<string> {
-  // Get the current count of centers for this state/LGA combination
-  const [result] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(centers)
-    .where(and(eq(centers.state, state), eq(centers.lga, lga)));
+// Helper function to generate center number per state/LGA (1-999)
+async function generateCenterNumber(
+  state: string,
+  lga: string
+): Promise<string> {
+  // Extract first two letters of state and convert to uppercase
+  const stateCode =
+    state.length >= 2
+      ? state.substring(0, 2).toUpperCase()
+      : state.padEnd(2, "X").toUpperCase();
 
-  const count = result?.count || 0;
-  const sequenceNumber = (count + 1).toString().padStart(3, "0");
-  
-  // Get state code (first 2 letters of state, uppercase)
-  const stateCode = state.substring(0, 2).toUpperCase();
-  
-  // Get LGA code (first 2 letters of LGA, uppercase)
-  const lgaCode = lga.substring(0, 2).toUpperCase();
-  
-  return `${stateCode}${lgaCode}${sequenceNumber}`;
+  // Extract first two letters of LGA and convert to uppercase
+  const lgaCode =
+    lga.length >= 2
+      ? lga.substring(0, 2).toUpperCase()
+      : lga.padEnd(2, "X").toUpperCase();
+
+  const prefix = `${stateCode}${lgaCode}`;
+
+  // Find the maximum sequence number for this specific state and LGA combination
+  const [maxResult] = await db
+    .select({
+      maxSequence: sql<number>`MAX(CAST(SUBSTRING(number, 5, 3) AS INTEGER))`,
+    })
+    .from(centers)
+    .where(
+      and(
+        eq(centers.state, state),
+        eq(centers.lga, lga),
+        sql`number LIKE ${prefix} || '%'`
+      )
+    );
+
+  // Determine the next sequence number
+  const nextSequence = (maxResult?.maxSequence || 0) + 1;
+
+  // Ensure we don't exceed 999
+  if (nextSequence > 999) {
+    throw new Error(
+      `Maximum number of centers (999) reached for ${state}, ${lga}`
+    );
+  }
+
+  // Format the sequence number as 3 digits
+  const sequenceNumber = nextSequence.toString().padStart(3, "0");
+
+  return `${prefix}${sequenceNumber}`;
 }
 
 // POST /api/centers
@@ -162,7 +193,13 @@ export async function POST(request: NextRequest) {
     const [existingCenter] = await db
       .select()
       .from(centers)
-      .where(and(eq(centers.name, name), eq(centers.state, state), eq(centers.lga, lga)))
+      .where(
+        and(
+          eq(centers.name, name),
+          eq(centers.state, state),
+          eq(centers.lga, lga)
+        )
+      )
       .limit(1);
 
     if (existingCenter) {
@@ -172,7 +209,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate center number
+    // Generate center number per state/LGA (1-999)
     const centerNumber = await generateCenterNumber(state, lga);
 
     // Use a transaction to create both the center and the admin-school relationship
@@ -231,12 +268,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(centerWithAdminNames, { status: 201 });
   } catch (error) {
     console.error("Centers POST API error:", error);
+
+    // Handle specific error for exceeding maximum centers
+    if (
+      error instanceof Error &&
+      error.message.includes("Maximum number of centers")
+    ) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     return NextResponse.json(
       { error: "Failed to create center" },
       { status: 500 }
     );
   }
 }
+
 // // src/app/api/centers/route.ts
 // import { NextRequest, NextResponse } from "next/server";
 // import { db } from "@/lib/server/db/index";
