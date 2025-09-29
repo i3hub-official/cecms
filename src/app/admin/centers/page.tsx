@@ -80,7 +80,6 @@ const api = {
       }
 
       if (lgaMap.has(state)) return lgaMap.get(state) as string[];
-
       const res = await fetch(
         `https://apinigeria.vercel.app/api/v1/lga?state=${encodeURIComponent(
           state
@@ -992,14 +991,3 @@ const showConfirmation = (options: Omit<ConfirmationModalState, "isOpen">) => {
     </div>
   );
 }
-
-// "use client";
-// import CenterForm from "@/app/admin/components/CenterForm";
-
-// export default function CenterPage() {
-//   return (
-//     <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto p-4">
-//       <CenterForm />
-//     </div>
-//   );
-// }
