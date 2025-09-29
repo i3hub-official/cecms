@@ -1,1 +1,0 @@
-ALTER TABLE "admins" ADD COLUMN "lastLogin" timestamp DEFAULT now() NOT NULL;
