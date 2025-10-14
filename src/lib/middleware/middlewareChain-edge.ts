@@ -14,7 +14,10 @@ export type RouteConfig = {
   apiAuth?: boolean;
 };
 
-function mergeResponses(base: NextResponse, nextRes: NextResponse): NextResponse {
+function mergeResponses(
+  base: NextResponse,
+  nextRes: NextResponse
+): NextResponse {
   nextRes.headers.forEach((value, key) => {
     base.headers.set(key, value);
   });
@@ -34,7 +37,7 @@ export async function chainMiddlewares(
 
   for (const mw of middlewares) {
     const nextRes = await mw(req, response);
-    
+
     if (nextRes.redirected || nextRes.status !== 200) {
       return mergeResponses(nextRes, response);
     }
@@ -67,7 +70,7 @@ export function withPathsEdge(publicPaths: string[]) {
 
     if (!sessionResult.isValid) {
       const isApiRoute = pathname.startsWith("/api/");
-      
+
       if (isApiRoute) {
         return new NextResponse(
           JSON.stringify({ error: sessionResult.error || "Unauthorized" }),
@@ -77,8 +80,8 @@ export function withPathsEdge(publicPaths: string[]) {
           }
         );
       } else {
-        const loginUrl = new URL("/auth/login", req.url);
-        loginUrl.searchParams.set("callbackUrl", pathname);
+        const loginUrl = new URL("/auth/login");
+        // loginUrl.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(loginUrl);
       }
     }

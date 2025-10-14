@@ -15,24 +15,40 @@ import { relations } from "drizzle-orm";
 // ------------------------
 // AdminSchool Model
 // ------------------------
-export const adminSchool = pgTable(
-  "admin_school",
+export const adminSchools = pgTable(
+  "admin_schools",
   {
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    adminId: text("admin_id")
-      .notNull()
-      .references(() => admins.id, { onDelete: "cascade" }),
-    schoolId: text("school_id")
-      .notNull()
-      .references(() => centers.id, { onDelete: "cascade" }),
-    isActive: boolean("is_active").notNull().default(true),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    adminId: text("admin_id").references(() => admins.id, {
+      onDelete: "set null",
+    }),
+    schoolId: text("school_id").references(() => centers.id, {
+      onDelete: "set null",
+    }),
+    assignedAt: timestamp("assigned_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => ({
-    uniqueConstraint: unique().on(table.adminId, table.schoolId),
+    // ensures no duplicate admin-school pair
+    adminSchoolUnique: uniqueIndex("admin_school_unique").on(
+      table.adminId,
+      table.schoolId
+    ),
+
+    // ensures only one active admin per school
+    oneActiveAdminPerSchool: uniqueIndex("one_active_admin_per_school").on(
+      table.schoolId,
+      table.isActive
+    ),
+
+    schoolIdx: index("admin_school_school_idx").on(table.schoolId),
+    adminIdx: index("admin_school_admin_idx").on(table.adminId),
+    activeIdx: index("admin_school_active_idx").on(table.isActive),
   })
 );
 
@@ -476,13 +492,13 @@ export const disputeCenters = pgTable(
 // ------------------------
 // Relations
 // ------------------------
-export const adminSchoolRelations = relations(adminSchool, ({ one }) => ({
-  admin: one(admins, {
-    fields: [adminSchool.adminId],
+export const adminSchoolsRelations = relations(adminSchools, ({ one }) => ({
+  adminUser: one(admins, {
+    fields: [adminSchools.adminId],
     references: [admins.id],
   }),
   school: one(centers, {
-    fields: [adminSchool.schoolId],
+    fields: [adminSchools.schoolId],
     references: [centers.id],
   }),
 }));
@@ -494,7 +510,7 @@ export const adminRelations = relations(admins, ({ many }) => ({
   adminActivities: many(adminActivities),
   createdCenters: many(centers, { relationName: "center_created_by" }),
   modifiedCenters: many(centers, { relationName: "center_modified_by" }),
-  adminSchools: many(adminSchool),
+  adminSchools: many(adminSchools),
   apiKeys: many(apiKeys),
 }));
 
@@ -509,9 +525,9 @@ export const centerRelations = relations(centers, ({ one }) => ({
     references: [admins.id],
     relationName: "center_modified_by",
   }),
-  adminSchool: one(adminSchool, {
+  adminSchool: one(adminSchools, {
     fields: [centers.id],
-    references: [adminSchool.schoolId],
+    references: [adminSchools.schoolId],
   }),
 }));
 
