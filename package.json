@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:test": "tsx test-connection.ts",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev-server": "node dev-server.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
