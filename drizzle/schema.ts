@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm"
 
 
 
-export const adminSchools = pgTable("admin_schools", {
+export const adminSchool = pgTable("admin_schools", {
 	id: text().primaryKey().notNull(),
 	adminId: text("admin_id"),
 	schoolId: text("school_id"),

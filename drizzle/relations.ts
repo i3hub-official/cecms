@@ -1,19 +1,19 @@
 import { relations } from "drizzle-orm/relations";
-import { admins, adminSchools, centers, adminSessions, apiKeys, apiRateLimits, apiUsageLogs, auditLogs, disputeCenters, emailVerifications, adminActivities, passwordResets } from "./schema";
+import { admins, adminSchool, centers, adminSessions, apiKeys, apiRateLimits, apiUsageLogs, auditLogs, disputeCenters, emailVerifications, adminActivities, passwordResets } from "./schema";
 
-export const adminSchoolsRelations = relations(adminSchools, ({one}) => ({
+export const adminSchoolRelations = relations(adminSchool, ({one}) => ({
 	admin: one(admins, {
-		fields: [adminSchools.adminId],
+		fields: [adminSchool.adminId],
 		references: [admins.id]
 	}),
 	center: one(centers, {
-		fields: [adminSchools.schoolId],
+		fields: [adminSchool.schoolId],
 		references: [centers.id]
 	}),
 }));
 
 export const adminsRelations = relations(admins, ({many}) => ({
-	adminSchools: many(adminSchools),
+	adminSchool: many(adminSchool),
 	adminSessions: many(adminSessions),
 	apiKeys: many(apiKeys),
 	auditLogs: many(auditLogs),
@@ -38,7 +38,7 @@ export const adminsRelations = relations(admins, ({many}) => ({
 }));
 
 export const centersRelations = relations(centers, ({one, many}) => ({
-	adminSchools: many(adminSchools),
+	adminSchool: many(adminSchool),
 	admin_createdById: one(admins, {
 		fields: [centers.createdById],
 		references: [admins.id],

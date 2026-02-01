@@ -1,5 +1,5 @@
 import { db } from "@/lib/server/db"; // adjust to your drizzle client
-import { adminSchools } from "@/lib/server/db/schema";
+import { adminSchool } from "@/lib/server/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 
 export class AdminSchoolService {
@@ -23,10 +23,10 @@ export class AdminSchoolService {
 
     // Step 1: Check if there's an existing active assignment
     const dbTx = tx as typeof db;
-    const existing = await dbTx.query.adminSchools.findFirst({
+    const existing = await dbTx.query.adminSchool.findFirst({
       where: and(
-        eq(adminSchools.schoolId, schoolId),
-        eq(adminSchools.isActive, true)
+        eq(adminSchool.schoolId, schoolId),
+        eq(adminSchool.isActive, true)
       ),
     });
 
@@ -40,15 +40,15 @@ export class AdminSchoolService {
       // Use the transaction object that supports .update
       const typedTx = tx as typeof db;
       await typedTx
-        .update(adminSchools)
+        .update(adminSchool)
         .set({ isActive: false, revokedAt: new Date() })
-        .where(eq(adminSchools.id, existing.id));
+        .where(eq(adminSchool.id, existing.id));
     }
 
     // Step 3: Create new assignment
     const typedTx = tx as typeof db;
     const [inserted] = await typedTx
-      .insert(adminSchools)
+      .insert(adminSchool)
       .values({
         schoolId,
         adminId: newAdminId,
@@ -73,12 +73,12 @@ export class AdminSchoolService {
     }
 
     return await tx
-      .update(adminSchools)
+      .update(adminSchool)
       .set({ isActive: false, revokedAt: new Date() })
       .where(
         and(
-          eq(adminSchools.schoolId, schoolId),
-          eq(adminSchools.isActive, true)
+          eq(adminSchool.schoolId, schoolId),
+          eq(adminSchool.isActive, true)
         )
       )
       .returning();
@@ -102,10 +102,10 @@ export class AdminSchoolService {
     }
 
     return await db.transaction(async (tx) => {
-      const activeAssignments = await tx.query.adminSchools.findMany({
+      const activeAssignments = await tx.query.adminSchool.findMany({
         where: and(
-          eq(adminSchools.adminId, oldAdminId),
-          eq(adminSchools.isActive, true)
+          eq(adminSchool.adminId, oldAdminId),
+          eq(adminSchool.isActive, true)
         ),
         columns: { schoolId: true },
       });
@@ -170,10 +170,10 @@ export class AdminSchoolService {
 
     return await db.transaction(async (tx) => {
       // Only get schools assigned to newAdminId after the transfer timestamp
-      const activeAssignments = await tx.query.adminSchools.findMany({
+      const activeAssignments = await tx.query.adminSchool.findMany({
         where: and(
-          eq(adminSchools.adminId, newAdminId),
-          eq(adminSchools.isActive, true)
+          eq(adminSchool.adminId, newAdminId),
+          eq(adminSchool.isActive, true)
         ),
         columns: { schoolId: true, assignedAt: true },
       });
@@ -230,10 +230,10 @@ export class AdminSchoolService {
       throw new Error("schoolId is required");
     }
 
-    return await db.query.adminSchools.findFirst({
+    return await db.query.adminSchool.findFirst({
       where: and(
-        eq(adminSchools.schoolId, schoolId),
-        eq(adminSchools.isActive, true)
+        eq(adminSchool.schoolId, schoolId),
+        eq(adminSchool.isActive, true)
       ),
       with: { adminUser: true },
     });
@@ -250,9 +250,9 @@ export class AdminSchoolService {
       throw new Error("schoolId is required");
     }
 
-    return await db.query.adminSchools.findMany({
-      where: eq(adminSchools.schoolId, schoolId),
-      orderBy: asc(adminSchools.assignedAt),
+    return await db.query.adminSchool.findMany({
+      where: eq(adminSchool.schoolId, schoolId),
+      orderBy: asc(adminSchool.assignedAt),
       with: { adminUser: true },
     });
   }
@@ -268,11 +268,11 @@ export class AdminSchoolService {
       return new Map();
     }
 
-    const allAssignments = await db.query.adminSchools.findMany({
+    const allAssignments = await db.query.adminSchool.findMany({
       where: and(),
       // Note: Drizzle's inArray would be used here
       // This is a simplified version - adjust based on your Drizzle version
-      orderBy: asc(adminSchools.assignedAt),
+      orderBy: asc(adminSchool.assignedAt),
       with: { adminUser: true },
     });
 

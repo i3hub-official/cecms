@@ -15,7 +15,7 @@ import { relations } from "drizzle-orm";
 // ------------------------
 // AdminSchool Model
 // ------------------------
-export const adminSchools = pgTable(
+export const adminSchool = pgTable(
   "admin_schools",
   {
     id: text("id")
@@ -492,13 +492,13 @@ export const disputeCenters = pgTable(
 // ------------------------
 // Relations
 // ------------------------
-export const adminSchoolsRelations = relations(adminSchools, ({ one }) => ({
+export const adminSchoolRelations = relations(adminSchool, ({ one }) => ({
   adminUser: one(admins, {
-    fields: [adminSchools.adminId],
+    fields: [adminSchool.adminId],
     references: [admins.id],
   }),
   school: one(centers, {
-    fields: [adminSchools.schoolId],
+    fields: [adminSchool.schoolId],
     references: [centers.id],
   }),
 }));
@@ -510,7 +510,7 @@ export const adminRelations = relations(admins, ({ many }) => ({
   adminActivities: many(adminActivities),
   createdCenters: many(centers, { relationName: "center_created_by" }),
   modifiedCenters: many(centers, { relationName: "center_modified_by" }),
-  adminSchools: many(adminSchools),
+  adminSchool: many(adminSchool),
   apiKeys: many(apiKeys),
 }));
 
@@ -525,9 +525,9 @@ export const centerRelations = relations(centers, ({ one }) => ({
     references: [admins.id],
     relationName: "center_modified_by",
   }),
-  adminSchool: one(adminSchools, {
+  adminSchool: one(adminSchool, {
     fields: [centers.id],
-    references: [adminSchools.schoolId],
+    references: [adminSchool.schoolId],
   }),
 }));
 
@@ -641,7 +641,7 @@ export type Center = typeof centers.$inferSelect & {
 export type Admin = typeof admins.$inferSelect & {
   createdCenters?: Center[];
   modifiedCenters?: Center[];
-  adminSchools?: {
+  adminSchool?: {
     school: Center;
   }[];
   apiKeys?: ApiKey[];
