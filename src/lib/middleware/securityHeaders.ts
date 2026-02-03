@@ -1,10 +1,15 @@
-// File: src/lib/middleware/securityHeaders.ts
+// File: src/lib/middleware/securityHeaders.ts - UPDATED WITH DEBUGGING
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getCspConfig } from "../security/cspConfig";
+import { getCspConfig, generateCspHeader } from "../security/cspConfig"; // Add import
 
 export function withSecurityHeaders(req: NextRequest) {
   const res = NextResponse.next();
+
+  // Debug logging
+  console.log("=== SECURITY HEADERS MIDDLEWARE ===");
+  console.log("Path:", req.nextUrl.pathname);
+  console.log("Environment:", process.env.NODE_ENV);
 
   // Core Security Headers
   res.headers.set("X-Frame-Options", "DENY");
@@ -20,35 +25,26 @@ export function withSecurityHeaders(req: NextRequest) {
   );
   res.headers.set("X-XSS-Protection", "1; mode=block");
 
-  // ✅ Generate CSP safely (no eval/new Function)
-  const cspConfig = getCspConfig() as Record<string, string[] | string>;
-  const cspDirectives = Object.entries(cspConfig)
-    .map(([key, values]) => {
-      const directive = key.replace(/([A-Z])/g, "-$1").toLowerCase();
-
-      if (Array.isArray(values)) {
-        return values.length > 0
-          ? `${directive} ${values.join(" ")}`
-          : directive;
-      }
-
-      if (typeof values === "string" && values.length > 0) {
-        return `${directive} ${values}`;
-      }
-
-      return null;
-    })
-    .filter(Boolean)
-    .join("; ");
+  // ✅ Generate CSP using the helper function
+  const cspConfig = getCspConfig();
+  const cspDirectives = generateCspHeader(cspConfig);
+  
+  // Debug: Log the CSP header
+  console.log("Generated CSP Header:", cspDirectives);
+  console.log("CSP Config keys:", Object.keys(cspConfig));
+  
+  // Check if connect-src has wildcards
+  if (cspConfig.connectSrc && Array.isArray(cspConfig.connectSrc)) {
+    console.log("connect-src values:", cspConfig.connectSrc);
+    const hasWildcards = cspConfig.connectSrc.some(src => 
+      src.includes('*') || src.includes('10.') || src.includes('localhost')
+    );
+    console.log("Has wildcards for local network:", hasWildcards);
+  }
 
   res.headers.set("Content-Security-Policy", cspDirectives);
+  res.headers.set("X-Content-Security-Policy", cspDirectives);
+  res.headers.set("X-WebKit-CSP", cspDirectives);
 
   return res;
 }
-
-// ✅ Don’t block Next.js internals
-export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
-  ],
-};

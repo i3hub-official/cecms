@@ -1,19 +1,7 @@
-// app/api/auth/user/route.ts
-
+// app/api/auth/me/route.ts - TEMPORARY REDIRECT
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromCookies } from "@/lib/auth"; // Your existing function
 
 export async function GET(request: NextRequest) {
-  try {
-    const user = await getUserFromCookies(request);
-
-    if (!user) {
-      return NextResponse.json(null, { status: 401 });
-    }
-
-    return NextResponse.json(user);
-  } catch (error) {
-    console.error("Get user error:", error);
-    return NextResponse.json(null, { status: 500 });
-  }
+  // Redirect to /api/auth/user
+  return NextResponse.redirect(new URL('/api/auth/user', request.url));
 }

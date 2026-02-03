@@ -91,13 +91,28 @@ export async function POST(request: NextRequest) {
     // Generate session ID
     const sessionId = generateSessionId();
 
+    // DEBUG: Log JWT info
+    console.log("=== JWT DEBUG INFO ===");
+    console.log("Admin name from DB:", admin.name);
+    console.log("JWT payload being sent:", {
+      userId: admin.id,
+      email: admin.email,
+      role: admin.role,
+      sessionId: sessionId,
+      name: admin.name,
+    });
+
     // Create JWT token
     const token = await createJWT({
       userId: admin.id,
       email: admin.email,
       role: admin.role,
       sessionId: sessionId,
+      name: admin.name,
     });
+
+    console.log("JWT token created, length:", token.length);
+    console.log("Token first 100 chars:", token.substring(0, 100));
 
     const userAgent = request.headers.get("user-agent") || null;
     const ipAddress = getClientIp(request) || null;
@@ -105,21 +120,107 @@ export async function POST(request: NextRequest) {
 
     const newSessionUUID = crypto.randomUUID();
 
-    // Store session in database
-    await db.insert(adminSessions).values({
-      id: newSessionUUID,
-      adminId: admin.id,
-      sessionId,
-      token,
-      expiresAt,
-      isActive: true,
-      createdAt: new Date(),
-      lastUsed: new Date(),
-      userAgent,
-      ipAddress,
-      location: null,
-      deviceType: null,
-    });
+    // DEBUG: Session creation
+    console.log("=== SESSION CREATION DEBUG ===");
+    console.log("Token to insert length:", token.length);
+    console.log("Session UUID:", newSessionUUID);
+
+    try {
+      // Store session in database with detailed error handling
+      const [insertedSession] = await db
+        .insert(adminSessions)
+        .values({
+          id: newSessionUUID,
+          adminId: admin.id,
+          sessionId,
+          token,
+          expiresAt,
+          isActive: true,
+          createdAt: new Date(),
+          lastUsed: new Date(),
+          userAgent,
+          ipAddress,
+          location: null,
+          deviceType: null,
+        })
+        .returning();
+
+      console.log("Session inserted successfully:", !!insertedSession);
+      console.log("Inserted session ID:", insertedSession?.id);
+
+      // Immediately verify it was saved
+      const verifySession = await db
+        .select()
+        .from(adminSessions)
+        .where(eq(adminSessions.id, newSessionUUID))
+        .limit(1);
+
+      console.log("Verification - session found:", verifySession.length > 0);
+      if (verifySession[0]) {
+        console.log("Verified token length:", verifySession[0].token?.length);
+        console.log("Tokens match:", verifySession[0].token === token);
+      }
+
+    } catch (insertError: any) {
+      console.error("FAILED TO INSERT SESSION:", {
+        message: insertError.message,
+        code: insertError.code,
+        detail: insertError.detail,
+        constraint: insertError.constraint,
+        table: insertError.table,
+      });
+
+      // Check for specific errors
+      if (insertError.message?.includes("unique constraint")) {
+        console.error("UNIQUE CONSTRAINT VIOLATION - token already exists?");
+        // Try with a new token
+        const newToken = await createJWT({
+          userId: admin.id,
+          email: admin.email,
+          role: admin.role,
+          sessionId: sessionId,
+          name: admin.name,
+        });
+        
+        console.log("Retrying with new token...");
+        const [retrySession] = await db
+          .insert(adminSessions)
+          .values({
+            id: crypto.randomUUID(),
+            adminId: admin.id,
+            sessionId,
+            token: newToken,
+            expiresAt,
+            isActive: true,
+            createdAt: new Date(),
+            lastUsed: new Date(),
+            userAgent,
+            ipAddress,
+            location: null,
+            deviceType: null,
+          })
+          .returning();
+          
+        console.log("Retry successful:", !!retrySession);
+      } else if (insertError.message?.includes("value too long")) {
+        console.error("VALUE TOO LONG - token might be truncated");
+        throw new Error("Token too long for database column");
+      } else {
+        throw insertError;
+      }
+    }
+
+    // DEBUG: Count all sessions
+    const allSessions = await db.select().from(adminSessions);
+    console.log("Total sessions in DB:", allSessions.length);
+
+    // Find the session we just created
+    const foundSession = await db.select().from(adminSessions).where(eq(adminSessions.token, token));
+    console.log("Session found by token:", foundSession.length > 0);
+    if (foundSession[0]) {
+      console.log("Stored token length:", foundSession[0].token?.length);
+      console.log("Tokens match:", foundSession[0].token === token);
+    }
 
     // Enforce max 3 active sessions per user (mark extras inactive)
     const activeSessions = await db
@@ -185,22 +286,48 @@ export async function POST(request: NextRequest) {
       sessionId,
     });
 
+    // DEBUG: Cookie settings
+    console.log("=== COOKIE DEBUG ===");
+    console.log("Setting cookie with token length:", token.length);
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    const isProduction = process.env.NODE_ENV === "production";
+
     // Set secure HttpOnly cookie
-    response.cookies.set("auth-token", token, {
+    response.cookies.set({
+      name: "auth-token",
+      value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProduction, // false for local development, true for production
       sameSite: "lax",
-      maxAge: 24 * 60 * 60, // 24 hours
+      maxAge: 24 * 60 * 60, // 24 hours in seconds
       path: "/",
     });
 
     // Set a non-HttpOnly cookie for client-side session awareness
-    response.cookies.set("session-active", "true", {
-      secure: process.env.NODE_ENV === "production",
+    response.cookies.set({
+      name: "session-active",
+      value: "true",
+      httpOnly: false,
+      secure: isProduction,
       sameSite: "lax",
       maxAge: 24 * 60 * 60,
       path: "/",
     });
+
+    // DEBUG: Check what cookies are being set
+    console.log("Response cookies being set:");
+    response.cookies.getAll().forEach(cookie => {
+      console.log(`- ${cookie.name}: ${cookie.value ? "SET" : "NOT SET"}`);
+    });
+
+    // Add CORS headers for development
+    if (!isProduction) {
+      const origin = request.headers.get("origin");
+      if (origin && (origin.includes("localhost") || origin.includes("127.0.0.1"))) {
+        response.headers.set("Access-Control-Allow-Credentials", "true");
+        response.headers.set("Access-Control-Allow-Origin", origin);
+      }
+    }
 
     // Set cache control headers
     response.headers.set("Cache-Control", "no-store, max-age=0");
@@ -208,8 +335,14 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     logger.error("Login error", { requestId, ip }, { error });
+    console.error("SIGNIN ERROR DETAILS:", error);
+    
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
+      { 
+        success: false, 
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
