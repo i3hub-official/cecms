@@ -5,6 +5,39 @@ import { centers, adminSchool, admins } from "@/lib/server/db/schema";
 import { getUserFromCookies } from "@/lib/auth";
 import { eq, or, ilike, and, sql, desc, SQL } from "drizzle-orm";
 
+// Define a proper type for the center data with relations
+interface CenterWithRelations {
+  id: string;
+  number: string;
+  name: string;
+  address: string;
+  state: string;
+  lga: string;
+  isActive: boolean;
+  createdBy: string;
+  modifiedBy: string | null;
+  createdById: string;
+  modifiedById: string;
+  createdAt: Date;
+  modifiedAt: Date | null;
+  
+  // Relations
+  adminSchool?: {
+    admin?: {
+      id: string;
+      name: string;
+    };
+  } | null;
+  modifiedByAdmin?: {
+    id: string;
+    name: string;
+  } | null;
+  createdByAdmin?: {
+    id: string;
+    name: string;
+  } | null;
+}
+
 // Center type including admin names and assigned admin
 interface CenterWithAdminNames {
   id: string;
@@ -47,28 +80,42 @@ export async function GET(request: NextRequest) {
     const includeInactive = searchParams.get("includeInactive") === "true";
     const skip = (page - 1) * limit;
 
+    // Build where conditions
     const whereConditions: SQL[] = [];
-    if (!includeInactive) whereConditions.push(eq(centers.isActive, true));
-    if (search) {
-      const searchPattern = `%${search}%`;
-      whereConditions.push(
-        or(
-          ilike(centers.name, searchPattern),
-          ilike(centers.number, searchPattern),
-          ilike(centers.address, searchPattern),
-          ilike(centers.state, searchPattern),
-          ilike(centers.lga, searchPattern)
-        )
-      );
+    
+    // Add active filter if needed
+    if (!includeInactive) {
+      whereConditions.push(eq(centers.isActive, true));
     }
     
-    const finalWhere = whereConditions.length > 0 
-      ? and(...whereConditions) 
-      : undefined;
+    // Add search filter if needed
+    if (search.trim()) {
+      const searchPattern = `%${search.trim()}%`;
+      const searchCondition = or(
+        ilike(centers.name, searchPattern),
+        ilike(centers.number, searchPattern),
+        ilike(centers.address, searchPattern),
+        ilike(centers.state, searchPattern),
+        ilike(centers.lga, searchPattern)
+      );
+      
+      // Only push if searchCondition is not false
+      if (searchCondition) {
+        whereConditions.push(searchCondition);
+      }
+    }
+    
+    // Create final where condition
+    let finalWhere: SQL | undefined;
+    if (whereConditions.length > 0) {
+      finalWhere = and(...whereConditions);
+    } else {
+      finalWhere = undefined;
+    }
 
     const [centersData, totalResult] = await Promise.all([
       db.query.centers.findMany({
-        where: finalWhere || undefined,
+        where: finalWhere,
         orderBy: desc(centers.modifiedAt),
         limit,
         offset: skip,
@@ -83,11 +130,11 @@ export async function GET(request: NextRequest) {
           modifiedByAdmin: { columns: { id: true, name: true } },
           createdByAdmin: { columns: { id: true, name: true } },
         },
-      }),
+      }) as Promise<CenterWithRelations[]>,
       db
         .select({ count: sql<number>`count(*)` })
         .from(centers)
-        .where(finalWhere || sql`true`),
+        .where(finalWhere || sql`1=1`),
     ]);
 
     const total = Number(totalResult[0]?.count) || 0;
@@ -95,7 +142,19 @@ export async function GET(request: NextRequest) {
 
     const transformedCenters: CenterWithAdminNames[] = centersData.map(
       (center) => ({
-        ...center,
+        id: center.id,
+        number: center.number,
+        name: center.name,
+        address: center.address,
+        state: center.state,
+        lga: center.lga,
+        isActive: center.isActive,
+        createdBy: center.createdBy,
+        modifiedBy: center.modifiedBy,
+        createdById: center.createdById,
+        modifiedById: center.modifiedById,
+        createdAt: center.createdAt,
+        modifiedAt: center.modifiedAt,
         assignedAdmin: center.adminSchool?.admin || null,
         modifiedByName: center.modifiedByAdmin?.name || "Unknown",
         createdByName: center.createdByAdmin?.name || "Unknown",
@@ -249,7 +308,7 @@ export async function POST(request: NextRequest) {
         modifiedByAdmin: { columns: { name: true } },
         createdByAdmin: { columns: { name: true } },
       },
-    });
+    }) as CenterWithRelations | undefined;
 
     const centerWithAdminNames: CenterWithAdminNames = {
       ...result,
