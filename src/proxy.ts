@@ -34,7 +34,7 @@ export const config = {
 };
 
 // ========= Main Middleware =========
-export async function middleware(request: NextRequest): Promise<Response> {
+export async function proxy(request: NextRequest): Promise<Response> {
   try {
     // Special handling for centers-lookup API (public CORS)
     if (request.nextUrl.pathname.startsWith("/api/centers-lookup")) {
