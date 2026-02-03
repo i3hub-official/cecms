@@ -80,7 +80,7 @@ export function withPathsEdge(publicPaths: string[]) {
           }
         );
       } else {
-        const loginUrl = new URL("/auth/login");
+        const loginUrl = new URL("/auth/signin", req.nextUrl.origin);
         // loginUrl.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(loginUrl);
       }

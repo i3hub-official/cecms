@@ -494,10 +494,10 @@ export class EmailService {
    * Send email verification email
    */
   async sendVerificationEmail(
-    email: string,
+   userId: string,  // Keep this for logging
     token: string,
     name: string,
-    userId: string
+    emailAddress: string  // This should be the actual email address
   ): Promise<boolean> {
     try {
       const baseUrl = this.getBaseUrl();
@@ -506,7 +506,7 @@ export class EmailService {
       )}`;
 
       const emailOptions: EmailOptions = {
-        to: email,
+                to: emailAddress,
         subject: "Verify Your Email Address",
         html: this.getVerificationTemplate(name, verificationLink),
         text: `Please verify your email address by clicking this link: ${verificationLink}`,
