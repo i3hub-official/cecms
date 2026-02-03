@@ -23,6 +23,7 @@ interface CenterWithAdminNames {
   modifiedAt: Date | null;
   modifiedByName: string;
   createdByName: string;
+  
   assignedAdmin?: {
     id: string;
     name: string;
