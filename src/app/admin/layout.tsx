@@ -1,4 +1,5 @@
-// src/app/admin/layout.tsx - FIXED VERSION
+// src/app/admin/layout.tsx
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -30,43 +31,30 @@ export default function AdminLayoutWrapper({
     router.push("/auth/signin");
   }, [router]);
 
-  /** 🔹 Validate session using the simpler endpoint */
+  /** 🔹 Validate session using your existing getUserFromCookies */
   const validateSession = useCallback(
     async (background = false) => {
       try {
         if (!background) setLoading(true);
 
-        console.log("Validating session...");
-        
-        // FIX: Use /api/auth/user instead of /api/auth/me
-        const response = await fetch("/api/auth/user", { // ← CHANGED HERE
+        // Call your API endpoint that uses getUserFromCookies
+        const response = await fetch("/api/auth/me", {
           method: "GET",
           credentials: "include",
-          headers: {
-            "Cache-Control": "no-cache",
-          },
         });
 
-        console.log("Response status:", response.status);
-        
         if (!response.ok) {
-          console.log("Session validation failed, redirecting to login");
           redirectToLogin();
           return;
         }
 
-        const data = await response.json();
-        console.log("User data received:", data);
-        
-        // FIX: Check the response structure
-        if (!data || !data.user) {
-          console.log("No user data in response");
+        const currentUser = await response.json();
+        if (!currentUser) {
           redirectToLogin();
           return;
         }
 
-        setUser(data.user);
-        console.log("Session validated successfully");
+        setUser(currentUser);
       } catch (error) {
         console.error("Session validation error:", error);
         redirectToLogin();
@@ -80,12 +68,33 @@ export default function AdminLayoutWrapper({
   /** 🔹 On mount: validate session */
   useEffect(() => {
     validateSession();
-  }, [validateSession]); // Added validateSession to dependencies
+  }, []); // run once on mount
 
-  /** 🔹 Debug: Check what endpoint is being called */
+  /** 🔹 Revalidate on route changes */
   useEffect(() => {
-    console.log("Current layout mounted, will call /api/auth/user");
-  }, []);
+    if (user && !loggingOut && pathname) {
+      validateSession(true);
+    }
+  }, [pathname]); // only revalidate on route changes
+
+  /** 🔹 Logout with loading state */
+  const handleLogout = async () => {
+    setLoggingOut(true);
+
+    try {
+      await fetch("/api/auth/signout", {
+        method: "POST",
+        credentials: "include",
+      });
+      // optional small delay for UX
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setLoggingOut(false);
+      redirectToLogin();
+    }
+  };
 
   /** 🔹 Loading UI */
   if (loading && !user) {
@@ -95,7 +104,7 @@ export default function AdminLayoutWrapper({
           <div className="flex flex-col items-center gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             <div className="text-muted-foreground text-sm font-medium">
-              Loading admin panel...
+              Authenticating...
             </div>
           </div>
         </div>
@@ -134,7 +143,7 @@ export default function AdminLayoutWrapper({
                 Signing Out...
               </div>
               <div className="text-sm text-muted-foreground max-w-md">
-                Safely ending your admin session
+                Safely ending your admin session and clearing your data
               </div>
             </div>
 
@@ -157,7 +166,7 @@ export default function AdminLayoutWrapper({
             )}
 
             <div className="text-xs text-muted-foreground">
-              Redirecting to login...
+              Your session will be securely terminated
             </div>
           </div>
         </div>
@@ -165,18 +174,7 @@ export default function AdminLayoutWrapper({
     );
   }
 
-  if (!user) {
-    // Show a message while redirecting
-    return (
-      <ThemeProvider>
-        <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-          <div className="text-center">
-            <div className="text-lg font-medium">Redirecting to login...</div>
-          </div>
-        </div>
-      </ThemeProvider>
-    );
-  }
+  if (!user) return null;
 
   return (
     <ThemeProvider>
