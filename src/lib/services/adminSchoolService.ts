@@ -1,4 +1,4 @@
-import { db } from "@/lib/server/db"; // adjust to your drizzle client
+import { db } from "@/lib/server/db";
 import { adminSchool } from "@/lib/server/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 
@@ -235,7 +235,7 @@ export class AdminSchoolService {
         eq(adminSchool.schoolId, schoolId),
         eq(adminSchool.isActive, true)
       ),
-      with: { adminUser: true },
+      with: { admin: true }, // Changed from adminUser to admin
     });
   }
 
@@ -253,7 +253,7 @@ export class AdminSchoolService {
     return await db.query.adminSchool.findMany({
       where: eq(adminSchool.schoolId, schoolId),
       orderBy: asc(adminSchool.assignedAt),
-      with: { adminUser: true },
+      with: { admin: true }, // Changed from adminUser to admin
     });
   }
 
@@ -269,11 +269,9 @@ export class AdminSchoolService {
     }
 
     const allAssignments = await db.query.adminSchool.findMany({
-      where: and(),
-      // Note: Drizzle's inArray would be used here
-      // This is a simplified version - adjust based on your Drizzle version
+      where: and(eq(adminSchool.isActive, true)),
       orderBy: asc(adminSchool.assignedAt),
-      with: { adminUser: true },
+      with: { admin: true }, // Changed from adminUser to admin
     });
 
     // Group by schoolId
