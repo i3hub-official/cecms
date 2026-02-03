@@ -7,27 +7,6 @@ const nextConfig: NextConfig = {
   compress: true,
   productionBrowserSourceMaps: false,
 
-  // Disable ESLint during build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
-  // Enable Turbopack in dev
-  turbopack: isDev
-    ? {
-        resolveAlias: {
-          underscore: "lodash",
-        },
-        resolveExtensions: [".mdx", ".tsx", ".ts", ".jsx", ".js", ".json"],
-      }
-    : undefined,
-
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "10mb",
-    },
-  },
-
   async headers() {
     return [
       {
@@ -69,20 +48,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
       { protocol: "https", hostname: "ui-avatars.com", pathname: "/**" },
       { protocol: "https", hostname: "i.pravatar.cc", pathname: "/**" },
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+      { protocol: "https", hostname: "**.pexels.com", pathname: "/**" },
+      { protocol: "https", hostname: "geeksforgeeks.org", pathname: "/**" },
     ],
-    disableStaticImages: false,
     minimumCacheTTL: 60,
-  },
-
-  webpack: (config) => {
-    if (!isDev) {
-      config.resolve.fallback = {
-        fs: false,
-        net: false,
-        tls: false,
-      };
-    }
-    return config;
   },
 
   output: process.env.DOCKER_BUILD ? "standalone" : undefined,
