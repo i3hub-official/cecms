@@ -516,7 +516,7 @@ export class EmailService {
 
       if (result) {
         logger.info("Verification email sent", {
-          email,
+          emailAddress,
           name,
           messageId: result.messageId,
           baseUrlUsed: baseUrl,
@@ -528,7 +528,7 @@ export class EmailService {
     } catch (error) {
       logger.error("Failed to send verification email", {
         error: error instanceof Error ? error.message : String(error),
-        email,
+        emailAddress,
         name,
       });
       return false;
