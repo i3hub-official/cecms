@@ -492,16 +492,6 @@ export const disputeCenters = pgTable(
 // ------------------------
 // Relations
 // ------------------------
-export const adminSchoolRelations = relations(adminSchool, ({ one }) => ({
-  adminUser: one(admins, {
-    fields: [adminSchool.adminId],
-    references: [admins.id],
-  }),
-  school: one(centers, {
-    fields: [adminSchool.schoolId],
-    references: [centers.id],
-  }),
-}));
 
 export const adminRelations = relations(admins, ({ many }) => ({
   sessions: many(adminSessions),
@@ -597,6 +587,44 @@ export const disputeCenterRelations = relations(disputeCenters, ({ one }) => ({
   }),
 }));
 
+export const adminSchoolRelations = relations(adminSchool, ({ one }) => ({
+  // Change from adminUser to admin
+  admin: one(admins, {
+    fields: [adminSchool.adminId],
+    references: [admins.id],
+  }),
+  school: one(centers, {
+    fields: [adminSchool.schoolId],
+    references: [centers.id],
+  }),
+}));
+
+// ------------------------
+// Inferred Types with Relations
+// ------------------------
+export type Center = typeof centers.$inferSelect & {
+  createdByAdmin?: Admin;
+  modifiedByAdmin?: Admin;
+  adminSchool?: {
+    admin: Admin;
+  } | null;
+};
+
+export type Admin = typeof admins.$inferSelect & {
+  createdCenters?: Center[];
+  modifiedCenters?: Center[];
+  adminSchool?: {
+    school: Center;
+  }[];
+  apiKeys?: ApiKey[];
+};
+
+export type ApiKeyWithRelations = ApiKey & {
+  admin?: Admin;
+  usageLogs?: ApiUsageLog[];
+  rateLimits?: ApiRateLimit[];
+};
+
 // ------------------------
 // Inferred Types
 // ------------------------
@@ -627,31 +655,7 @@ export type NewApiRateLimit = typeof apiRateLimits.$inferInsert;
 export type DisputeCenter = typeof disputeCenters.$inferSelect;
 export type NewDisputeCenter = typeof disputeCenters.$inferInsert;
 
-// ------------------------
-// Inferred Types with Relations
-// ------------------------
-export type Center = typeof centers.$inferSelect & {
-  createdByAdmin?: Admin;
-  modifiedByAdmin?: Admin;
-  adminSchool?: {
-    admin: Admin;
-  } | null;
-};
 
-export type Admin = typeof admins.$inferSelect & {
-  createdCenters?: Center[];
-  modifiedCenters?: Center[];
-  adminSchool?: {
-    school: Center;
-  }[];
-  apiKeys?: ApiKey[];
-};
-
-export type ApiKeyWithRelations = ApiKey & {
-  admin?: Admin;
-  usageLogs?: ApiUsageLog[];
-  rateLimits?: ApiRateLimit[];
-};
 
 // // src/db/schema.ts
 // import * as crypto from "crypto";

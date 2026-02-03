@@ -4,7 +4,6 @@ import { db } from "@/lib/server/db/index";
 import { centers, adminSchool, admins } from "@/lib/server/db/schema";
 import { getUserFromCookies } from "@/lib/auth";
 import { eq, or, ilike, and, sql, desc, SQL } from "drizzle-orm";
-import * as crypto from "crypto";
 
 // Center type including admin names and assigned admin
 interface CenterWithAdminNames {
@@ -51,23 +50,25 @@ export async function GET(request: NextRequest) {
     const whereConditions: SQL[] = [];
     if (!includeInactive) whereConditions.push(eq(centers.isActive, true));
     if (search) {
+      const searchPattern = `%${search}%`;
       whereConditions.push(
         or(
-          ilike(centers.name, `%${search}%`),
-          ilike(centers.number, `%${search}%`),
-          ilike(centers.address, `%${search}%`),
-          ilike(centers.state, `%${search}%`),
-          ilike(centers.lga, `%${search}%`)
-        ) || sql`false`
+          ilike(centers.name, searchPattern),
+          ilike(centers.number, searchPattern),
+          ilike(centers.address, searchPattern),
+          ilike(centers.state, searchPattern),
+          ilike(centers.lga, searchPattern)
+        )
       );
     }
-    const finalWhere = whereConditions.length
-      ? and(...whereConditions)
-      : sql`true`;
+    
+    const finalWhere = whereConditions.length > 0 
+      ? and(...whereConditions) 
+      : undefined;
 
     const [centersData, totalResult] = await Promise.all([
       db.query.centers.findMany({
-        where: finalWhere || sql`true`,
+        where: finalWhere || undefined,
         orderBy: desc(centers.modifiedAt),
         limit,
         offset: skip,
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
         .where(finalWhere || sql`true`),
     ]);
 
-    const total = totalResult[0]?.count || 0;
+    const total = Number(totalResult[0]?.count) || 0;
     const pages = Math.ceil(total / limit);
 
     const transformedCenters: CenterWithAdminNames[] = centersData.map(
@@ -98,9 +99,6 @@ export async function GET(request: NextRequest) {
         assignedAdmin: center.adminSchool?.admin || null,
         modifiedByName: center.modifiedByAdmin?.name || "Unknown",
         createdByName: center.createdByAdmin?.name || "Unknown",
-        modifiedByAdmin: undefined,
-        createdByAdmin: undefined,
-        adminSchool: undefined,
       })
     );
 
@@ -139,14 +137,14 @@ async function generateCenterNumber(
   // Find the maximum sequence number for this specific state and LGA combination
   const [maxResult] = await db
     .select({
-      maxSequence: sql<number>`MAX(CAST(SUBSTRING(number, 5, 3) AS INTEGER))`,
+      maxSequence: sql<number>`MAX(CAST(SUBSTRING(${centers.number}, 5, 3) AS INTEGER))`,
     })
     .from(centers)
     .where(
       and(
         eq(centers.state, state),
         eq(centers.lga, lga),
-        sql`number LIKE ${prefix} || '%'`
+        sql`${centers.number} LIKE ${`${prefix}%`}`
       )
     );
 
@@ -174,13 +172,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body: {
-      name: string;
-      address: string;
-      state: string;
-      lga: string;
-      isActive?: boolean;
-    } = await request.json();
+    const body = await request.json();
     const { name, address, state, lga, isActive = true } = body;
 
     if (!name || !address || !state || !lga) {
