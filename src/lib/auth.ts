@@ -384,28 +384,44 @@ export async function hasRequiredRole(
  * @param request NextRequest object
  * @returns User object or null if not authenticated
  */
+// Update your getUserFromCookies function
 export async function getUserFromCookies(request: NextRequest) {
-  // Extract token from cookies
-  const token = extractAuthToken(request);
-  if (!token) return null;
+  console.log("=== getUserFromCookies START ===");
+  
+  // FIX: Use request.cookies.get() directly
+  const token = request.cookies.get("auth-token")?.value;
+  
+  console.log("Token from request.cookies.get():", token ? "PRESENT" : "MISSING");
+  console.log("Token length:", token?.length);
+  console.log("All cookies:", Array.from(request.cookies.getAll()).map(c => c.name));
+  
+  if (!token) {
+    console.log("No token found");
+    return null;
+  }
 
   try {
-    // Verify the JWT
     const jwtResult = await verifyJWT(token);
+    console.log("JWT verification result:", {
+      isValid: jwtResult.isValid,
+      email: jwtResult.payload?.email
+    });
 
-    if (!jwtResult.isValid || !jwtResult.payload) return null;
+    if (!jwtResult.isValid || !jwtResult.payload) {
+      console.log("Invalid JWT");
+      return null;
+    }
 
-    // Return user info
+    console.log("✅ getUserFromCookies successful for:", jwtResult.payload.email);
     return {
       id: jwtResult.payload.userId,
       email: jwtResult.payload.email,
       role: jwtResult.payload.role,
       name: jwtResult.payload.name || "",
       sessionId: jwtResult.payload.sessionId,
-      
     };
   } catch (error) {
-    console.error("Failed to get user from cookie:", error);
+    console.error("Error in getUserFromCookies:", error);
     return null;
   }
 }

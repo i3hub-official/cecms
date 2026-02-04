@@ -38,7 +38,7 @@ export default function AdminLayoutWrapper({
         if (!background) setLoading(true);
 
         // Call your API endpoint that uses getUserFromCookies
-        const response = await fetch("/api/auth/me", {
+        const response = await fetch("/api/auth/user", {
           method: "GET",
           credentials: "include",
         });

@@ -3,7 +3,7 @@ import { db } from "@/lib/server/db/index";
 import { adminSessions, admins } from "@/lib/server/db/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { logger } from "./logger";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 
 const SESSION_CONFIG = {
   SESSION_EXPIRY_HOURS: 24,
@@ -213,7 +213,7 @@ export async function revokeSession(sessionId: string) {
 }
 
 export function generateSessionId(): string {
-  return randomBytes(16).toString("hex");
+  return randomUUID(); // Generates 36-char UUID
 }
 
 /**

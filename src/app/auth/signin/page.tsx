@@ -174,10 +174,11 @@ export default function SignInPage() {
         setSuccess(true);
         sessionStorage.setItem("user", JSON.stringify(data.user));
 
+        
         // Short delay to show success state
         setTimeout(() => {
-          window.location.href = "/admin";
-        }, 1200);
+         router.push("/admin");
+        }, 1500);
       } else {
         if (data.requiresVerification) {
           // Handle unverified email case

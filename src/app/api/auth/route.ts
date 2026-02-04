@@ -1,4 +1,4 @@
-// src/app/api/auth/validate/route.ts
+// src/app/api/auth/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromCookies } from "@/lib/auth";
 

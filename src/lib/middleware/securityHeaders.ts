@@ -7,9 +7,9 @@ export function withSecurityHeaders(req: NextRequest) {
   const res = NextResponse.next();
 
   // Debug logging
-  console.log("=== SECURITY HEADERS MIDDLEWARE ===");
-  console.log("Path:", req.nextUrl.pathname);
-  console.log("Environment:", process.env.NODE_ENV);
+  // console.log("=== SECURITY HEADERS MIDDLEWARE ===");
+  // console.log("Path:", req.nextUrl.pathname);
+  // console.log("Environment:", process.env.NODE_ENV);
 
   // Core Security Headers
   res.headers.set("X-Frame-Options", "DENY");
@@ -30,16 +30,16 @@ export function withSecurityHeaders(req: NextRequest) {
   const cspDirectives = generateCspHeader(cspConfig);
   
   // Debug: Log the CSP header
-  console.log("Generated CSP Header:", cspDirectives);
-  console.log("CSP Config keys:", Object.keys(cspConfig));
+  // console.log("Generated CSP Header:", cspDirectives);
+  // console.log("CSP Config keys:", Object.keys(cspConfig));
   
   // Check if connect-src has wildcards
   if (cspConfig.connectSrc && Array.isArray(cspConfig.connectSrc)) {
-    console.log("connect-src values:", cspConfig.connectSrc);
+    // console.log("connect-src values:", cspConfig.connectSrc);
     const hasWildcards = cspConfig.connectSrc.some(src => 
       src.includes('*') || src.includes('10.') || src.includes('localhost')
     );
-    console.log("Has wildcards for local network:", hasWildcards);
+    // console.log("Has wildcards for local network:", hasWildcards);
   }
 
   res.headers.set("Content-Security-Policy", cspDirectives);

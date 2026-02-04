@@ -288,7 +288,7 @@ export const getCspConfig = () => {
   }
   
   // For development, use dev config
-  console.log('Using DEV CSP config with wildcards');
+  // console.log('Using DEV CSP config with wildcards');
   return devCspConfig;
 };
 
