@@ -72,8 +72,9 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const number = searchParams.get("number");
-    if (!number) {
+    const query = searchParams.get("number");
+    
+    if (!query) {
       const err = errorResponse(
         ErrorCodes.INVALID_INPUT,
         "Center number is required"
@@ -83,6 +84,19 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Validate input: only allow alphanumeric characters
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+    if (!alphanumericRegex.test(query)) {
+      const err = errorResponse(
+        ErrorCodes.INVALID_INPUT,
+        "Center number must contain only letters and numbers (no spaces or special characters)"
+      );
+      return NextResponse.json(err, {
+        status: getStatusCodeForError(err.error.code),
+      });
+    }
+
+    // Search for center by number (case-insensitive)
     const [center] = await db
       .select({
         id: centers.id,
@@ -94,7 +108,7 @@ export async function GET(request: NextRequest) {
         isActive: centers.isActive,
       })
       .from(centers)
-      .where(and(ilike(centers.number, number), eq(centers.isActive, true)))
+      .where(and(ilike(centers.number, query), eq(centers.isActive, true)))
       .limit(1);
 
     if (!center) {
