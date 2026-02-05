@@ -202,7 +202,17 @@ export async function GET(request: NextRequest) {
         if (matchingCenters.length > 1) {
           duplicates.push({
             id: `duplicate-group-${duplicateGroupId++}`,
-            centers: matchingCenters,
+            centers: matchingCenters.map(c => ({
+              id: c.id,
+              number: c.number,
+              name: c.name,
+              address: c.address,
+              state: c.state,
+              lga: c.lga,
+              isActive: c.isActive,
+              createdAt: c.createdAt,
+              modifiedAt: c.modifiedAt ?? null,
+            })),
             similarity: 100,
             type: "name",
             reason: "Exact name match after removing common words",
@@ -293,7 +303,17 @@ export async function GET(request: NextRequest) {
 
           duplicates.push({
             id: `duplicate-group-${duplicateGroupId++}`,
-            centers: similarCenters,
+            centers: similarCenters.map(c => ({
+              id: c.id,
+              number: c.number,
+              name: c.name,
+              address: c.address,
+              state: c.state,
+              lga: c.lga,
+              isActive: c.isActive,
+              createdAt: c.createdAt,
+              modifiedAt: c.modifiedAt ?? null,
+            })),
             similarity: Math.round(maxSimilarity),
             type: duplicateType,
             reason,
