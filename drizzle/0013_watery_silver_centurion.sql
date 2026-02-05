@@ -1,0 +1,2 @@
+ALTER TABLE "centers" ADD COLUMN "mergedInto" text;--> statement-breakpoint
+ALTER TABLE "centers" ADD CONSTRAINT "centers_mergedInto_centers_id_fk" FOREIGN KEY ("mergedInto") REFERENCES "public"."centers"("id") ON DELETE set null ON UPDATE no action;

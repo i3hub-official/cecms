@@ -1,14 +1,9 @@
-// app/api/centers/[id]/route.ts
+// src/app/api/centers/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server/db/index";
-import { centers, admins, adminSessions } from "@/lib/server/db/schema";
+import { centers } from "@/lib/server/db/schema";
+import { getUserFromCookies } from "@/lib/auth";
 import { eq, and, not } from "drizzle-orm";
-import { jwtVerify } from "jose";
-
-// JWT configuration
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "fallback-secret-change-in-production"
-);
 
 interface UpdateData {
   number?: string;
@@ -21,90 +16,6 @@ interface UpdateData {
   modifiedAt: Date;
 }
 
-// Helper function to verify auth token (same as /api/auth/user and /api/dashboard)
-async function verifyAuthToken(request: NextRequest) {
-  try {
-    // Method 1: Check cookies from request
-    const tokenFromCookie = request.cookies.get("auth-token")?.value;
-    
-    if (!tokenFromCookie) {
-      // Also check Authorization header as fallback
-      const authHeader = request.headers.get("authorization");
-      if (authHeader?.startsWith("Bearer ")) {
-        const token = authHeader.substring(7);
-        return await verifyToken(token);
-      }
-      return null;
-    }
-
-    return await verifyToken(tokenFromCookie);
-  } catch (error) {
-    console.error("Auth verification error:", error);
-    return null;
-  }
-}
-
-async function verifyToken(token: string) {
-  try {
-    // Verify JWT
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    
-    // Check session in database
-    const session = await db
-      .select()
-      .from(adminSessions)
-      .where(
-        and(
-          eq(adminSessions.token, token),
-          eq(adminSessions.isActive, true),
-          eq(adminSessions.adminId, payload.userId as string)
-        )
-      )
-      .limit(1);
-
-    if (session.length === 0) {
-      console.log("No active session found in database");
-      return null;
-    }
-
-    // Get user details
-    const [user] = await db
-      .select({
-        id: admins.id,
-        email: admins.email,
-        name: admins.name,
-        role: admins.role,
-        isEmailVerified: admins.isEmailVerified,
-        isActive: admins.isActive,
-      })
-      .from(admins)
-      .where(eq(admins.id, payload.userId as string))
-      .limit(1);
-
-    if (!user || !user.isActive) {
-      console.log("User not found or inactive");
-      return null;
-    }
-
-    // Update session last used time
-    await db
-      .update(adminSessions)
-      .set({ lastUsed: new Date() })
-      .where(eq(adminSessions.id, session[0].id));
-
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      isEmailVerified: user.isEmailVerified,
-    };
-  } catch (error) {
-    console.error("Token verification error:", error);
-    return null;
-  }
-}
-
 /**
  * GET /api/centers/[id]
  */
@@ -115,13 +26,14 @@ export async function GET(
   try {
     const { id } = await params;
     
-    // Verify authentication
-    const user = await verifyAuthToken(request);
+    // Get user from cookies using the simplified auth
+    const user = await getUserFromCookies(request);
 
     if (!user) {
       console.log("GET center: Unauthorized access attempt");
       return NextResponse.json(
         { 
+          success: false,
           error: "Unauthorized",
           message: "Please log in to access center details"
         }, 
@@ -129,7 +41,7 @@ export async function GET(
       );
     }
 
-    console.log(`GET center ${id}: Authorized access for user ${user.email}`);
+    console.log(`GET center ${id}: Authorized access for user ${user.email} (${user.role})`);
 
     const [center] = await db
       .select()
@@ -141,6 +53,7 @@ export async function GET(
       console.log(`Center ${id} not found`);
       return NextResponse.json(
         { 
+          success: false,
           error: "Center not found",
           message: "The requested center does not exist"
         }, 
@@ -156,12 +69,14 @@ export async function GET(
         id: user.id,
         email: user.email,
         role: user.role,
+        name: user.name,
       },
     });
   } catch (error) {
     console.error("GET center error:", error);
     return NextResponse.json(
       { 
+        success: false,
         error: "Failed to fetch center",
         message: "An internal server error occurred"
       },
@@ -180,13 +95,14 @@ export async function PUT(
   try {
     const { id } = await params;
     
-    // Verify authentication
-    const user = await verifyAuthToken(request);
+    // Get user from cookies using the simplified auth
+    const user = await getUserFromCookies(request);
 
     if (!user) {
       console.log("PUT center: Unauthorized access attempt");
       return NextResponse.json(
         { 
+          success: false,
           error: "Unauthorized",
           message: "Please log in to update center details"
         }, 
@@ -198,6 +114,7 @@ export async function PUT(
     if (user.role !== 'admin' && user.role !== 'superadmin') {
       return NextResponse.json(
         { 
+          success: false,
           error: "Forbidden",
           message: "You do not have permission to update centers"
         }, 
@@ -224,6 +141,7 @@ export async function PUT(
     if (validationErrors.length > 0) {
       return NextResponse.json(
         { 
+          success: false,
           error: "Validation failed",
           message: "Please correct the following errors",
           errors: validationErrors
@@ -243,6 +161,7 @@ export async function PUT(
       console.log(`Center ${id} not found for update`);
       return NextResponse.json(
         { 
+          success: false,
           error: "Center not found",
           message: "The center you are trying to update does not exist"
         }, 
@@ -261,6 +180,7 @@ export async function PUT(
       if (duplicate) {
         return NextResponse.json(
           { 
+            success: false,
             error: "Duplicate center number",
             message: `Center number ${number} is already assigned to another center`
           },
@@ -290,6 +210,7 @@ export async function PUT(
     if (!updatedCenter) {
       return NextResponse.json(
         { 
+          success: false,
           error: "Update failed",
           message: "Failed to update center"
         }, 
@@ -307,6 +228,7 @@ export async function PUT(
         id: user.id,
         email: user.email,
         role: user.role,
+        name: user.name,
       },
     });
   } catch (error) {
@@ -316,6 +238,7 @@ export async function PUT(
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         { 
+          success: false,
           error: "Invalid JSON",
           message: "The request body contains invalid JSON"
         },
@@ -325,6 +248,7 @@ export async function PUT(
 
     return NextResponse.json(
       { 
+        success: false,
         error: "Failed to update center",
         message: "An internal server error occurred"
       },
@@ -343,13 +267,14 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    // Verify authentication
-    const user = await verifyAuthToken(request);
+    // Get user from cookies using the simplified auth
+    const user = await getUserFromCookies(request);
 
     if (!user) {
       console.log("DELETE center: Unauthorized access attempt");
       return NextResponse.json(
         { 
+          success: false,
           error: "Unauthorized",
           message: "Please log in to delete centers"
         }, 
@@ -361,6 +286,7 @@ export async function DELETE(
     if (user.role !== 'superadmin') {
       return NextResponse.json(
         { 
+          success: false,
           error: "Forbidden",
           message: "Only superadmins can delete centers"
         }, 
@@ -381,6 +307,7 @@ export async function DELETE(
       console.log(`Center ${id} not found for deletion`);
       return NextResponse.json(
         { 
+          success: false,
           error: "Center not found",
           message: "The center you are trying to delete does not exist"
         }, 
@@ -402,6 +329,7 @@ export async function DELETE(
     if (!updatedCenter) {
       return NextResponse.json(
         { 
+          success: false,
           error: "Deletion failed",
           message: "Failed to delete center"
         }, 
@@ -419,99 +347,15 @@ export async function DELETE(
         id: user.id,
         email: user.email,
         role: user.role,
+        name: user.name,
       },
     });
   } catch (error) {
     console.error("DELETE center error:", error);
     return NextResponse.json(
       { 
+        success: false,
         error: "Failed to delete center",
-        message: "An internal server error occurred"
-      },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * PATCH /api/centers/[id] - Alternative to PUT for partial updates
- */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    
-    // Verify authentication
-    const user = await verifyAuthToken(request);
-
-    if (!user) {
-      console.log("PATCH center: Unauthorized access attempt");
-      return NextResponse.json(
-        { 
-          error: "Unauthorized",
-          message: "Please log in to update center details"
-        }, 
-        { status: 401 }
-      );
-    }
-
-    // Check if user has permission to update centers
-    if (user.role !== 'admin' && user.role !== 'superadmin') {
-      return NextResponse.json(
-        { 
-          error: "Forbidden",
-          message: "You do not have permission to update centers"
-        }, 
-        { status: 403 }
-      );
-    }
-
-    console.log(`PATCH center ${id}: Authorized access for user ${user.email}`);
-
-    const body = await request.json();
-    const updates: Partial<UpdateData> = {
-      modifiedBy: user.email,
-      modifiedAt: new Date(),
-    };
-
-    // Only include fields that are provided in the request
-    if (body.number !== undefined) updates.number = body.number;
-    if (body.name !== undefined) updates.name = body.name;
-    if (body.address !== undefined) updates.address = body.address;
-    if (body.state !== undefined) updates.state = body.state;
-    if (body.lga !== undefined) updates.lga = body.lga;
-    if (body.isActive !== undefined) updates.isActive = body.isActive;
-
-    const [updatedCenter] = await db
-      .update(centers)
-      .set(updates)
-      .where(eq(centers.id, id))
-      .returning();
-
-    if (!updatedCenter) {
-      return NextResponse.json(
-        { 
-          error: "Center not found",
-          message: "The center you are trying to update does not exist"
-        }, 
-        { status: 404 }
-      );
-    }
-
-    console.log(`Center ${id} partially updated by ${user.email}`);
-    
-    return NextResponse.json({
-      success: true,
-      message: "Center updated successfully",
-      data: updatedCenter,
-    });
-  } catch (error) {
-    console.error("PATCH center error:", error);
-    return NextResponse.json(
-      { 
-        error: "Failed to update center",
         message: "An internal server error occurred"
       },
       { status: 500 }
@@ -526,7 +370,7 @@ export async function OPTIONS() {
     {
       status: 200,
       headers: {
-        "Access-Control-Allow-Methods": "GET, PUT, DELETE, PATCH, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, PUT, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization, Cookie",
         "Access-Control-Allow-Credentials": "true",
         "Access-Control-Max-Age": "86400",

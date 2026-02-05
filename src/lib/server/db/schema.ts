@@ -74,6 +74,9 @@ export const centers = pgTable(
       .references(() => admins.id, { onDelete: "set default" })
       .default("system"),
     modifiedBy: text("modifiedBy"),
+    mergedInto: text("mergedInto").references(() => centers.id, {
+      onDelete: "set null",
+    }),
     modifiedAt: timestamp("modifiedAt").$onUpdateFn(() => new Date()),
     modifiedById: text("modifiedById")
       .notNull()
