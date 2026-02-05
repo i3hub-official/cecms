@@ -357,62 +357,15 @@ export async function hasRequiredRole(
 /**
  * Get user info directly from JWT in cookies (no DB hit)
  */
-// export async function getUserFromCookies(request: NextRequest) {
-//   // Extract token from cookie
-//   const token = extractAuthToken(request);
-//   if (!token) return null;
-
-//   try {
-//     const jwtResult = await verifyJWT(token);
-//     if (!jwtResult.isValid || !jwtResult.payload) return null;
-
-//     return {
-//       id: jwtResult.payload.userId,
-//       email: jwtResult.payload.email,
-//       role: jwtResult.payload.role,
-//       name: jwtResult.payload.name || "",
-//       sessionId: jwtResult.payload.sessionId,
-//     };
-//   } catch (error) {
-//     console.error("Failed to get user from cookie:", error);
-//     return null;
-//   }
-// }
-
-/**
- * Get the currently logged-in user from cookies.
- * @param request NextRequest object
- * @returns User object or null if not authenticated
- */
-// Update your getUserFromCookies function
 export async function getUserFromCookies(request: NextRequest) {
-  console.log("=== getUserFromCookies START ===");
-  
-  // FIX: Use request.cookies.get() directly
-  const token = request.cookies.get("auth-token")?.value;
-  
-  console.log("Token from request.cookies.get():", token ? "PRESENT" : "MISSING");
-  console.log("Token length:", token?.length);
-  console.log("All cookies:", Array.from(request.cookies.getAll()).map(c => c.name));
-  
-  if (!token) {
-    console.log("No token found");
-    return null;
-  }
+  // Extract token from cookie
+  const token = extractAuthToken(request);
+  if (!token) return null;
 
   try {
     const jwtResult = await verifyJWT(token);
-    console.log("JWT verification result:", {
-      isValid: jwtResult.isValid,
-      email: jwtResult.payload?.email
-    });
+    if (!jwtResult.isValid || !jwtResult.payload) return null;
 
-    if (!jwtResult.isValid || !jwtResult.payload) {
-      console.log("Invalid JWT");
-      return null;
-    }
-
-    console.log("✅ getUserFromCookies successful for:", jwtResult.payload.email);
     return {
       id: jwtResult.payload.userId,
       email: jwtResult.payload.email,
@@ -421,7 +374,54 @@ export async function getUserFromCookies(request: NextRequest) {
       sessionId: jwtResult.payload.sessionId,
     };
   } catch (error) {
-    console.error("Error in getUserFromCookies:", error);
+    console.error("Failed to get user from cookie:", error);
     return null;
   }
 }
+
+/**
+ * Get the currently logged-in user from cookies.
+ * @param request NextRequest object
+ * @returns User object or null if not authenticated
+ */
+// Update your getUserFromCookies function
+// export async function getUserFromCookies(request: NextRequest) {
+//   console.log("=== getUserFromCookies START ===");
+  
+//   // FIX: Use request.cookies.get() directly
+//   const token = request.cookies.get("auth-token")?.value;
+  
+//   console.log("Token from request.cookies.get():", token ? "PRESENT" : "MISSING");
+//   console.log("Token length:", token?.length);
+//   console.log("All cookies:", Array.from(request.cookies.getAll()).map(c => c.name));
+  
+//   if (!token) {
+//     console.log("No token found");
+//     return null;
+//   }
+
+//   try {
+//     const jwtResult = await verifyJWT(token);
+//     console.log("JWT verification result:", {
+//       isValid: jwtResult.isValid,
+//       email: jwtResult.payload?.email
+//     });
+
+//     if (!jwtResult.isValid || !jwtResult.payload) {
+//       console.log("Invalid JWT");
+//       return null;
+//     }
+
+//     console.log("✅ getUserFromCookies successful for:", jwtResult.payload.email);
+//     return {
+//       id: jwtResult.payload.userId,
+//       email: jwtResult.payload.email,
+//       role: jwtResult.payload.role,
+//       name: jwtResult.payload.name || "",
+//       sessionId: jwtResult.payload.sessionId,
+//     };
+//   } catch (error) {
+//     console.error("Error in getUserFromCookies:", error);
+//     return null;
+//   }
+// }
